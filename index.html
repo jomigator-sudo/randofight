@@ -327,12 +327,14 @@
 
         function saveGameData() {
             try {
-                window.gameDataStorage = JSON.stringify({
+                var gameData = JSON.stringify({
                     fighters: gameState.fighters,
                     diamonds: gameState.diamonds,
                     fightCooldownEnd: gameState.fightCooldownEnd,
                     unlockedSlots: gameState.unlockedSlots
                 });
+                localStorage.setItem('randofight_gamedata', gameData);
+                console.log('Game saved to localStorage');
             } catch (e) {
                 console.log('Local save failed:', e);
             }
@@ -340,12 +342,16 @@
 
         function loadGameData() {
             try {
-                if (window.gameDataStorage) {
-                    var data = JSON.parse(window.gameDataStorage);
+                var gameData = localStorage.getItem('randofight_gamedata');
+                if (gameData) {
+                    var data = JSON.parse(gameData);
                     gameState.fighters = data.fighters || [];
                     gameState.diamonds = data.diamonds || 0;
                     gameState.fightCooldownEnd = data.fightCooldownEnd || 0;
                     gameState.unlockedSlots = data.unlockedSlots || [true, false, false, false, false];
+                    console.log('Game loaded from localStorage');
+                } else {
+                    console.log('No saved data found in localStorage');
                 }
             } catch (e) {
                 console.log('Local load failed:', e);
