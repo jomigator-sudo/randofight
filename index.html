@@ -54,17 +54,17 @@
         .fighter-card { background: rgba(255, 255, 255, 0.1); padding: 20px; border-radius: 10px; text-align: center; }
         .hp-bar { width: 100%; height: 20px; background: rgba(0, 0, 0, 0.3); border-radius: 10px; margin: 10px 0; overflow: hidden; }
         .hp-fill { height: 100%; background: #6bcf7f; border-radius: 10px; transition: width 0.5s ease; }
-        .fight-log { background: rgba(0, 0, 0, 0.3); padding: 25px; border-radius: 10px; height: 300px; overflow-y: auto; margin-bottom: 20px; font-size: 1em; line-height: 1.8; font-family: 'Georgia', serif; color: #f0f0f0; }
-        .fight-log p { margin-bottom: 15px; text-indent: 20px; }
-        .story-title { font-size: 1.2em; font-weight: bold; color: #4ecdc4; text-align: center; margin-bottom: 20px; text-indent: 0; font-family: 'Courier New', monospace; }
+        .fight-log { background: rgba(0, 0, 0, 0.3); padding: 25px; border-radius: 10px; height: 300px; overflow-y: auto; margin-bottom: 20px; font-size: 1em; line-height: 1.4; font-family: 'Courier New', monospace; color: #f0f0f0; }
+        .fight-log p { margin-bottom: 8px; text-indent: 0; }
+        .story-title { font-size: 1.1em; font-weight: bold; color: #4ecdc4; text-align: center; margin-bottom: 10px; }
         .damage { color: #ff6b6b; font-weight: bold; }
         .heal { color: #6bcf7f; font-weight: bold; }
         .special { color: #ffd93d; font-weight: bold; }
-        .critical { color: #ff8c42; font-weight: bold; text-shadow: 0 0 5px rgba(255, 140, 66, 0.5); }
+        .critical { color: #ff8c42; font-weight: bold; }
         .dodge { color: #74b9ff; font-style: italic; }
         .victory { color: #00b894; font-weight: bold; font-size: 1.1em; }
         .defeat { color: #e17055; font-weight: bold; }
-        .level-up { color: #fdcb6e; font-weight: bold; font-size: 1.05em; text-shadow: 0 0 3px rgba(253, 203, 110, 0.5); }
+        .level-up { color: #fdcb6e; font-weight: bold; }
         .exp-gain { color: #81ecec; }
         .leaderboard { background: rgba(255, 255, 255, 0.1); padding: 20px; border-radius: 10px; max-height: 400px; overflow-y: auto; }
         .leaderboard-entry { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
@@ -94,8 +94,8 @@
             <div style="text-align: center; margin-bottom: 30px;">
                 <h2 style="color: #4ecdc4; font-size: 2.5em; margin-bottom: 10px;">Character Select</h2>
                 <p style="color: #ccc; font-size: 1.1em;">Choose your fighter or create a new one</p>
-                <div style="background: rgba(255, 193, 7, 0.2); border: 1px solid #ffc107; border-radius: 5px; padding: 10px; margin: 15px auto; max-width: 600px;">
-                    <p style="color: #ffc107; font-size: 0.9em; margin: 0;">⚠️ <strong>Note:</strong> Character data is saved for this session only. Refreshing the page will reset all progress.</p>
+                <div style="background: rgba(34, 197, 94, 0.2); border: 1px solid #22c55e; border-radius: 5px; padding: 10px; margin: 15px auto; max-width: 600px;">
+                    <p style="color: #22c55e; font-size: 0.9em; margin: 0;">✅ <strong>Supabase Enabled:</strong> Your characters are now saved to the cloud and won't disappear on page reload!</p>
                 </div>
             </div>
 
@@ -106,24 +106,24 @@
             </div>
 
             <div class="fighter-slots">
-                <div class="fighter-slot" id="slot-container-0">
+                <div class="fighter-slot" id="slot-container-0" onclick="selectFighter(0)">
                     <div class="slot-number">Slot 1</div>
                     <div class="fighter-name">Empty Slot</div>
                     <div>Click to create fighter</div>
                 </div>
-                <div class="fighter-slot locked" id="slot-container-1">
+                <div class="fighter-slot locked" id="slot-container-1" onclick="purchaseSlot(1)">
                     <div class="slot-number">Slot 2</div>
                     <div>Purchase this slot for 100 💎</div>
                 </div>
-                <div class="fighter-slot locked" id="slot-container-2">
+                <div class="fighter-slot locked" id="slot-container-2" onclick="purchaseSlot(2)">
                     <div class="slot-number">Slot 3</div>
                     <div>Purchase this slot for 100 💎</div>
                 </div>
-                <div class="fighter-slot locked" id="slot-container-3">
+                <div class="fighter-slot locked" id="slot-container-3" onclick="purchaseSlot(3)">
                     <div class="slot-number">Slot 4</div>
                     <div>Purchase this slot for 100 💎</div>
                 </div>
-                <div class="fighter-slot locked" id="slot-container-4">
+                <div class="fighter-slot locked" id="slot-container-4" onclick="purchaseSlot(4)">
                     <div class="slot-number">Slot 5</div>
                     <div>Purchase this slot for 100 💎</div>
                 </div>
@@ -208,6 +208,23 @@
     </div>
 
     <script>
+        // Supabase configuration
+        var SUPABASE_URL = 'https://pmsbxvqavkoboxyhqjcc.supabase.co';
+        var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBtc2J4dnFhdmtvYm94eWhxamNjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc2NjA2OTMsImV4cCI6MjA3MzIzNjY5M30.9-0-glSFo66fOktfR6ineO8J4Ra8RLVXwytCb9jca9U';
+        
+        // Initialize Supabase client
+        var supabase = null;
+        try {
+            if (window.supabase && window.supabase.createClient) {
+                supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                console.log('Supabase connected successfully!');
+            } else {
+                console.error('Supabase library not loaded');
+            }
+        } catch (e) {
+            console.error('Failed to initialize Supabase:', e);
+        }
+
         var gameState = {
             fighters: [],
             currentFighter: null,
@@ -220,6 +237,94 @@
         var specialAttacks = ['Fury Strike', 'Power Slam', 'Devastator', 'Thunder Punch', 'Dragon Fist', 'Shadow Strike', 'Meteor Crash', 'Annihilator'];
         var equipmentSlots = ['Weapon', 'Off-Hand', 'Helmet', 'Shoulders', 'Gloves', 'Chest', 'Greaves', 'Boots'];
 
+        function getUserId() {
+            var userId = localStorage.getItem('randofight_user_id');
+            if (!userId) {
+                userId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                localStorage.setItem('randofight_user_id', userId);
+            }
+            return userId;
+        }
+
+        function saveToSupabase() {
+            if (!supabase) {
+                console.log('Supabase not available, using local storage');
+                saveGameData();
+                return;
+            }
+            
+            var userId = getUserId();
+            var gameData = {
+                user_id: userId,
+                fighters: gameState.fighters,
+                diamonds: gameState.diamonds,
+                fight_cooldown_end: gameState.fightCooldownEnd,
+                unlocked_slots: gameState.unlockedSlots,
+                updated_at: new Date().toISOString()
+            };
+
+            console.log('Saving to Supabase:', gameData);
+
+            supabase
+                .from('game_data')
+                .upsert(gameData, { onConflict: 'user_id' })
+                .then(function(result) {
+                    if (result.error) {
+                        console.error('Supabase save error:', result.error);
+                        saveGameData();
+                    } else {
+                        console.log('Saved to Supabase successfully!');
+                    }
+                })
+                .catch(function(e) {
+                    console.error('Save failed:', e);
+                    saveGameData();
+                });
+        }
+
+        function loadFromSupabase() {
+            if (!supabase) {
+                console.log('Supabase not available, loading from local storage');
+                loadGameData();
+                return;
+            }
+
+            var userId = getUserId();
+            console.log('Loading from Supabase for user:', userId);
+            
+            supabase
+                .from('game_data')
+                .select('*')
+                .eq('user_id', userId)
+                .single()
+                .then(function(result) {
+                    if (result.error) {
+                        if (result.error.code === 'PGRST116') {
+                            console.log('No saved data found - starting fresh');
+                        } else {
+                            console.error('Load error:', result.error);
+                            loadGameData();
+                        }
+                    } else if (result.data) {
+                        console.log('Loading data from Supabase:', result.data);
+                        gameState.fighters = result.data.fighters || [];
+                        gameState.diamonds = result.data.diamonds || 0;
+                        gameState.fightCooldownEnd = result.data.fight_cooldown_end || 0;
+                        gameState.unlockedSlots = result.data.unlocked_slots || [true, false, false, false, false];
+                        console.log('Game loaded from cloud successfully!');
+                    }
+                    
+                    updateFighterSlots();
+                    updateDiamondDisplay();
+                })
+                .catch(function(e) {
+                    console.error('Load failed:', e);
+                    loadGameData();
+                    updateFighterSlots();
+                    updateDiamondDisplay();
+                });
+        }
+
         function saveGameData() {
             try {
                 window.gameDataStorage = JSON.stringify({
@@ -229,7 +334,7 @@
                     unlockedSlots: gameState.unlockedSlots
                 });
             } catch (e) {
-                console.log('Save failed:', e);
+                console.log('Local save failed:', e);
             }
         }
 
@@ -243,7 +348,7 @@
                     gameState.unlockedSlots = data.unlockedSlots || [true, false, false, false, false];
                 }
             } catch (e) {
-                console.log('Load failed:', e);
+                console.log('Local load failed:', e);
             }
         }
 
@@ -254,14 +359,22 @@
             }
         }
 
-        function showTitleScreen() {
-            hideAll();
-            document.getElementById('titleScreen').style.display = 'block';
-            updateFighterSlots();
+        function updateDiamondDisplay() {
             var titleDiamonds = document.getElementById('titleDiamonds');
             if (titleDiamonds) {
                 titleDiamonds.textContent = gameState.diamonds;
             }
+            var diamondsDisplay = document.getElementById('diamonds');
+            if (diamondsDisplay) {
+                diamondsDisplay.textContent = gameState.diamonds;
+            }
+        }
+
+        function showTitleScreen() {
+            hideAll();
+            document.getElementById('titleScreen').style.display = 'block';
+            updateFighterSlots();
+            updateDiamondDisplay();
         }
 
         function showCreationScreen() {
@@ -315,7 +428,7 @@
                 alert('Welcome to RandoFight! You have received 10 free diamonds to get you started!');
             }
             
-            saveGameData();
+            saveToSupabase();
             gameState.currentFighter = fighter;
             showFighterScreen();
         }
@@ -332,6 +445,24 @@
             }
         }
 
+        function purchaseSlot(slotIndex) {
+            if (gameState.unlockedSlots[slotIndex]) {
+                return;
+            }
+            
+            if (gameState.diamonds < 100) {
+                alert('You need 100 diamonds to unlock this slot! You currently have ' + gameState.diamonds + ' diamonds.');
+                return;
+            }
+            
+            gameState.diamonds -= 100;
+            gameState.unlockedSlots[slotIndex] = true;
+            updateDiamondDisplay();
+            updateFighterSlots();
+            saveToSupabase();
+            alert('Fighter slot ' + (slotIndex + 1) + ' unlocked!');
+        }
+
         function updateFighterSlots() {
             for (var i = 0; i < 5; i++) {
                 var slotContainer = document.getElementById('slot-container-' + i);
@@ -340,7 +471,6 @@
                 var fighter = gameState.fighters[i];
                 slotContainer.innerHTML = '';
                 slotContainer.className = 'fighter-slot';
-                slotContainer.onclick = null;
                 
                 var slotNumber = document.createElement('div');
                 slotNumber.className = 'slot-number';
@@ -354,45 +484,44 @@
                         '<div class="fighter-level">Level ' + fighter.level + '</div>' +
                         '<div class="fighter-wins">' + fighter.wins + ' wins</div>';
                     slotContainer.appendChild(fighterContent);
-                    slotContainer.onclick = (function(index) {
+                    slotContainer.onclick = function(index) {
                         return function() { selectFighter(index); };
-                    })(i);
+                    }(i);
                 } else if (gameState.unlockedSlots[i]) {
                     var emptyContent = document.createElement('div');
                     emptyContent.innerHTML = 
                         '<div class="fighter-name">Empty Slot</div>' +
                         '<div>Click to create fighter</div>';
                     slotContainer.appendChild(emptyContent);
-                    slotContainer.onclick = (function(index) {
+                    slotContainer.onclick = function(index) {
                         return function() { selectFighter(index); };
-                    })(i);
+                    }(i);
                 } else {
                     slotContainer.classList.add('locked');
                     var lockedContent = document.createElement('div');
                     lockedContent.innerHTML = 'Purchase this slot for 100 💎';
                     slotContainer.appendChild(lockedContent);
-                    slotContainer.onclick = (function(index) {
+                    slotContainer.onclick = function(index) {
                         return function() { purchaseSlot(index); };
-                    })(i);
+                    }(i);
                 }
             }
         }
 
-        function purchaseSlot(slotIndex) {
-            if (gameState.unlockedSlots[slotIndex]) return;
-            
-            if (gameState.diamonds < 100) {
-                alert('You need 100 diamonds to unlock this slot! You currently have ' + gameState.diamonds + ' diamonds.');
-                return;
-            }
-            
-            if (confirm('Purchase fighter slot ' + (slotIndex + 1) + ' for 100 diamonds?')) {
-                gameState.diamonds -= 100;
-                gameState.unlockedSlots[slotIndex] = true;
-                saveGameData();
-                updateFighterSlots();
-                alert('Fighter slot ' + (slotIndex + 1) + ' unlocked!');
-            }
+        function addTestDiamonds() {
+            gameState.diamonds += 5;
+            saveToSupabase();
+            updateDiamondDisplay();
+            updateFightStatus();
+            alert('Added 5 test diamonds!');
+        }
+
+        function purchaseDiamonds() {
+            gameState.diamonds += 10;
+            saveToSupabase();
+            updateDiamondDisplay();
+            updateFightStatus();
+            alert('10 Diamonds purchased!');
         }
 
         function updateFighterDisplay() {
@@ -409,7 +538,7 @@
 
             var strengthBonus = (fighter.stats.strength - 1) * 2;
             var toughnessBonus = fighter.stats.toughness >= 2 ? (fighter.stats.toughness - 1) * 3 : 0;
-            var speedBonus = (fighter.stats.speed - 1) * 1;
+            var speedBonus = (fighter.stats.speed - 1) * 5;
             var luckBonus = fighter.stats.luck >= 2 ? (fighter.stats.luck - 1) * 3 : 0;
 
             var statsHTML = 
@@ -423,7 +552,7 @@
                 '<div class="stat-row"><span>Toughness <span style="color: #888; font-size: 0.8em;">(-' + toughnessBonus + '% damage taken)</span>:</span> <span>' + fighter.stats.toughness + '</span></div>' +
                 '<div class="stat-row"><span>Agility <span style="color: #888; font-size: 0.8em;">(dodge chance)</span>:</span> <span>' + fighter.stats.agility + '</span></div>' +
                 '<div class="stat-row"><span>Luck <span style="color: #888; font-size: 0.8em;">(+' + luckBonus + '% crit chance)</span>:</span> <span>' + fighter.stats.luck + '</span></div>' +
-                '<div class="stat-row"><span>Speed <span style="color: #888; font-size: 0.8em;">(+' + speedBonus + '% hit chance)</span>:</span> <span>' + fighter.stats.speed + '</span></div>' +
+                '<div class="stat-row"><span>Speed <span style="color: #888; font-size: 0.8em;">(+' + speedBonus + '% attack speed)</span>:</span> <span>' + fighter.stats.speed + '</span></div>' +
                 '<hr style="margin: 10px 0; border-color: rgba(255,255,255,0.2);">' +
                 specialDisplay;
             
@@ -517,33 +646,10 @@
                 return;
             }
             gameState.diamonds--;
-            saveGameData();
+            saveToSupabase();
+            updateDiamondDisplay();
             var opponent = generateOpponent(gameState.currentFighter.level);
             startFight(gameState.currentFighter, opponent);
-        }
-
-        function addTestDiamonds() {
-            gameState.diamonds += 5;
-            saveGameData();
-            updateFightStatus();
-            var titleDiamonds = document.getElementById('titleDiamonds');
-            if (titleDiamonds) {
-                titleDiamonds.textContent = gameState.diamonds;
-            }
-            alert('Added 5 test diamonds!');
-        }
-
-        function purchaseDiamonds() {
-            if (confirm('Purchase 10 Diamonds for $1.99?')) {
-                gameState.diamonds += 10;
-                saveGameData();
-                updateFightStatus();
-                var titleDiamonds = document.getElementById('titleDiamonds');
-                if (titleDiamonds) {
-                    titleDiamonds.textContent = gameState.diamonds;
-                }
-                alert('10 Diamonds purchased!');
-            }
         }
 
         function generateOpponent(level) {
@@ -567,6 +673,9 @@
                     agility: Math.floor(1 + (opponentLevel - 1) * 2),
                     luck: Math.floor(1 + (opponentLevel - 1) * 2),
                     speed: Math.floor(1 + (opponentLevel - 1) * 2)
+                },
+                equipment: {
+                    weapon: { name: 'Iron Sword', rarity: 'common' }
                 },
                 specialAttack: {
                     name: specialAttacks[Math.floor(Math.random() * specialAttacks.length)]
@@ -592,53 +701,86 @@
             var fightLog = document.getElementById('fightLog');
             fightLog.innerHTML = '';
 
-            addToFightLog('<div class="story-title">~ The Tale of ' + player.name + ' vs ' + opponent.name + ' ~</div>');
-            addToFightLog('In the ancient colosseum, a legendary warrior named ' + player.name + ' prepared for battle. Across the arena, ' + opponent.name + ' from ' + opponent.birthplace + ' stood ready, their eyes burning with determination.');
-            addToFightLog('The crowd roared as these two mighty champions faced each other. The air was thick with anticipation, for only one would emerge victorious from this epic confrontation.');
+            addToFightLog('<div class="story-title">' + player.name + ' vs ' + opponent.name + '</div>');
+            addToFightLog('Fight begins!');
             
-            setTimeout(function() { simulateFight(player, opponent); }, 2000);
+            setTimeout(function() { simulateFight(player, opponent); }, 1500);
         }
 
         function simulateFight(player, opponent) {
-            var turn = 1;
+            var turn = 0;
             var maxTurns = 50;
+            var fightEnded = false;
             
-            setTimeout(function() {
-                addToFightLog('The battle commenced as both warriors circled each other, their weapons gleaming in the arena light. The crowd held its breath, waiting for the first strike...');
-            }, 1000);
+            function checkFightEnd() {
+                if (fightEnded) return true;
+                
+                if (player.currentHp <= 0) {
+                    fightEnded = true;
+                    setTimeout(function() {
+                        addToFightLog('<span class="defeat">' + player.name + ' loses.</span>');
+                        giveRewards(player, false);
+                        gameState.fightCooldownEnd = Date.now() + 30000;
+                        player.hp = player.maxHp;
+                        saveToSupabase();
+                        document.getElementById('endFightBtn').style.display = 'block';
+                    }, 500);
+                    return true;
+                }
+                
+                if (opponent.currentHp <= 0) {
+                    fightEnded = true;
+                    setTimeout(function() {
+                        addToFightLog('<span class="victory">' + player.name + ' wins!</span>');
+                        player.wins++;
+                        giveRewards(player, true);
+                        gameState.fightCooldownEnd = Date.now() + 30000;
+                        player.hp = player.maxHp;
+                        saveToSupabase();
+                        document.getElementById('endFightBtn').style.display = 'block';
+                    }, 500);
+                    return true;
+                }
+                
+                return false;
+            }
             
-            var fightInterval = setInterval(function() {
-                if (player.currentHp <= 0 || opponent.currentHp <= 0 || turn > maxTurns) {
-                    clearInterval(fightInterval);
-                    endCombat(player, opponent);
+            function executeRound() {
+                if (checkFightEnd()) return;
+                
+                turn++;
+                if (turn > maxTurns) {
+                    fightEnded = true;
+                    addToFightLog('Fight ends in a draw!');
+                    setTimeout(function() {
+                        giveRewards(player, false);
+                        gameState.fightCooldownEnd = Date.now() + 30000;
+                        player.hp = player.maxHp;
+                        saveToSupabase();
+                        document.getElementById('endFightBtn').style.display = 'block';
+                    }, 500);
                     return;
                 }
-
-                var playerSpeed = player.stats.speed + Math.random() * 10;
-                var opponentSpeed = opponent.stats.speed + Math.random() * 10;
-
-                if (playerSpeed >= opponentSpeed) {
+                
+                if (!fightEnded && player.currentHp > 0 && opponent.currentHp > 0) {
                     performAttack(player, opponent);
-                    if (opponent.currentHp > 0) {
-                        setTimeout(function() { 
-                            if (player.currentHp > 0) {
-                                performAttack(opponent, player); 
-                            }
-                        }, 1500);
-                    }
-                } else {
-                    performAttack(opponent, player);
-                    if (player.currentHp > 0) {
-                        setTimeout(function() { 
-                            if (opponent.currentHp > 0) {
-                                performAttack(player, opponent); 
-                            }
-                        }, 1500);
-                    }
+                    if (checkFightEnd()) return;
                 }
-
-                turn++;
-            }, 3500);
+                
+                setTimeout(function() {
+                    if (!fightEnded && opponent.currentHp > 0 && player.currentHp > 0) {
+                        performAttack(opponent, player);
+                        if (checkFightEnd()) return;
+                        
+                        var playerSpeed = Math.max(1000, 2500 - (player.stats.speed * 200));
+                        var opponentSpeed = Math.max(1000, 2500 - (opponent.stats.speed * 200));
+                        var nextRoundDelay = Math.min(playerSpeed, opponentSpeed);
+                        setTimeout(executeRound, nextRoundDelay);
+                    }
+                }, 800);
+            }
+            
+            executeRound();
         }
 
         function performAttack(attacker, defender) {
@@ -651,26 +793,55 @@
             var specialChance = 0.2;
             var canUseSpecial = attacker.specialAttack && attacker.specialAttack.name && attacker.level >= 10;
             var isSpecial = canUseSpecial && Math.random() < specialChance;
-            
-            var weaponName = attacker.equipment && attacker.equipment.weapon ? 
-                attacker.equipment.weapon.name : 'bare fists';
 
-            var dodgeChance = defender.stats.agility * 0.03;
+            var weaponName = attacker.equipment && attacker.equipment.weapon ? 
+                attacker.equipment.weapon.name : 'fists';
+
+            var dodgeChance = Math.min(0.25, defender.stats.agility * 0.04);
             if (Math.random() < dodgeChance) {
-                addToFightLog('<span class="dodge">' + attacker.name + ' lunged forward with their ' + weaponName + ', but ' + defender.name + ' gracefully danced away from the strike, their movements fluid as water.</span>');
+                var dodgeTexts = [
+                    attacker.name + ' swings their ' + weaponName + ' but ' + defender.name + ' dodges!',
+                    defender.name + ' sidesteps ' + attacker.name + '\'s ' + weaponName + ' attack!',
+                    attacker.name + ' attacks with ' + weaponName + ' but misses as ' + defender.name + ' evades!',
+                    defender.name + ' ducks under ' + attacker.name + '\'s ' + weaponName + ' strike!',
+                    attacker.name + '\'s ' + weaponName + ' whooshes past as ' + defender.name + ' dodges!'
+                ];
+                addToFightLog('<span class="dodge">' + dodgeTexts[Math.floor(Math.random() * dodgeTexts.length)] + '</span>');
                 return;
             }
             
             if (isSpecial) {
                 var specialDamage = Math.floor(attacker.level * 15 + (attacker.stats.strength + 10) * 0.5);
                 damage = specialDamage;
-                addToFightLog('<span class="special">' + attacker.name + ' channeled their inner power and unleashed the devastating ' + attacker.specialAttack.name + '! Energy crackled through the air as the attack struck ' + defender.name + ' with tremendous force, dealing <span class="damage">' + damage + ' damage</span>.</span>');
+                var specialTexts = [
+                    attacker.name + ' channels power into their ' + weaponName + ' and unleashes ' + attacker.specialAttack.name + ' for <span class="damage">' + damage + ' damage</span>!',
+                    attacker.name + ' activates ' + attacker.specialAttack.name + ' with their ' + weaponName + ', dealing <span class="damage">' + damage + ' damage</span>!',
+                    attacker.name + ' executes ' + attacker.specialAttack.name + ' using their ' + weaponName + ' for <span class="damage">' + damage + ' damage</span>!',
+                    attacker.name + '\'s ' + weaponName + ' glows as they perform ' + attacker.specialAttack.name + ', hitting for <span class="damage">' + damage + ' damage</span>!'
+                ];
+                addToFightLog('<span class="special">' + specialTexts[Math.floor(Math.random() * specialTexts.length)] + '</span>');
             } else {
                 if (isCrit) {
                     damage *= 2;
-                    addToFightLog('<span class="critical">In a moment of perfect precision, ' + attacker.name + ' found a gap in ' + defender.name + '\'s defenses! Their ' + weaponName + ' struck true, delivering a critical blow for ' + damage + ' damage! The crowd erupted in cheers.</span>');
+                    var critTexts = [
+                        attacker.name + ' lands a critical strike with their ' + weaponName + ' for <span class="damage">' + damage + ' damage</span>!',
+                        attacker.name + '\'s ' + weaponName + ' finds a weak spot, dealing <span class="damage">' + damage + ' critical damage</span>!',
+                        attacker.name + ' delivers a devastating blow with their ' + weaponName + ' for <span class="damage">' + damage + ' damage</span>!',
+                        attacker.name + ' strikes perfectly with their ' + weaponName + ', causing <span class="damage">' + damage + ' critical damage</span>!',
+                        attacker.name + '\'s ' + weaponName + ' hits a vital point for <span class="damage">' + damage + ' damage</span>!'
+                    ];
+                    addToFightLog('<span class="critical">' + critTexts[Math.floor(Math.random() * critTexts.length)] + '</span>');
                 } else {
-                    addToFightLog(attacker.name + ' pressed their advantage, swinging their ' + weaponName + ' in a calculated strike. The weapon connected solidly with ' + defender.name + ', dealing <span class="damage">' + damage + ' damage</span> as the battle intensified.');
+                    var attackTexts = [
+                        attacker.name + ' strikes with their ' + weaponName + ' for <span class="damage">' + damage + ' damage</span>',
+                        attacker.name + ' attacks using their ' + weaponName + ', dealing <span class="damage">' + damage + ' damage</span>',
+                        attacker.name + ' swings their ' + weaponName + ' and hits for <span class="damage">' + damage + ' damage</span>',
+                        attacker.name + ' slashes with their ' + weaponName + ', causing <span class="damage">' + damage + ' damage</span>',
+                        attacker.name + ' wields their ' + weaponName + ' effectively for <span class="damage">' + damage + ' damage</span>',
+                        attacker.name + '\'s ' + weaponName + ' connects, dealing <span class="damage">' + damage + ' damage</span>',
+                        attacker.name + ' lands a solid hit with their ' + weaponName + ' for <span class="damage">' + damage + ' damage</span>'
+                    ];
+                    addToFightLog(attackTexts[Math.floor(Math.random() * attackTexts.length)]);
                 }
             }
 
@@ -692,37 +863,12 @@
             }
         }
 
-        function endCombat(player, opponent) {
-            var playerWon = opponent.currentHp <= 0;
-            
-            setTimeout(function() {
-                if (playerWon) {
-                    addToFightLog('<span class="victory">As the dust settled in the arena, ' + opponent.name + ' collapsed to their knees, unable to continue. ' + player.name + ' stood victorious, breathing heavily but triumphant. The crowd rose to their feet, their cheers echoing across the ancient stones.</span>');
-                    player.wins++;
-                    giveRewards(player, true);
-                } else {
-                    addToFightLog('<span class="defeat">Despite their valiant efforts, ' + player.name + ' was overwhelmed by ' + opponent.name + '\'s superior skill. As they fell to the arena floor, the crowd fell silent, respecting the courage shown in defeat.</span>');
-                    giveRewards(player, false);
-                }
-                
-                gameState.fightCooldownEnd = Date.now() + 30000;
-                player.hp = player.maxHp;
-                saveGameData();
-                document.getElementById('endFightBtn').style.display = 'block';
-            }, 2000);
-        }
-
         function giveRewards(fighter, won) {
             var baseExp = 50 + (fighter.level * 10);
             var expGained = won ? baseExp : Math.floor(baseExp * 0.3);
             
             fighter.exp += expGained;
-            
-            if (won) {
-                addToFightLog('<span class="exp-gain">Through this hard-fought victory, ' + fighter.name + ' gained valuable experience (+' + expGained + ' EXP), growing stronger and wiser in the ways of combat.</span>');
-            } else {
-                addToFightLog('<span class="exp-gain">Even in defeat, ' + fighter.name + ' learned from the battle, gaining ' + expGained + ' experience points that would serve them well in future conflicts.</span>');
-            }
+            addToFightLog('<span class="exp-gain">' + fighter.name + ' gains ' + expGained + ' EXP</span>');
 
             if (fighter.exp >= fighter.expRequired && fighter.level < 100) {
                 levelUp(fighter);
@@ -740,26 +886,14 @@
             var randomStat = stats[Math.floor(Math.random() * stats.length)];
             fighter.stats[randomStat]++;
 
+            var statDisplayName = randomStat.charAt(0).toUpperCase() + randomStat.slice(1);
+
             if (fighter.level === 10 && (!fighter.specialAttack || !fighter.specialAttack.name)) {
                 var randomSpecialAttack = specialAttacks[Math.floor(Math.random() * specialAttacks.length)];
                 fighter.specialAttack = { name: randomSpecialAttack };
-                
-                var specialUnlockTexts = [
-                    '<span class="level-up">LEVEL UP! ' + fighter.name + ' reaches level ' + fighter.level + '!</span> <span class="heal">' + randomStat + ' increased!</span> <span class="special">Special attack unlocked: ' + randomSpecialAttack + '!</span>',
-                    '<span class="level-up">' + fighter.name + ' ascends to level ' + fighter.level + '!</span> <span class="heal">' + randomStat + ' grows stronger!</span> <span class="special">New technique mastered: ' + randomSpecialAttack + '!</span>',
-                    '<span class="level-up">Level ' + fighter.level + ' achieved!</span> <span class="heal">' + randomStat + ' improved!</span> <span class="special">' + fighter.name + ' learns ' + randomSpecialAttack + '!</span>',
-                    '<span class="level-up">' + fighter.name + ' reaches new heights! Level ' + fighter.level + '!</span> <span class="heal">' + randomStat + ' enhanced!</span> <span class="special">Ultimate move unlocked: ' + randomSpecialAttack + '!</span>'
-                ];
-                addToFightLog(specialUnlockTexts[Math.floor(Math.random() * specialUnlockTexts.length)]);
+                addToFightLog('<span class="level-up">LEVEL UP! ' + fighter.name + ' reaches level ' + fighter.level + '!</span> <span class="heal">' + statDisplayName + ' +1</span> <span class="special">Special attack unlocked: ' + randomSpecialAttack + '!</span>');
             } else {
-                var levelUpTexts = [
-                    '<span class="level-up">LEVEL UP! ' + fighter.name + ' reaches level ' + fighter.level + '!</span> <span class="heal">' + randomStat + ' increased!</span>',
-                    '<span class="level-up">' + fighter.name + ' grows stronger! Level ' + fighter.level + '!</span> <span class="heal">' + randomStat + ' improved!</span>',
-                    '<span class="level-up">New level achieved! ' + fighter.name + ' is now level ' + fighter.level + '!</span> <span class="heal">' + randomStat + ' enhanced!</span>',
-                    '<span class="level-up">' + fighter.name + ' ascends to level ' + fighter.level + '!</span> <span class="heal">' + randomStat + ' grows stronger!</span>',
-                    '<span class="level-up">Power surge! ' + fighter.name + ' reaches level ' + fighter.level + '!</span> <span class="heal">' + randomStat + ' boosted!</span>'
-                ];
-                addToFightLog(levelUpTexts[Math.floor(Math.random() * levelUpTexts.length)]);
+                addToFightLog('<span class="level-up">LEVEL UP! ' + fighter.name + ' reaches level ' + fighter.level + '!</span> <span class="heal">' + statDisplayName + ' +1</span>');
             }
         }
 
@@ -821,9 +955,14 @@
         }
 
         function initGame() {
-            loadGameData();
-            showTitleScreen();
-            setInterval(updateFightStatus, 1000);
+            console.log('RandoFight initializing...');
+            
+            // Wait a moment for Supabase to initialize, then load game
+            setTimeout(function() {
+                loadFromSupabase();
+                showTitleScreen();
+                setInterval(updateFightStatus, 1000);
+            }, 200);
         }
 
         window.addEventListener('load', initGame);
