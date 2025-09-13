@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RandoFight - Complete Game</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/supabase/2.39.3/supabase.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Courier New', monospace; background: linear-gradient(135deg, #1a1a2e, #16213e); color: #fff; min-height: 100vh; padding: 20px; }
@@ -208,23 +208,6 @@
     </div>
 
     <script>
-        // Supabase configuration
-        var SUPABASE_URL = 'https://pmsbxvqavkoboxyhqjcc.supabase.co';
-        var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBtc2J4dnFhdmtvYm94eWhxamNjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc2NjA2OTMsImV4cCI6MjA3MzIzNjY5M30.9-0-glSFo66fOktfR6ineO8J4Ra8RLVXwytCb9jca9U';
-        
-        // Initialize Supabase client
-        var supabase = null;
-        try {
-            if (window.supabase && window.supabase.createClient) {
-                supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-                console.log('Supabase connected successfully!');
-            } else {
-                console.error('Supabase library not loaded');
-            }
-        } catch (e) {
-            console.error('Failed to initialize Supabase:', e);
-        }
-
         var gameState = {
             fighters: [],
             currentFighter: null,
@@ -237,94 +220,6 @@
         var specialAttacks = ['Fury Strike', 'Power Slam', 'Devastator', 'Thunder Punch', 'Dragon Fist', 'Shadow Strike', 'Meteor Crash', 'Annihilator'];
         var equipmentSlots = ['Weapon', 'Off-Hand', 'Helmet', 'Shoulders', 'Gloves', 'Chest', 'Greaves', 'Boots'];
 
-        function getUserId() {
-            var userId = localStorage.getItem('randofight_user_id');
-            if (!userId) {
-                userId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-                localStorage.setItem('randofight_user_id', userId);
-            }
-            return userId;
-        }
-
-        function saveToSupabase() {
-            if (!supabase) {
-                console.log('Supabase not available, using local storage');
-                saveGameData();
-                return;
-            }
-            
-            var userId = getUserId();
-            var gameData = {
-                user_id: userId,
-                fighters: gameState.fighters,
-                diamonds: gameState.diamonds,
-                fight_cooldown_end: gameState.fightCooldownEnd,
-                unlocked_slots: gameState.unlockedSlots,
-                updated_at: new Date().toISOString()
-            };
-
-            console.log('Saving to Supabase:', gameData);
-
-            supabase
-                .from('game_data')
-                .upsert(gameData, { onConflict: 'user_id' })
-                .then(function(result) {
-                    if (result.error) {
-                        console.error('Supabase save error:', result.error);
-                        saveGameData();
-                    } else {
-                        console.log('Saved to Supabase successfully!');
-                    }
-                })
-                .catch(function(e) {
-                    console.error('Save failed:', e);
-                    saveGameData();
-                });
-        }
-
-        function loadFromSupabase() {
-            if (!supabase) {
-                console.log('Supabase not available, loading from local storage');
-                loadGameData();
-                return;
-            }
-
-            var userId = getUserId();
-            console.log('Loading from Supabase for user:', userId);
-            
-            supabase
-                .from('game_data')
-                .select('*')
-                .eq('user_id', userId)
-                .single()
-                .then(function(result) {
-                    if (result.error) {
-                        if (result.error.code === 'PGRST116') {
-                            console.log('No saved data found - starting fresh');
-                        } else {
-                            console.error('Load error:', result.error);
-                            loadGameData();
-                        }
-                    } else if (result.data) {
-                        console.log('Loading data from Supabase:', result.data);
-                        gameState.fighters = result.data.fighters || [];
-                        gameState.diamonds = result.data.diamonds || 0;
-                        gameState.fightCooldownEnd = result.data.fight_cooldown_end || 0;
-                        gameState.unlockedSlots = result.data.unlocked_slots || [true, false, false, false, false];
-                        console.log('Game loaded from cloud successfully!');
-                    }
-                    
-                    updateFighterSlots();
-                    updateDiamondDisplay();
-                })
-                .catch(function(e) {
-                    console.error('Load failed:', e);
-                    loadGameData();
-                    updateFighterSlots();
-                    updateDiamondDisplay();
-                });
-        }
-
         function saveGameData() {
             try {
                 var gameData = JSON.stringify({
@@ -336,7 +231,7 @@
                 localStorage.setItem('randofight_gamedata', gameData);
                 console.log('Game saved to localStorage');
             } catch (e) {
-                console.log('Local save failed:', e);
+                console.log('Save failed:', e);
             }
         }
 
@@ -351,10 +246,10 @@
                     gameState.unlockedSlots = data.unlockedSlots || [true, false, false, false, false];
                     console.log('Game loaded from localStorage');
                 } else {
-                    console.log('No saved data found in localStorage');
+                    console.log('No saved data found');
                 }
             } catch (e) {
-                console.log('Local load failed:', e);
+                console.log('Load failed:', e);
             }
         }
 
@@ -963,12 +858,21 @@
         function initGame() {
             console.log('RandoFight initializing...');
             
-            // Wait a moment for Supabase to initialize, then load game
+            // Try to initialize Supabase first
+            var supabaseReady = initSupabase();
+            
+            // Wait a moment for everything to initialize, then load game
             setTimeout(function() {
-                loadFromSupabase();
+                if (supabaseReady) {
+                    loadFromSupabase();
+                } else {
+                    loadGameData();
+                    updateFighterSlots();
+                    updateDiamondDisplay();
+                }
                 showTitleScreen();
                 setInterval(updateFightStatus, 1000);
-            }, 200);
+            }, 500);
         }
 
         window.addEventListener('load', initGame);
