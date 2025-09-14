@@ -231,12 +231,29 @@
         // Wait for Supabase to be available
         function initSupabase() {
             try {
-                if (window.supabase && window.supabase.createClient) {
-                    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                // Try different ways to access Supabase
+                var supabaseClient = null;
+                
+                if (typeof window.supabase !== 'undefined' && window.supabase.createClient) {
+                    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                    console.log('Supabase connected via window.supabase');
+                } else if (typeof supabase !== 'undefined' && supabase.createClient) {
+                    supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                    console.log('Supabase connected via global supabase');
+                } else if (typeof createClient !== 'undefined') {
+                    supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                    console.log('Supabase connected via createClient');
+                } else {
+                    console.log('Supabase library not found. Available globals:', Object.keys(window).filter(k => k.toLowerCase().includes('supabase')));
+                    return false;
+                }
+                
+                if (supabaseClient) {
+                    supabase = supabaseClient;
                     console.log('Supabase connected successfully!');
                     return true;
                 } else {
-                    console.error('Supabase library not found - will use localStorage');
+                    console.error('Failed to create Supabase client');
                     return false;
                 }
             } catch (e) {
@@ -1058,9 +1075,7 @@
         function initGame() {
             console.log('RandoFight initializing...');
             
-            setTimeout(function() {
-                var supabaseReady = initSupabase();
-                
+            initSupabase().then(function(supabaseReady) {
                 if (supabaseReady) {
                     loadFromSupabase();
                 } else {
@@ -1071,7 +1086,7 @@
                 }
                 showTitleScreen();
                 setInterval(updateFightStatus, 1000);
-            }, 1000);
+            });
         }
 
         window.addEventListener('load', initGame);
