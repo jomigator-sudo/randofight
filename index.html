@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RandoFight - Complete Game</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/supabase/2.39.3/supabase.min.js"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Courier New', monospace; background: linear-gradient(135deg, #1a1a2e, #16213e); color: #fff; min-height: 100vh; padding: 20px; }
@@ -94,8 +94,8 @@
             <div style="text-align: center; margin-bottom: 30px;">
                 <h2 style="color: #4ecdc4; font-size: 2.5em; margin-bottom: 10px;">Character Select</h2>
                 <p style="color: #ccc; font-size: 1.1em;">Choose your fighter or create a new one</p>
-                <div style="background: rgba(34, 197, 94, 0.2); border: 1px solid #22c55e; border-radius: 5px; padding: 10px; margin: 15px auto; max-width: 600px;">
-                    <p style="color: #22c55e; font-size: 0.9em; margin: 0;">✅ <strong>Supabase Enabled:</strong> Your characters are now saved to the cloud and won't disappear on page reload!</p>
+                <div style="background: rgba(168, 85, 247, 0.2); border: 1px solid #a855f7; border-radius: 5px; padding: 10px; margin: 15px auto; max-width: 600px;">
+                    <p style="color: #a855f7; font-size: 0.9em; margin: 0;">⚡ <strong>Cloud Save Enabled:</strong> Your characters are automatically saved and will persist across devices and sessions!</p>
                 </div>
             </div>
 
@@ -152,6 +152,7 @@
         <!-- Fighter Details Screen -->
         <div id="fighterScreen" class="game-screen">
             <button class="btn btn-secondary back-btn" onclick="showTitleScreen()">← Back</button>
+            <button class="btn" style="background: #e74c3c; color: #fff; position: absolute; top: 20px; right: 20px;" onclick="console.log('Delete button clicked'); deleteFighter();">Delete Fighter</button>
             <div style="text-align: center; margin-bottom: 20px; margin-top: 60px;">
                 <button class="btn btn-fight" onclick="findFight()" id="fightBtn">Find Fight</button>
                 <button class="btn btn-primary" onclick="fightWithoutRest()" id="fightWithoutRestBtn">Fight 💎</button>
@@ -208,6 +209,13 @@
     </div>
 
     <script>
+        // Supabase configuration
+        var SUPABASE_URL = 'https://pmsbxvqavkoboxyhqjcc.supabase.co';
+        var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBtc2J4dnFhdmtvYm94eWhxamNjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc2NjA2OTMsImV4cCI6MjA3MzIzNjY5M30.9-0-glSFo66fOktfR6ineO8J4Ra8RLVXwytCb9jca9U';
+        
+        // Initialize Supabase client
+        var supabase = null;
+        
         var gameState = {
             fighters: [],
             currentFighter: null,
@@ -219,6 +227,113 @@
 
         var specialAttacks = ['Fury Strike', 'Power Slam', 'Devastator', 'Thunder Punch', 'Dragon Fist', 'Shadow Strike', 'Meteor Crash', 'Annihilator'];
         var equipmentSlots = ['Weapon', 'Off-Hand', 'Helmet', 'Shoulders', 'Gloves', 'Chest', 'Greaves', 'Boots'];
+
+        // Wait for Supabase to be available
+        function initSupabase() {
+            try {
+                if (window.supabase && window.supabase.createClient) {
+                    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                    console.log('Supabase connected successfully!');
+                    return true;
+                } else {
+                    console.error('Supabase library not found - will use localStorage');
+                    return false;
+                }
+            } catch (e) {
+                console.error('Failed to initialize Supabase:', e);
+                return false;
+            }
+        }
+
+        function getUserId() {
+            var userId = localStorage.getItem('randofight_user_id');
+            if (!userId) {
+                userId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                localStorage.setItem('randofight_user_id', userId);
+            }
+            return userId;
+        }
+
+        function saveToSupabase() {
+            if (!supabase) {
+                console.log('Supabase not available, using local storage');
+                saveGameData();
+                return;
+            }
+            
+            var userId = getUserId();
+            var gameData = {
+                user_id: userId,
+                fighters: gameState.fighters,
+                diamonds: gameState.diamonds,
+                fight_cooldown_end: gameState.fightCooldownEnd,
+                unlocked_slots: gameState.unlockedSlots,
+                updated_at: new Date().toISOString()
+            };
+
+            console.log('Saving to Supabase:', gameData);
+
+            supabase
+                .from('game_data')
+                .upsert(gameData, { onConflict: 'user_id' })
+                .then(function(result) {
+                    if (result.error) {
+                        console.error('Supabase save error:', result.error);
+                        saveGameData();
+                    } else {
+                        console.log('Saved to Supabase successfully!');
+                    }
+                })
+                .catch(function(e) {
+                    console.error('Save failed:', e);
+                    saveGameData();
+                });
+        }
+
+        function loadFromSupabase() {
+            if (!supabase) {
+                console.log('Supabase not available, loading from local storage');
+                loadGameData();
+                updateFighterSlots();
+                updateDiamondDisplay();
+                return;
+            }
+
+            var userId = getUserId();
+            console.log('Loading from Supabase for user:', userId);
+            
+            supabase
+                .from('game_data')
+                .select('*')
+                .eq('user_id', userId)
+                .single()
+                .then(function(result) {
+                    if (result.error) {
+                        if (result.error.code === 'PGRST116') {
+                            console.log('No saved data found - starting fresh');
+                        } else {
+                            console.error('Load error:', result.error);
+                            loadGameData();
+                        }
+                    } else if (result.data) {
+                        console.log('Loading data from Supabase:', result.data);
+                        gameState.fighters = result.data.fighters || [];
+                        gameState.diamonds = result.data.diamonds || 0;
+                        gameState.fightCooldownEnd = result.data.fight_cooldown_end || 0;
+                        gameState.unlockedSlots = result.data.unlocked_slots || [true, false, false, false, false];
+                        console.log('Game loaded from cloud successfully!');
+                    }
+                    
+                    updateFighterSlots();
+                    updateDiamondDisplay();
+                })
+                .catch(function(e) {
+                    console.error('Load failed:', e);
+                    loadGameData();
+                    updateFighterSlots();
+                    updateDiamondDisplay();
+                });
+        }
 
         function saveGameData() {
             try {
@@ -423,6 +538,91 @@
             updateDiamondDisplay();
             updateFightStatus();
             alert('10 Diamonds purchased!');
+        }
+
+        function deleteFighter() {
+            console.log('deleteFighter function called');
+            console.log('gameState.currentFighter:', gameState.currentFighter);
+            
+            if (!gameState.currentFighter) {
+                console.log('No current fighter found');
+                alert('No fighter selected to delete!');
+                return;
+            }
+            
+            var fighterName = gameState.currentFighter.name;
+            console.log('Fighter name to delete:', fighterName);
+            
+            // Create modal dynamically
+            createDeleteModal(fighterName);
+        }
+
+        function createDeleteModal(fighterName) {
+            // Remove existing modal if it exists
+            var existingModal = document.getElementById('deleteModal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+            
+            // Create modal HTML
+            var modalHTML = 
+                '<div id="deleteModal" style="display: block; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000;">' +
+                    '<div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #1a1a2e; padding: 30px; border-radius: 10px; border: 2px solid #e74c3c; max-width: 400px; text-align: center;">' +
+                        '<h3 style="color: #e74c3c; margin-bottom: 20px;">Delete Fighter</h3>' +
+                        '<p style="margin-bottom: 20px;">Are you sure you want to delete <span style="color: #4ecdc4; font-weight: bold;">' + fighterName + '</span>?</p>' +
+                        '<p style="color: #888; font-size: 0.9em; margin-bottom: 25px;">This action cannot be undone!</p>' +
+                        '<div style="display: flex; gap: 15px; justify-content: center;">' +
+                            '<button class="btn" style="background: #e74c3c; color: #fff;" onclick="confirmDelete()">Delete</button>' +
+                            '<button class="btn btn-secondary" onclick="cancelDelete()">Cancel</button>' +
+                        '</div>' +
+                    '</div>' +
+                '</div>';
+            
+            // Add modal to body
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+        }
+
+        function confirmDelete() {
+            console.log('Delete confirmed');
+            var fighterName = gameState.currentFighter.name;
+            
+            try {
+                // Find which slot the current fighter is in and clear it
+                for (var i = 0; i < gameState.fighters.length; i++) {
+                    if (gameState.fighters[i] && gameState.fighters[i].name === fighterName) {
+                        console.log('Found fighter in slot', i, 'deleting...');
+                        gameState.fighters[i] = null;
+                        break;
+                    }
+                }
+                
+                // Clear current fighter reference
+                gameState.currentFighter = null;
+                
+                // Save the updated state
+                saveToSupabase();
+                
+                // Remove modal and show success message
+                var modal = document.getElementById('deleteModal');
+                if (modal) {
+                    modal.remove();
+                }
+                
+                alert(fighterName + ' has been deleted.');
+                showTitleScreen();
+                
+            } catch (e) {
+                console.error('Error deleting fighter:', e);
+                alert('Error deleting fighter: ' + e.message);
+            }
+        }
+
+        function cancelDelete() {
+            console.log('Delete cancelled');
+            var modal = document.getElementById('deleteModal');
+            if (modal) {
+                modal.remove();
+            }
         }
 
         function updateFighterDisplay() {
@@ -858,21 +1058,20 @@
         function initGame() {
             console.log('RandoFight initializing...');
             
-            // Try to initialize Supabase first
-            var supabaseReady = initSupabase();
-            
-            // Wait a moment for everything to initialize, then load game
             setTimeout(function() {
+                var supabaseReady = initSupabase();
+                
                 if (supabaseReady) {
                     loadFromSupabase();
                 } else {
+                    console.log('Using localStorage fallback');
                     loadGameData();
                     updateFighterSlots();
                     updateDiamondDisplay();
                 }
                 showTitleScreen();
                 setInterval(updateFightStatus, 1000);
-            }, 500);
+            }, 1000);
         }
 
         window.addEventListener('load', initGame);
