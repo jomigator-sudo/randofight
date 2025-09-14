@@ -715,8 +715,24 @@
             gameState.diamonds--;
             saveToSupabase();
             updateDiamondDisplay();
-            var opponent = generateOpponent(gameState.currentFighter.level);
-            startFight(gameState.currentFighter, opponent);
+            
+            console.log('Looking for opponents for diamond fight...');
+            findOpponentFromSupabase(gameState.currentFighter.level)
+                .then(function(opponent) {
+                    if (opponent) {
+                        console.log('Found real player opponent for diamond fight:', opponent.name);
+                        startFight(gameState.currentFighter, opponent);
+                    } else {
+                        console.log('No real players found for diamond fight, generating AI opponent');
+                        var botOpponent = generateOpponent(gameState.currentFighter.level);
+                        startFight(gameState.currentFighter, botOpponent);
+                    }
+                })
+                .catch(function(error) {
+                    console.error('Diamond fight matchmaking error, using AI opponent:', error);
+                    var botOpponent = generateOpponent(gameState.currentFighter.level);
+                    startFight(gameState.currentFighter, botOpponent);
+                });
         }
 
         function generateOpponent(level) {
