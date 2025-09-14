@@ -1075,18 +1075,10 @@
         function initGame() {
             console.log('RandoFight initializing...');
             
-            initSupabase().then(function(supabaseReady) {
-                if (supabaseReady) {
-                    loadFromSupabase();
-                } else {
-                    console.log('Using localStorage fallback');
-                    loadGameData();
-                    updateFighterSlots();
-                    updateDiamondDisplay();
-                }
-                showTitleScreen();
-                setInterval(updateFightStatus, 1000);
-            });
+            // Try loading from Supabase first, fall back to localStorage if it fails
+            loadFromSupabase();
+            showTitleScreen();
+            setInterval(updateFightStatus, 1000);
         }
 
         window.addEventListener('load', initGame);
