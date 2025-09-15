@@ -1108,8 +1108,16 @@
         function initGame() {
             console.log('RandoFight initializing...');
             
-            loadFromSupabase();
-            showTitleScreen();
+            // Check for existing login session
+            if (checkExistingSession()) {
+                // User has valid session, load their data
+                loadFromSupabase();
+                showTitleScreen();
+            } else {
+                // No valid session, show login screen
+                showLoginScreen();
+            }
+            
             setInterval(updateFightStatus, 1000);
         }
 
