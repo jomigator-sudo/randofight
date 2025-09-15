@@ -403,34 +403,101 @@
                 return;
             }
 
-            var fighter = {
-                name: name,
-                birthplace: 'Unknown',
-                level: 1,
-                exp: 0,
-                expRequired: 100,
-                hp: 100,
-                maxHp: 100,
-                wins: 0,
-                stats: { strength: 1, toughness: 1, agility: 1, luck: 1, speed: 1 },
-                specialAttack: null,
-                equipment: {
-                    weapon: { name: 'Wooden Stick', type: 'weapon', slot: 'weapon', power: 5, level: 1, rarity: 'common', statType: 'Damage' },
-                    offHand: null, helmet: null, shoulders: null, gloves: null, chest: null, greaves: null, boots: null
-                }
-            };
+            // Check for duplicate names in Supabase
+            checkNameAvailability(name)
+                .then(function(isAvailable) {
+                    if (!isAvailable) {
+                        alert('Fighter name "' + name + '" is already taken. Please choose a different name.');
+                        return;
+                    }
+                    
+                    // Name is available, create the fighter
+                    var fighter = {
+                        name: name,
+                        birthplace: 'Unknown',
+                        level: 1,
+                        exp: 0,
+                        expRequired: 100,
+                        hp: 100,
+                        maxHp: 100,
+                        wins: 0,
+                        stats: { strength: 1, toughness: 1, agility: 1, luck: 1, speed: 1 },
+                        specialAttack: null,
+                        equipment: {
+                            weapon: { name: 'Wooden Stick', type: 'weapon', slot: 'weapon', power: 5, level: 1, rarity: 'common', statType: 'Damage' },
+                            offHand: null, helmet: null, shoulders: null, gloves: null, chest: null, greaves: null, boots: null
+                        }
+                    };
 
-            gameState.fighters[gameState.currentSlotIndex] = fighter;
+                    gameState.fighters[gameState.currentSlotIndex] = fighter;
+                    
+                    var isFirstFighter = gameState.fighters.filter(function(f) { return f !== null && f !== undefined; }).length === 1;
+                    if (isFirstFighter && gameState.diamonds === 0) {
+                        gameState.diamonds = 10;
+                        alert('Welcome to RandoFight! You have received 10 free diamonds to get you started!');
+                    }
+                    
+                    saveToSupabase();
+                    gameState.currentFighter = fighter;
+                    showFighterScreen();
+                })
+                .catch(function(error) {
+                    console.error('Error checking name availability:', error);
+                    alert('Unable to verify name availability. Please try again.');
+                });
+        }
+
+        function checkNameAvailability(name) {
+            console.log('Checking if name "' + name + '" is available...');
             
-            var isFirstFighter = gameState.fighters.filter(function(f) { return f !== null && f !== undefined; }).length === 1;
-            if (isFirstFighter && gameState.diamonds === 0) {
-                gameState.diamonds = 10;
-                alert('Welcome to RandoFight! You have received 10 free diamonds to get you started!');
-            }
-            
-            saveToSupabase();
-            gameState.currentFighter = fighter;
-            showFighterScreen();
+            return fetch(SUPABASE_URL + '/rest/v1/game_data?select=fighters', {
+                method: 'GET',
+                headers: {
+                    'apikey': SUPABASE_ANON_KEY,
+                    'Authorization': 'Bearer ' + SUPABASE_ANON_KEY
+                }
+            })
+            .then(function(response) {
+                if (!response.ok) {
+                    throw new Error('Failed to check name availability: ' + response.status);
+                }
+                return response.json();
+            })
+            .then(function(allPlayers) {
+                console.log('Checking name against', allPlayers.length, 'players...');
+                
+                // Check all fighters across all players
+                for (var i = 0; i < allPlayers.length; i++) {
+                    var playerData = allPlayers[i];
+                    
+                    if (!playerData.fighters || !Array.isArray(playerData.fighters)) {
+                        continue;
+                    }
+                    
+                    for (var j = 0; j < playerData.fighters.length; j++) {
+                        var fighter = playerData.fighters[j];
+                        
+                        if (fighter && fighter.name && fighter.name.toLowerCase() === name.toLowerCase()) {
+                            console.log('Name "' + name + '" is already taken');
+                            return false; // Name is taken
+                        }
+                    }
+                }
+                
+                console.log('Name "' + name + '" is available');
+                return true; // Name is available
+            })
+            .catch(function(error) {
+                console.error('Error checking name availability:', error);
+                // If we can't check Supabase, at least check local fighters
+                for (var i = 0; i < gameState.fighters.length; i++) {
+                    var fighter = gameState.fighters[i];
+                    if (fighter && fighter.name && fighter.name.toLowerCase() === name.toLowerCase()) {
+                        return false; // Name is taken locally
+                    }
+                }
+                return true; // Assume available if we can't check online
+            });
         }
 
         function selectFighter(slotIndex) {
