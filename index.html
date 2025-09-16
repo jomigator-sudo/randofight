@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RandoFight - Complete Game</title>
     <script async src="https://pay.google.com/gp/p/js/pay.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Courier New', monospace; background: linear-gradient(135deg, #1a1a2e, #16213e); color: #fff; min-height: 100vh; padding: 20px; }
@@ -108,6 +109,9 @@
                         <button class="btn btn-primary" onclick="loginUser()">Login</button>
                         <button class="btn btn-secondary" onclick="showSignupForm()">Create Account</button>
                     </div>
+                    <div style="text-align: center; margin-top: 15px;">
+                        <button class="btn" style="background: #6c757d; color: #fff; font-size: 0.9em;" onclick="showForgotPasswordForm()">Forgot Password?</button>
+                    </div>
                 </div>
 
                 <div id="signupForm" style="display: none;">
@@ -126,6 +130,40 @@
                     </div>
                     <div style="text-align: center; margin-top: 20px;">
                         <button class="btn btn-primary" onclick="signupUser()">Create Account</button>
+                        <button class="btn btn-secondary" onclick="showLoginForm()">Back to Login</button>
+                    </div>
+                </div>
+
+                <div id="forgotPasswordForm" style="display: none;">
+                    <h3 style="text-align: center; margin-bottom: 20px; color: #4ecdc4;">Reset Password</h3>
+                    <p style="text-align: center; margin-bottom: 20px; color: #ccc; font-size: 0.9em;">
+                        Enter your email address and we'll send you a link to reset your password.
+                    </p>
+                    <div class="form-group">
+                        <label for="resetEmail">Email:</label>
+                        <input type="email" id="resetEmail" placeholder="Enter your email address">
+                    </div>
+                    <div style="text-align: center; margin-top: 20px;">
+                        <button class="btn btn-primary" onclick="sendPasswordReset()">Send Reset Link</button>
+                        <button class="btn btn-secondary" onclick="showLoginForm()">Back to Login</button>
+                    </div>
+                </div>
+
+                <div id="resetPasswordForm" style="display: none;">
+                    <h3 style="text-align: center; margin-bottom: 20px; color: #4ecdc4;">Set New Password</h3>
+                    <p style="text-align: center; margin-bottom: 20px; color: #ccc; font-size: 0.9em;">
+                        Enter your new password below.
+                    </p>
+                    <div class="form-group">
+                        <label for="newPassword">New Password:</label>
+                        <input type="password" id="newPassword" placeholder="Enter new password (min 6 characters)">
+                    </div>
+                    <div class="form-group">
+                        <label for="confirmPassword">Confirm Password:</label>
+                        <input type="password" id="confirmPassword" placeholder="Confirm new password">
+                    </div>
+                    <div style="text-align: center; margin-top: 20px;">
+                        <button class="btn btn-primary" onclick="resetPassword()">Update Password</button>
                         <button class="btn btn-secondary" onclick="showLoginForm()">Back to Login</button>
                     </div>
                 </div>
@@ -273,6 +311,23 @@
         var specialAttacks = ['Fury Strike', 'Power Slam', 'Devastator', 'Thunder Punch', 'Dragon Fist', 'Shadow Strike', 'Meteor Crash', 'Annihilator'];
         var equipmentSlots = ['Weapon', 'Off-Hand', 'Helmet', 'Shoulders', 'Gloves', 'Chest', 'Greaves', 'Boots'];
 
+        // EmailJS Configuration
+        var EMAILJS_PUBLIC_KEY = 'K5NaITkysVL6hhc2A';
+        var EMAILJS_SERVICE_ID = 'service_22pzu4g';
+        var EMAILJS_TEMPLATE_ID = 'template_38r3g5c';
+
+        // Initialize EmailJS
+        function initEmailJS() {
+            if (typeof emailjs !== 'undefined' && EMAILJS_PUBLIC_KEY !== 'YOUR_EMAILJS_PUBLIC_KEY') {
+                emailjs.init(EMAILJS_PUBLIC_KEY);
+                console.log('EmailJS initialized successfully');
+                return true;
+            } else {
+                console.log('EmailJS not configured - using demo mode');
+                return false;
+            }
+        }
+
         function getUserId() {
             if (gameState.currentUser && gameState.currentUser.user_id) {
                 return gameState.currentUser.user_id;
@@ -332,11 +387,29 @@
         function showLoginForm() {
             document.getElementById('loginForm').style.display = 'block';
             document.getElementById('signupForm').style.display = 'none';
+            document.getElementById('forgotPasswordForm').style.display = 'none';
+            document.getElementById('resetPasswordForm').style.display = 'none';
         }
 
         function showSignupForm() {
             document.getElementById('loginForm').style.display = 'none';
             document.getElementById('signupForm').style.display = 'block';
+            document.getElementById('forgotPasswordForm').style.display = 'none';
+            document.getElementById('resetPasswordForm').style.display = 'none';
+        }
+
+        function showForgotPasswordForm() {
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('signupForm').style.display = 'none';
+            document.getElementById('forgotPasswordForm').style.display = 'block';
+            document.getElementById('resetPasswordForm').style.display = 'none';
+        }
+
+        function showResetPasswordForm() {
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('signupForm').style.display = 'none';
+            document.getElementById('forgotPasswordForm').style.display = 'none';
+            document.getElementById('resetPasswordForm').style.display = 'block';
         }
 
         function showLoginScreen() {
@@ -528,6 +601,245 @@
             
             showLoginScreen();
             console.log('User logged out');
+        }
+
+        function sendPasswordReset() {
+            var email = document.getElementById('resetEmail').value.trim();
+            
+            if (!email) {
+                alert('Please enter your email address.');
+                return;
+            }
+            
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                alert('Please enter a valid email address.');
+                return;
+            }
+            
+            console.log('Sending password reset for:', email);
+            
+            // Check if user exists
+            fetch(SUPABASE_URL + '/rest/v1/users?email=eq.' + encodeURIComponent(email), {
+                method: 'GET',
+                headers: {
+                    'apikey': SUPABASE_ANON_KEY,
+                    'Authorization': 'Bearer ' + SUPABASE_ANON_KEY
+                }
+            })
+            .then(function(response) {
+                return response.json();
+            })
+            .then(function(users) {
+                if (users.length === 0) {
+                    // Don't reveal if email exists or not for security
+                    alert('If an account with this email exists, you will receive a password reset link shortly.');
+                    return;
+                }
+                
+                var user = users[0];
+                
+                // Generate reset token
+                var resetToken = generateResetToken();
+                var resetExpiry = new Date(Date.now() + 60 * 60 * 1000).toISOString(); // 1 hour from now
+                
+                // Store reset token in database
+                return fetch(SUPABASE_URL + '/rest/v1/password_resets', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Authorization': 'Bearer ' + SUPABASE_ANON_KEY
+                    },
+                    body: JSON.stringify({
+                        user_id: user.user_id,
+                        reset_token: resetToken,
+                        expires_at: resetExpiry,
+                        created_at: new Date().toISOString()
+                    })
+                })
+                .then(function(response) {
+                    if (response.ok) {
+                        // Try to send email via EmailJS
+                        if (initEmailJS() && EMAILJS_SERVICE_ID !== 'YOUR_SERVICE_ID') {
+                            sendResetEmail(email, user.username, resetToken);
+                        } else {
+                            // Fallback to demo mode
+                            localStorage.setItem('reset_token_demo', resetToken);
+                            localStorage.setItem('reset_user_id', user.user_id);
+                            
+                            alert('EmailJS not configured - Demo Mode:\n\nPassword reset link: \n' + window.location.origin + window.location.pathname + '?reset=' + resetToken + '\n\nCopy this link and paste it in your browser to reset your password.');
+                        }
+                        
+                        showLoginForm();
+                        document.getElementById('resetEmail').value = '';
+                    } else {
+                        throw new Error('Failed to create reset token');
+                    }
+                });
+            })
+            .catch(function(error) {
+                console.error('Password reset error:', error);
+                alert('If an account with this email exists, you will receive a password reset link shortly.');
+            });
+        }
+
+        function sendResetEmail(email, username, resetToken) {
+            var resetLink = window.location.origin + window.location.pathname + '?reset=' + resetToken;
+            
+            var templateParams = {
+                to_email: email,
+                to_name: username,
+                reset_link: resetLink,
+                game_name: 'RandoFight',
+                expiry_time: '1 hour'
+            };
+            
+            emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, templateParams)
+                .then(function(response) {
+                    console.log('Email sent successfully:', response);
+                    alert('Password reset instructions have been sent to your email address. Please check your inbox (and spam folder) for the reset link.');
+                })
+                .catch(function(error) {
+                    console.error('EmailJS error:', error);
+                    
+                    // Fallback to demo mode if email fails
+                    localStorage.setItem('reset_token_demo', resetToken);
+                    localStorage.setItem('reset_user_id', templateParams.user_id);
+                    
+                    alert('Email service temporarily unavailable - Demo Mode:\n\nPassword reset link: \n' + resetLink + '\n\nCopy this link and paste it in your browser to reset your password.');
+                });
+        }
+
+        function generateResetToken() {
+            var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+            var token = '';
+            for (var i = 0; i < 32; i++) {
+                token += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return token;
+        }
+
+        function resetPassword() {
+            var newPassword = document.getElementById('newPassword').value;
+            var confirmPassword = document.getElementById('confirmPassword').value;
+            var resetToken = getResetTokenFromURL();
+            
+            if (!newPassword || !confirmPassword) {
+                alert('Please fill in all fields.');
+                return;
+            }
+            
+            if (newPassword.length < 6) {
+                alert('Password must be at least 6 characters long.');
+                return;
+            }
+            
+            if (newPassword !== confirmPassword) {
+                alert('Passwords do not match.');
+                return;
+            }
+            
+            if (!resetToken) {
+                alert('Invalid or missing reset token.');
+                return;
+            }
+            
+            console.log('Resetting password with token:', resetToken);
+            
+            // Verify reset token and get user
+            fetch(SUPABASE_URL + '/rest/v1/password_resets?reset_token=eq.' + encodeURIComponent(resetToken), {
+                method: 'GET',
+                headers: {
+                    'apikey': SUPABASE_ANON_KEY,
+                    'Authorization': 'Bearer ' + SUPABASE_ANON_KEY
+                }
+            })
+            .then(function(response) {
+                return response.json();
+            })
+            .then(function(resetTokens) {
+                if (resetTokens.length === 0) {
+                    alert('Invalid or expired reset token.');
+                    return;
+                }
+                
+                var resetRecord = resetTokens[0];
+                var expiryTime = new Date(resetRecord.expires_at).getTime();
+                
+                if (Date.now() > expiryTime) {
+                    alert('Reset token has expired. Please request a new password reset.');
+                    return;
+                }
+                
+                // Hash the new password
+                return hashPassword(newPassword).then(function(hashedPassword) {
+                    // Update user password
+                    return fetch(SUPABASE_URL + '/rest/v1/users?user_id=eq.' + encodeURIComponent(resetRecord.user_id), {
+                        method: 'PATCH',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'apikey': SUPABASE_ANON_KEY,
+                            'Authorization': 'Bearer ' + SUPABASE_ANON_KEY
+                        },
+                        body: JSON.stringify({
+                            password_hash: hashedPassword
+                        })
+                    })
+                    .then(function(response) {
+                        if (response.ok) {
+                            // Delete used reset token
+                            return fetch(SUPABASE_URL + '/rest/v1/password_resets?reset_token=eq.' + encodeURIComponent(resetToken), {
+                                method: 'DELETE',
+                                headers: {
+                                    'apikey': SUPABASE_ANON_KEY,
+                                    'Authorization': 'Bearer ' + SUPABASE_ANON_KEY
+                                }
+                            });
+                        } else {
+                            throw new Error('Failed to update password');
+                        }
+                    })
+                    .then(function() {
+                        // Clear demo tokens
+                        localStorage.removeItem('reset_token_demo');
+                        localStorage.removeItem('reset_user_id');
+                        
+                        alert('Password updated successfully! You can now login with your new password.');
+                        
+                        // Clear URL parameter and redirect to clean login
+                        window.history.replaceState({}, document.title, window.location.pathname);
+                        showLoginForm();
+                        
+                        // Clear form
+                        document.getElementById('newPassword').value = '';
+                        document.getElementById('confirmPassword').value = '';
+                    });
+                });
+            })
+            .catch(function(error) {
+                console.error('Password reset error:', error);
+                alert('Failed to reset password. Please try again.');
+            });
+        }
+
+        function getResetTokenFromURL() {
+            var urlParams = new URLSearchParams(window.location.search);
+            var tokenFromURL = urlParams.get('reset');
+            
+            // For demo purposes, also check localStorage
+            var tokenFromDemo = localStorage.getItem('reset_token_demo');
+            
+            return tokenFromURL || tokenFromDemo;
+        }
+
+        function checkForPasswordReset() {
+            var resetToken = getResetTokenFromURL();
+            if (resetToken) {
+                console.log('Password reset token found, showing reset form');
+                showResetPasswordForm();
+                return true;
+            }
+            return false;
         }
 
         // Game functions
@@ -1374,6 +1686,13 @@
             console.log('RandoFight initializing...');
             
             try {
+                // Check if this is a password reset link first
+                if (checkForPasswordReset()) {
+                    // Password reset form is already shown
+                    return;
+                }
+                
+                // Check for existing login session
                 if (checkExistingSession()) {
                     console.log('Valid session found, loading game data...');
                     loadFromSupabase();
