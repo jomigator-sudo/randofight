@@ -836,12 +836,34 @@
             });
         }
 
+        function checkForPasswordReset() {
+            console.log('Checking for password reset...');
+            
+            // Check URL first
+            var urlParams = new URLSearchParams(window.location.search);
+            var tokenFromURL = urlParams.get('reset');
+            console.log('URL reset token:', tokenFromURL);
+            
+            // Check localStorage
+            var tokenFromDemo = localStorage.getItem('reset_token_demo');
+            console.log('Demo token from localStorage:', tokenFromDemo);
+            
+            var resetToken = tokenFromURL || tokenFromDemo;
+            
+            if (resetToken) {
+                console.log('Password reset token found:', resetToken, 'showing reset form');
+                showResetPasswordForm();
+                return true;
+            } else {
+                console.log('No reset token found');
+                return false;
+            }
+        }
+
         function getResetTokenFromURL() {
             var urlParams = new URLSearchParams(window.location.search);
             var tokenFromURL = urlParams.get('reset');
             
-            // Only check localStorage for demo token if there's no URL token
-            // and only if we're in a demo scenario
             if (!tokenFromURL) {
                 var tokenFromDemo = localStorage.getItem('reset_token_demo');
                 if (tokenFromDemo) {
@@ -851,16 +873,6 @@
             }
             
             return tokenFromURL;
-        }
-
-        function checkForPasswordReset() {
-            var resetToken = getResetTokenFromURL();
-            if (resetToken) {
-                console.log('Password reset token found:', resetToken);
-                showResetPasswordForm();
-                return true;
-            }
-            return false;
         }
 
         // Game functions
@@ -1706,21 +1718,26 @@
         function initGame() {
             console.log('RandoFight initializing...');
             
+            // Force clear any password reset tokens first
+            console.log('Clearing any existing reset tokens...');
+            localStorage.removeItem('reset_token_demo');
+            localStorage.removeItem('reset_user_id');
+            
             // Initialize EmailJS early
             setTimeout(function() {
                 initEmailJS();
             }, 1000);
             
             try {
-                // Check if this is a password reset link first
-                if (checkForPasswordReset()) {
-                    // Password reset form is already shown
+                // Check if this is a password reset link first (only URL parameters, not localStorage)
+                var urlParams = new URLSearchParams(window.location.search);
+                var tokenFromURL = urlParams.get('reset');
+                
+                if (tokenFromURL) {
+                    console.log('URL reset token found:', tokenFromURL);
+                    showResetPasswordForm();
                     return;
                 }
-                
-                // Clear any leftover demo tokens since we're not in reset mode
-                localStorage.removeItem('reset_token_demo');
-                localStorage.removeItem('reset_user_id');
                 
                 // Check for existing login session
                 if (checkExistingSession()) {
@@ -1738,6 +1755,14 @@
             
             setInterval(updateFightStatus, 1000);
         }
+
+        // Add a manual cleanup function you can call from browser console
+        window.clearResetTokens = function() {
+            localStorage.removeItem('reset_token_demo');
+            localStorage.removeItem('reset_user_id');
+            console.log('Reset tokens cleared');
+            location.reload();
+        };
 
         window.addEventListener('load', initGame);
     </script>
