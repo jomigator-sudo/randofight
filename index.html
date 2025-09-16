@@ -840,16 +840,23 @@
             var urlParams = new URLSearchParams(window.location.search);
             var tokenFromURL = urlParams.get('reset');
             
-            // For demo purposes, also check localStorage
-            var tokenFromDemo = localStorage.getItem('reset_token_demo');
+            // Only check localStorage for demo token if there's no URL token
+            // and only if we're in a demo scenario
+            if (!tokenFromURL) {
+                var tokenFromDemo = localStorage.getItem('reset_token_demo');
+                if (tokenFromDemo) {
+                    console.log('Using demo reset token from localStorage');
+                    return tokenFromDemo;
+                }
+            }
             
-            return tokenFromURL || tokenFromDemo;
+            return tokenFromURL;
         }
 
         function checkForPasswordReset() {
             var resetToken = getResetTokenFromURL();
             if (resetToken) {
-                console.log('Password reset token found, showing reset form');
+                console.log('Password reset token found:', resetToken);
                 showResetPasswordForm();
                 return true;
             }
@@ -1710,6 +1717,10 @@
                     // Password reset form is already shown
                     return;
                 }
+                
+                // Clear any leftover demo tokens since we're not in reset mode
+                localStorage.removeItem('reset_token_demo');
+                localStorage.removeItem('reset_user_id');
                 
                 // Check for existing login session
                 if (checkExistingSession()) {
