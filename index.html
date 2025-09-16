@@ -700,6 +700,9 @@
         function sendResetEmail(email, username, resetToken) {
             var resetLink = window.location.origin + window.location.pathname + '?reset=' + resetToken;
             
+            console.log('Sending email to:', email);
+            console.log('Reset link:', resetLink);
+            
             var templateParams = {
                 to_email: email,
                 to_name: username,
@@ -707,6 +710,8 @@
                 game_name: 'RandoFight',
                 expiry_time: '1 hour'
             };
+            
+            console.log('Template parameters:', templateParams);
             
             emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, templateParams)
                 .then(function(response) {
@@ -716,11 +721,16 @@
                 .catch(function(error) {
                     console.error('EmailJS error:', error);
                     
+                    // Check if it's a template/configuration issue
+                    if (error.status === 422) {
+                        console.error('Template error - check your EmailJS template configuration');
+                        alert('Email template configuration error. Please check:\n\n1. Your EmailJS template exists\n2. Template uses {{to_email}} variable\n3. Email service is properly connected\n\nFalling back to demo mode...');
+                    }
+                    
                     // Fallback to demo mode if email fails
                     localStorage.setItem('reset_token_demo', resetToken);
-                    localStorage.setItem('reset_user_id', templateParams.user_id);
                     
-                    alert('Email service temporarily unavailable - Demo Mode:\n\nPassword reset link: \n' + resetLink + '\n\nCopy this link and paste it in your browser to reset your password.');
+                    alert('Email service error - Demo Mode:\n\nPassword reset link: \n' + resetLink + '\n\nCopy this link and paste it in your browser to reset your password.');
                 });
         }
 
@@ -1212,20 +1222,27 @@
         }
 
         function purchaseDiamonds() {
+            console.log('Purchase diamonds clicked');
+            
+            // Check if Google Pay is available
             if (typeof google !== 'undefined' && google.payments && google.payments.api) {
+                console.log('Google Pay API available, initiating payment...');
                 initiateGooglePay();
             } else {
                 console.log('Google Pay not available, using test purchase');
+                // For now, just award diamonds directly for testing
                 gameState.diamonds += 20;
                 saveToSupabase();
                 updateDiamondDisplay();
                 updateFightStatus();
-                alert('20 Diamonds purchased! (Test Mode)');
+                alert('20 Diamonds purchased! (Test Mode - Google Pay not available)');
             }
         }
 
         function initiateGooglePay() {
             try {
+                console.log('Initializing Google Pay with PayPal gateway...');
+                
                 var paymentDataRequest = {
                     apiVersion: 2,
                     apiVersionMinor: 0,
@@ -1257,9 +1274,13 @@
                     callbackIntents: ['PAYMENT_AUTHORIZATION']
                 };
 
+                console.log('Payment request config:', paymentDataRequest);
+
                 var paymentsClient = new google.payments.api.PaymentsClient({
-                    environment: 'TEST'
+                    environment: 'TEST' // Change to 'PRODUCTION' for live payments
                 });
+
+                console.log('PaymentsClient created, loading payment data...');
 
                 paymentsClient.loadPaymentData(paymentDataRequest)
                     .then(function(paymentData) {
@@ -1267,20 +1288,38 @@
                         processSuccessfulPayment(paymentData);
                     })
                     .catch(function(err) {
-                        console.error('Payment failed:', err);
+                        console.error('Payment failed with error:', err);
+                        console.error('Error details:', {
+                            statusCode: err.statusCode,
+                            statusMessage: err.statusMessage,
+                            intent: err.intent
+                        });
+                        
                         if (err.statusCode === 'CANCELED') {
-                            alert('Payment was canceled.');
+                            alert('Payment was canceled by user.');
+                        } else if (err.statusCode === 'DEVELOPER_ERROR') {
+                            alert('Google Pay configuration error. For now, awarding diamonds directly.\n\nIssue: ' + err.statusMessage);
+                            // Fallback - just award the diamonds
+                            gameState.diamonds += 20;
+                            saveToSupabase();
+                            updateDiamondDisplay();
+                            updateFightStatus();
                         } else {
-                            alert('Payment failed. Please try again.');
+                            alert('Payment failed: ' + (err.statusMessage || err.statusCode || 'Unknown error') + '\n\nFor now, awarding diamonds directly as fallback.');
+                            // Fallback - just award the diamonds
+                            gameState.diamonds += 20;
+                            saveToSupabase();
+                            updateDiamondDisplay();
+                            updateFightStatus();
                         }
                     });
             } catch (error) {
                 console.error('Google Pay initialization error:', error);
+                alert('Google Pay setup error: ' + error.message + '\n\nFallback: Awarding 20 diamonds directly.');
                 gameState.diamonds += 20;
                 saveToSupabase();
                 updateDiamondDisplay();
                 updateFightStatus();
-                alert('20 Diamonds purchased! (Fallback Mode)');
             }
         }
 
