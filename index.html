@@ -318,12 +318,23 @@
 
         // Initialize EmailJS
         function initEmailJS() {
+            console.log('Checking EmailJS availability...');
+            console.log('typeof emailjs:', typeof emailjs);
+            console.log('Public key:', EMAILJS_PUBLIC_KEY);
+            
             if (typeof emailjs !== 'undefined' && EMAILJS_PUBLIC_KEY !== 'YOUR_EMAILJS_PUBLIC_KEY') {
-                emailjs.init(EMAILJS_PUBLIC_KEY);
-                console.log('EmailJS initialized successfully');
-                return true;
+                try {
+                    emailjs.init(EMAILJS_PUBLIC_KEY);
+                    console.log('EmailJS initialized successfully');
+                    return true;
+                } catch (error) {
+                    console.error('EmailJS initialization error:', error);
+                    return false;
+                }
             } else {
-                console.log('EmailJS not configured - using demo mode');
+                console.log('EmailJS not available or not configured');
+                console.log('emailjs undefined:', typeof emailjs === 'undefined');
+                console.log('Public key not set:', EMAILJS_PUBLIC_KEY === 'YOUR_EMAILJS_PUBLIC_KEY');
                 return false;
             }
         }
@@ -659,16 +670,19 @@
                 })
                 .then(function(response) {
                     if (response.ok) {
-                        // Try to send email via EmailJS
-                        if (initEmailJS() && EMAILJS_SERVICE_ID !== 'YOUR_SERVICE_ID') {
-                            sendResetEmail(email, user.username, resetToken);
-                        } else {
-                            // Fallback to demo mode
-                            localStorage.setItem('reset_token_demo', resetToken);
-                            localStorage.setItem('reset_user_id', user.user_id);
-                            
-                            alert('EmailJS not configured - Demo Mode:\n\nPassword reset link: \n' + window.location.origin + window.location.pathname + '?reset=' + resetToken + '\n\nCopy this link and paste it in your browser to reset your password.');
-                        }
+                        // Wait a moment for EmailJS to be available, then try to send email
+                        setTimeout(function() {
+                            if (initEmailJS()) {
+                                sendResetEmail(email, user.username, resetToken);
+                            } else {
+                                // Fallback to demo mode
+                                console.log('EmailJS failed, falling back to demo mode');
+                                localStorage.setItem('reset_token_demo', resetToken);
+                                localStorage.setItem('reset_user_id', user.user_id);
+                                
+                                alert('EmailJS not available - Demo Mode:\n\nPassword reset link: \n' + window.location.origin + window.location.pathname + '?reset=' + resetToken + '\n\nCopy this link and paste it in your browser to reset your password.');
+                            }
+                        }, 2000);
                         
                         showLoginForm();
                         document.getElementById('resetEmail').value = '';
@@ -1684,6 +1698,11 @@
 
         function initGame() {
             console.log('RandoFight initializing...');
+            
+            // Initialize EmailJS early
+            setTimeout(function() {
+                initEmailJS();
+            }, 1000);
             
             try {
                 // Check if this is a password reset link first
