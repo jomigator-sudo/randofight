@@ -345,62 +345,59 @@
 
         // Initialize PayPal Buttons
         function initPayPalButtons() {
-            // Clear existing buttons first to prevent duplicates
+            // Clear existing buttons and labels first to prevent duplicates
             var titleContainer = document.getElementById('titlePaypalButton');
             var fighterContainer = document.getElementById('fighterPaypalButton');
             
             if (titleContainer) {
                 titleContainer.innerHTML = '';
+                // Remove any existing labels
+                var existingLabel = titleContainer.previousElementSibling;
+                if (existingLabel && existingLabel.innerHTML && existingLabel.innerHTML.includes('Buy 20')) {
+                    existingLabel.remove();
+                }
             }
             if (fighterContainer) {
                 fighterContainer.innerHTML = '';
+                // Remove any existing labels
+                var existingLabel = fighterContainer.previousElementSibling;
+                if (existingLabel && existingLabel.innerHTML && existingLabel.innerHTML.includes('Buy 20')) {
+                    existingLabel.remove();
+                }
             }
             
-            // PayPal button for title screen
-            if (typeof paypal !== 'undefined' && titleContainer) {
-                paypal.Buttons({
-                    createOrder: function(data, actions) {
-                        return actions.order.create({
-                            purchase_units: [{
-                                amount: {
-                                    value: '0.99',
-                                    currency_code: 'USD'
-                                },
-                                description: '20 Diamonds for RandoFight'
-                            }]
-                        });
-                    },
-                    onApprove: function(data, actions) {
-                        return actions.order.capture().then(function(details) {
-                            console.log('PayPal payment successful:', details);
-                            processSuccessfulPayment(details);
-                        });
-                    },
-                    onError: function(err) {
-                        console.error('PayPal payment error:', err);
-                        alert('Payment failed. Please try again.');
-                    },
-                    onCancel: function(data) {
-                        console.log('PayPal payment cancelled:', data);
-                        // Don't show alert for cancellation - user intentionally cancelled
-                    },
-                    style: {
-                        color: 'blue',
-                        shape: 'pill',
-                        label: 'pay',
-                        height: 40,
-                        tagline: false
-                    }
-                }).render('#titlePaypalButton');
-                
-                // Add text label above PayPal button
-                var titleLabel = document.createElement('div');
-                titleLabel.innerHTML = '<small style="color: #ccc; display: block; text-align: center; margin-bottom: 5px;">Buy 20 💎 ($0.99)</small>';
-                titleContainer.parentNode.insertBefore(titleLabel, titleContainer);
+            // Replace PayPal buttons with regular buttons that open modals
+            if (titleContainer) {
+                titleContainer.innerHTML = '<button class="btn btn-primary" onclick="showPayPalModal()">Buy 20 💎 ($0.99)</button>';
             }
+            
+            if (fighterContainer) {
+                fighterContainer.innerHTML = '<button class="btn btn-primary" onclick="showPayPalModal()">Buy 20 💎 ($0.99)</button>';
+            }
+        }
 
-            // PayPal button for fighter screen
-            if (typeof paypal !== 'undefined' && fighterContainer) {
+        // Show PayPal Modal
+        function showPayPalModal() {
+            var existingModal = document.getElementById('paypalModal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+            
+            var modalHTML = 
+                '<div id="paypalModal" style="display: block; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000;">' +
+                    '<div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #1a1a2e; padding: 30px; border-radius: 10px; border: 2px solid #4ecdc4; max-width: 400px; text-align: center; width: 90%;">' +
+                        '<h3 style="color: #4ecdc4; margin-bottom: 20px;">Purchase Diamonds</h3>' +
+                        '<p style="margin-bottom: 20px; color: #fff;">You are about to purchase <span style="color: #ffd93d; font-weight: bold;">20 Diamonds 💎</span> for <span style="color: #4ecdc4; font-weight: bold;">$0.99 USD</span></p>' +
+                        '<div style="margin-bottom: 20px; font-size: 0.9em; color: #ccc;">Secure payment powered by PayPal</div>' +
+                        '<div id="modalPaypalButton" style="margin-bottom: 15px;"></div>' +
+                        '<button class="btn btn-secondary" onclick="closePayPalModal()" style="width: 100%;">Cancel</button>' +
+                    '</div>' +
+                '</div>';
+            
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+            
+            // Initialize PayPal button in modal
+            if (typeof paypal !== 'undefined') {
                 paypal.Buttons({
                     createOrder: function(data, actions) {
                         return actions.order.create({
@@ -416,31 +413,48 @@
                     onApprove: function(data, actions) {
                         return actions.order.capture().then(function(details) {
                             console.log('PayPal payment successful:', details);
+                            closePayPalModal();
                             processSuccessfulPayment(details);
                         });
                     },
                     onError: function(err) {
                         console.error('PayPal payment error:', err);
                         alert('Payment failed. Please try again.');
+                        closePayPalModal();
                     },
                     onCancel: function(data) {
                         console.log('PayPal payment cancelled:', data);
-                        // Don't show alert for cancellation - user intentionally cancelled
+                        closePayPalModal();
                     },
                     style: {
                         color: 'blue',
                         shape: 'pill',
                         label: 'pay',
-                        height: 40,
+                        height: 45,
                         tagline: false
                     }
-                }).render('#fighterPaypalButton');
-                
-                // Add text label above PayPal button
-                var fighterLabel = document.createElement('div');
-                fighterLabel.innerHTML = '<small style="color: #ccc; display: block; text-align: center; margin-bottom: 5px;">Buy 20 💎 ($0.99)</small>';
-                fighterContainer.parentNode.insertBefore(fighterLabel, fighterContainer);
+                }).render('#modalPaypalButton');
+            } else {
+                // Fallback if PayPal not available
+                document.getElementById('modalPaypalButton').innerHTML = 
+                    '<button class="btn btn-primary" onclick="fallbackPurchase()" style="width: 100%;">Purchase (Test Mode)</button>';
             }
+        }
+
+        function closePayPalModal() {
+            var modal = document.getElementById('paypalModal');
+            if (modal) {
+                modal.remove();
+            }
+        }
+
+        function fallbackPurchase() {
+            closePayPalModal();
+            gameState.diamonds += 20;
+            saveToSupabase();
+            updateDiamondDisplay();
+            updateFightStatus();
+            alert('20 Diamonds purchased! (Test Mode - PayPal not loaded)');
         }
 
         function processSuccessfulPayment(paymentDetails) {
