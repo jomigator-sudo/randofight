@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RandoFight - Complete Game</title>
-    <script async src="https://pay.google.com/gp/p/js/pay.js"></script>
+    <script src="https://www.paypal.com/sdk/js?client-id=ARItOSiEuqCdGhT7vEXmY5kQt3HOjUu0cq7cOypXivdsQOARvW43mw9CpyAGaFEzevWpOJ7G2C0eIKiT&currency=USD"></script>
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -12,20 +12,83 @@
         .container { max-width: 1200px; margin: 0 auto; }
         .title { text-align: center; font-size: 3em; margin-bottom: 30px; color: #ff6b6b; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
         .game-screen { display: none; }
+        .back-btn { position: absolute; top: 20px; left: 20px; z-index: 100; }
+        .fighter-slots { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .fighter-slot { border: 2px solid #4ecdc4; border-radius: 10px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.3s ease; background: rgba(78, 205, 196, 0.1); }
+        .fighter-slot:hover { background: rgba(78, 205, 196, 0.2); transform: translateY(-2px); }
+        .fighter-slot.locked { border-color: #666; background: rgba(102, 102, 102, 0.1); cursor: not-allowed; }
+        .fighter-slot.locked:hover { background: rgba(102, 102, 102, 0.1); transform: none; }
+        .slot-number { font-size: 1.2em; color: #4ecdc4; margin-bottom: 10px; }
+        .fighter-name { font-size: 1.1em; margin: 10px 0; }
+        .fighter-level { color: #ffd93d; }
+        .fighter-wins { color: #6bcf7f; }
+        .ui-buttons { display: flex; justify-content: center; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
+        .btn { padding: 12px 24px; border: none; border-radius: 6px; cursor: pointer; font-family: inherit; font-size: 1em; transition: all 0.3s ease; }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .btn-primary { background: #4ecdc4; color: #fff; }
+        .btn-primary:hover:not(:disabled) { background: #45b7aa; }
+        .btn-secondary { background: #6c5ce7; color: #fff; }
+        .btn-secondary:hover { background: #5f4fcf; }
+        .btn-fight { background: #ff6b6b; color: #fff; font-weight: bold; box-shadow: 0 4px 8px rgba(255, 107, 107, 0.3); }
+        .btn-fight:hover:not(:disabled) { background: #ff5252; transform: translateY(-2px); box-shadow: 0 6px 12px rgba(255, 107, 107, 0.4); }
+        .btn-fight:disabled { background: #666; box-shadow: none; }
         .creation-form { max-width: 400px; margin: 0 auto; padding: 20px; background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
         .form-group { margin-bottom: 20px; }
         .form-group label { display: block; margin-bottom: 5px; color: #4ecdc4; }
         .form-group input { width: 100%; padding: 10px; border: 1px solid #4ecdc4; border-radius: 4px; background: rgba(0, 0, 0, 0.3); color: #fff; font-family: inherit; }
-        .btn { padding: 12px 24px; border: none; border-radius: 6px; cursor: pointer; font-family: inherit; font-size: 1em; transition: all 0.3s ease; }
-        .btn-primary { background: #4ecdc4; color: #fff; }
-        .btn-secondary { background: #6c5ce7; color: #fff; }
-        .error { color: #e74c3c; margin: 10px 0; }
+        .fighter-details { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px; }
+        .stats-panel, .inventory-panel { background: rgba(255, 255, 255, 0.1); padding: 20px; border-radius: 10px; }
+        .panel-title { font-size: 1.3em; color: #4ecdc4; margin-bottom: 15px; text-align: center; }
+        .stat-row { display: flex; justify-content: space-between; margin-bottom: 8px; }
+        .equipment-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 15px; }
+        .equipment-slot { padding: 8px; border: 1px solid #666; border-radius: 4px; text-align: center; font-size: 0.8em; min-height: 80px; display: flex; flex-direction: column; background: rgba(0, 0, 0, 0.2); }
+        .slot-name { font-size: 0.7em; color: #888; margin-bottom: 5px; font-weight: bold; text-transform: uppercase; }
+        .item-content { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 3px; }
+        .item-power { font-size: 0.8em; color: #ffd93d; font-weight: bold; }
+        .item-name { font-size: 0.8em; font-weight: bold; }
+        .fight-status { text-align: center; margin-bottom: 20px; padding: 15px; background: rgba(255, 255, 255, 0.1); border-radius: 8px; }
+        .diamonds-display { font-size: 1.2em; margin-bottom: 10px; color: #ffd93d; }
+        .cooldown-timer { color: #e74c3c; font-weight: bold; }
+        .fighters-display { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 20px; }
+        .fighter-card { background: rgba(255, 255, 255, 0.1); padding: 20px; border-radius: 10px; text-align: center; }
+        .hp-bar { width: 100%; height: 20px; background: rgba(0, 0, 0, 0.3); border-radius: 10px; margin: 10px 0; overflow: hidden; }
+        .hp-fill { height: 100%; background: #6bcf7f; border-radius: 10px; transition: width 0.5s ease; }
+        .fight-log { background: rgba(0, 0, 0, 0.3); padding: 25px; border-radius: 10px; height: 300px; overflow-y: auto; margin-bottom: 20px; font-size: 1em; line-height: 1.4; font-family: 'Courier New', monospace; color: #f0f0f0; }
+        .fight-log p { margin-bottom: 8px; text-indent: 0; }
+        .story-title { font-size: 1.1em; font-weight: bold; color: #4ecdc4; text-align: center; margin-bottom: 10px; }
+        .damage { color: #ff6b6b; font-weight: bold; }
+        .heal { color: #6bcf7f; font-weight: bold; }
+        .special { color: #ffd93d; font-weight: bold; }
+        .critical { color: #ff8c42; font-weight: bold; }
+        .dodge { color: #74b9ff; font-style: italic; }
+        .victory { color: #00b894; font-weight: bold; font-size: 1.1em; }
+        .defeat { color: #e17055; font-weight: bold; }
+        .level-up { color: #fdcb6e; font-weight: bold; }
+        .exp-gain { color: #81ecec; }
+        .leaderboard { background: rgba(255, 255, 255, 0.1); padding: 20px; border-radius: 10px; max-height: 400px; overflow-y: auto; }
+        .leaderboard-entry { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
+        .leaderboard-entry:nth-child(1) { color: #ffd700; }
+        .leaderboard-entry:nth-child(2) { color: #c0c0c0; }
+        .leaderboard-entry:nth-child(3) { color: #cd7f32; }
+        .common { color: #9d9d9d; }
+        .uncommon { color: #1eff00; }
+        .rare { color: #0070dd; }
+        .epic { color: #a335ee; }
+        .legendary { color: #ff8000; }
+        .mythic { color: #ff0000; }
+        .paypal-button-container { margin: 10px 0; display: inline-block; }
+        @media (max-width: 768px) {
+            .fighter-details { grid-template-columns: 1fr; }
+            .fighters-display { grid-template-columns: 1fr; }
+            .title { font-size: 2em; }
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1 class="title">RandoFight</h1>
 
+        <!-- Login Screen -->
         <div id="loginScreen" class="game-screen" style="display: block;">
             <div style="text-align: center; margin-bottom: 30px;">
                 <h2 style="color: #4ecdc4; font-size: 2.5em; margin-bottom: 10px;">Welcome to RandoFight</h2>
@@ -37,16 +100,18 @@
                     <h3 style="text-align: center; margin-bottom: 20px; color: #4ecdc4;">Login</h3>
                     <div class="form-group">
                         <label for="loginEmail">Email:</label>
-                        <input type="email" id="loginEmail" placeholder="Enter your email" required>
+                        <input type="email" id="loginEmail" placeholder="Enter your email">
                     </div>
                     <div class="form-group">
                         <label for="loginPassword">Password:</label>
-                        <input type="password" id="loginPassword" placeholder="Enter your password" required>
+                        <input type="password" id="loginPassword" placeholder="Enter your password">
                     </div>
-                    <div id="loginError" class="error" style="display: none;"></div>
                     <div style="text-align: center; margin-top: 20px;">
-                        <button class="btn btn-primary" onclick="loginUser()" id="loginBtn">Login</button>
+                        <button class="btn btn-primary" onclick="loginUser()">Login</button>
                         <button class="btn btn-secondary" onclick="showSignupForm()">Create Account</button>
+                    </div>
+                    <div style="text-align: center; margin-top: 15px;">
+                        <button class="btn" style="background: #6c757d; color: #fff; font-size: 0.9em;" onclick="showForgotPasswordForm()">Forgot Password?</button>
                     </div>
                 </div>
 
@@ -54,127 +119,378 @@
                     <h3 style="text-align: center; margin-bottom: 20px; color: #4ecdc4;">Create Account</h3>
                     <div class="form-group">
                         <label for="signupEmail">Email:</label>
-                        <input type="email" id="signupEmail" placeholder="Enter your email" required>
+                        <input type="email" id="signupEmail" placeholder="Enter your email">
                     </div>
                     <div class="form-group">
                         <label for="signupPassword">Password:</label>
-                        <input type="password" id="signupPassword" placeholder="Choose a password (min 6 characters)" required>
+                        <input type="password" id="signupPassword" placeholder="Choose a password (min 6 characters)">
                     </div>
                     <div class="form-group">
                         <label for="signupUsername">Username:</label>
-                        <input type="text" id="signupUsername" placeholder="Choose a username" maxlength="20" required>
+                        <input type="text" id="signupUsername" placeholder="Choose a username" maxlength="20">
                     </div>
-                    <div id="signupError" class="error" style="display: none;"></div>
                     <div style="text-align: center; margin-top: 20px;">
-                        <button class="btn btn-primary" onclick="signupUser()" id="signupBtn">Create Account</button>
+                        <button class="btn btn-primary" onclick="signupUser()">Create Account</button>
+                        <button class="btn btn-secondary" onclick="showLoginForm()">Back to Login</button>
+                    </div>
+                </div>
+
+                <div id="forgotPasswordForm" style="display: none;">
+                    <h3 style="text-align: center; margin-bottom: 20px; color: #4ecdc4;">Reset Password</h3>
+                    <p style="text-align: center; margin-bottom: 20px; color: #ccc; font-size: 0.9em;">
+                        Enter your email address and we'll send you a link to reset your password.
+                    </p>
+                    <div class="form-group">
+                        <label for="resetEmail">Email:</label>
+                        <input type="email" id="resetEmail" placeholder="Enter your email address">
+                    </div>
+                    <div style="text-align: center; margin-top: 20px;">
+                        <button class="btn btn-primary" onclick="sendPasswordReset()">Send Reset Link</button>
+                        <button class="btn btn-secondary" onclick="showLoginForm()">Back to Login</button>
+                    </div>
+                </div>
+
+                <div id="resetPasswordForm" style="display: none;">
+                    <h3 style="text-align: center; margin-bottom: 20px; color: #4ecdc4;">Set New Password</h3>
+                    <p style="text-align: center; margin-bottom: 20px; color: #ccc; font-size: 0.9em;">
+                        Enter your new password below.
+                    </p>
+                    <div class="form-group">
+                        <label for="newPassword">New Password:</label>
+                        <input type="password" id="newPassword" placeholder="Enter new password (min 6 characters)">
+                    </div>
+                    <div class="form-group">
+                        <label for="confirmPassword">Confirm Password:</label>
+                        <input type="password" id="confirmPassword" placeholder="Confirm new password">
+                    </div>
+                    <div style="text-align: center; margin-top: 20px;">
+                        <button class="btn btn-primary" onclick="resetPassword()">Update Password</button>
                         <button class="btn btn-secondary" onclick="showLoginForm()">Back to Login</button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div id="titleScreen" class="game-screen">
-            <div style="text-align: center; margin: 60px 0 30px;">
-                <h2 style="color: #4ecdc4; font-size: 2.5em;">Character Select</h2>
-                <p style="color: #ccc;">Welcome back, <span id="usernameDisplay">Player</span>!</p>
-            </div>
-            
-            <div style="text-align: center; margin: 30px 0;">
-                <div style="display: inline-block; background: rgba(255, 255, 255, 0.1); padding: 20px; border-radius: 10px; margin-bottom: 20px;">
-                    <h3 style="color: #ffd93d; margin-bottom: 10px;">Diamonds: <span id="titleDiamonds">0</span></h3>
-                    <p style="color: #ccc; margin-bottom: 15px;">Use diamonds to unlock fighter slots and fight without cooldowns!</p>
-                    <button class="btn btn-primary" onclick="purchaseDiamonds()" style="font-size: 1.1em; padding: 15px 30px;">
-                        Buy 20 Diamonds - $0.99
-                        <br><small style="opacity: 0.8;">(via PayPal)</small>
-                    </button>
-                </div>
-                
-                <div style="margin: 20px 0;">
-                    <button class="btn btn-secondary" onclick="logoutUser()">Logout</button>
-                </div>
-                
-                <div style="background: rgba(34, 197, 94, 0.2); border: 1px solid #22c55e; border-radius: 5px; padding: 15px; margin: 20px auto; max-width: 600px;">
-                    <h4 style="color: #22c55e; margin-bottom: 10px;">Production Features Active:</h4>
-                    <ul style="color: #22c55e; text-align: left; list-style: none; padding: 0;">
-                        <li>✅ Real user authentication with Supabase</li>
-                        <li>✅ PayPal payment integration</li>
-                        <li>✅ EmailJS password reset system</li>
-                        <li>✅ Cloud save functionality</li>
-                        <li>✅ Production security measures</li>
-                    </ul>
+        <!-- Character Select Screen -->
+        <div id="titleScreen" class="game-screen" style="display: none;">
+            <button class="btn btn-secondary" style="position: absolute; top: 20px; right: 20px;" onclick="logoutUser()">Logout</button>
+            <div style="text-align: center; margin-bottom: 30px; margin-top: 60px;">
+                <h2 style="color: #4ecdc4; font-size: 2.5em; margin-bottom: 10px;">Character Select</h2>
+                <p style="color: #ccc; font-size: 1.1em;">Welcome back, <span id="usernameDisplay">Player</span>!</p>
+                <div style="background: rgba(34, 197, 94, 0.2); border: 1px solid #22c55e; border-radius: 5px; padding: 10px; margin: 15px auto; max-width: 600px;">
+                    <p style="color: #22c55e; font-size: 0.9em; margin: 0;">✅ <strong>Cloud Save Enabled:</strong> Your characters are automatically saved and will persist across devices and sessions!</p>
                 </div>
             </div>
+
+            <div class="ui-buttons">
+                <span style="color: #ffd93d; font-size: 1.2em; margin-right: 20px;">Diamonds: <span id="titleDiamonds">0</span> 💎</span>
+                <div id="titlePaypalButton" class="paypal-button-container"></div>
+                <button class="btn btn-secondary" onclick="showLeaderboard()">Leaderboard</button>
+            </div>
+
+            <div class="fighter-slots">
+                <div class="fighter-slot" id="slot-container-0" onclick="selectFighter(0)">
+                    <div class="slot-number">Slot 1</div>
+                    <div class="fighter-name">Empty Slot</div>
+                    <div>Click to create fighter</div>
+                </div>
+                <div class="fighter-slot locked" id="slot-container-1" onclick="purchaseSlot(1)">
+                    <div class="slot-number">Slot 2</div>
+                    <div>Purchase this slot for 100 💎</div>
+                </div>
+                <div class="fighter-slot locked" id="slot-container-2" onclick="purchaseSlot(2)">
+                    <div class="slot-number">Slot 3</div>
+                    <div>Purchase this slot for 100 💎</div>
+                </div>
+                <div class="fighter-slot locked" id="slot-container-3" onclick="purchaseSlot(3)">
+                    <div class="slot-number">Slot 4</div>
+                    <div>Purchase this slot for 100 💎</div>
+                </div>
+                <div class="fighter-slot locked" id="slot-container-4" onclick="purchaseSlot(4)">
+                    <div class="slot-number">Slot 5</div>
+                    <div>Purchase this slot for 100 💎</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fighter Creation Screen -->
+        <div id="creationScreen" class="game-screen">
+            <button class="btn btn-secondary back-btn" onclick="showTitleScreen()">← Back</button>
+            <div class="creation-form">
+                <h2 style="text-align: center; margin-bottom: 20px; color: #4ecdc4;">Create New Fighter</h2>
+                <div class="form-group">
+                    <label for="fighterName">Fighter Name:</label>
+                    <input type="text" id="fighterName" maxlength="20" placeholder="Enter fighter name">
+                </div>
+                <div style="text-align: center; margin-top: 30px;">
+                    <button class="btn btn-primary" onclick="createFighter()">Create Fighter</button>
+                    <button class="btn btn-secondary" onclick="showTitleScreen()">Cancel</button>
+                </div>
+                <div style="text-align: center; margin-top: 20px; color: #888; font-size: 0.9em;">
+                    <p>🔥 Your fighter will unlock a special attack at level 10! 🔥</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fighter Details Screen -->
+        <div id="fighterScreen" class="game-screen">
+            <button class="btn btn-secondary back-btn" onclick="showTitleScreen()">← Back</button>
+            <button class="btn" style="background: #e74c3c; color: #fff; position: absolute; top: 20px; right: 20px;" onclick="console.log('Delete button clicked'); deleteFighter();">Delete Fighter</button>
+            <div style="text-align: center; margin-bottom: 20px; margin-top: 60px;">
+                <div style="display: flex; justify-content: center; gap: 15px; margin-bottom: 15px; flex-wrap: wrap;">
+                    <button class="btn btn-fight" onclick="findFight()" id="fightBtn">Find Fight</button>
+                    <button class="btn btn-primary" onclick="fightWithoutRest()" id="fightWithoutRestBtn">Fight 💎</button>
+                    <div id="fighterPaypalButton" class="paypal-button-container"></div>
+                </div>
+            </div>
+            <div class="fight-status">
+                <div class="diamonds-display">Diamonds: <span id="diamonds">0</span> 💎</div>
+                <div class="cooldown-timer" id="cooldownTimer"></div>
+            </div>
+            <div class="fighter-details">
+                <div class="stats-panel">
+                    <h3 class="panel-title">Fighter Stats</h3>
+                    <div id="fighterStats"></div>
+                </div>
+                <div class="inventory-panel">
+                    <h3 class="panel-title">Equipment</h3>
+                    <div id="fighterEquipment" class="equipment-grid"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fight Screen -->
+        <div id="fightScreen" class="game-screen">
+            <div class="fighters-display">
+                <div class="fighter-card">
+                    <h3 id="player1Name">Your Fighter</h3>
+                    <div class="hp-bar">
+                        <div id="player1HP" class="hp-fill" style="width: 100%"></div>
+                    </div>
+                    <div id="player1Info">HP: <span id="player1HPText">100/100</span></div>
+                </div>
+                <div class="fighter-card">
+                    <h3 id="player2Name">Opponent</h3>
+                    <div class="hp-bar">
+                        <div id="player2HP" class="hp-fill" style="width: 100%"></div>
+                    </div>
+                    <div id="player2Info">HP: <span id="player2HPText">100/100</span></div>
+                </div>
+            </div>
+            <div id="fightLog" class="fight-log"></div>
+            <div style="text-align: center;">
+                <button class="btn btn-secondary" onclick="endFight()" id="endFightBtn" style="display: none;">Continue</button>
+            </div>
+        </div>
+
+        <!-- Leaderboard Screen -->
+        <div id="leaderboardScreen" class="game-screen">
+            <button class="btn btn-secondary back-btn" onclick="showTitleScreen()">← Back</button>
+            <div style="text-align: center; margin-bottom: 20px; margin-top: 60px;">
+                <h2 style="color: #4ecdc4;">Top Fighters</h2>
+            </div>
+            <div id="leaderboardContent" class="leaderboard"></div>
         </div>
     </div>
 
     <script>
-        // Production configuration
+        // Supabase configuration
         var SUPABASE_URL = 'https://pmsbxvqavkoboxyhqjcc.supabase.co';
         var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBtc2J4dnFhdmtvYm94eWhxamNjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc2NjA2OTMsImV4cCI6MjA3MzIzNjY5M30.9-0-glSFo66fOktfR6ineO8J4Ra8RLVXwytCb9jca9U';
+        
+        var gameState = {
+            fighters: [],
+            currentFighter: null,
+            diamonds: 0,
+            fightCooldownEnd: 0,
+            unlockedSlots: [true, false, false, false, false],
+            currentSlotIndex: 0,
+            currentUser: null,
+            isLoggedIn: false
+        };
+
+        var specialAttacks = ['Fury Strike', 'Power Slam', 'Devastator', 'Thunder Punch', 'Dragon Fist', 'Shadow Strike', 'Meteor Crash', 'Annihilator'];
+        var equipmentSlots = ['Weapon', 'Off-Hand', 'Helmet', 'Shoulders', 'Gloves', 'Chest', 'Greaves', 'Boots'];
+
+        // EmailJS Configuration
         var EMAILJS_PUBLIC_KEY = 'K5NaITkysVL6hhc2A';
         var EMAILJS_SERVICE_ID = 'service_22pzu4g';
         var EMAILJS_TEMPLATE_ID = 'template_38r3g5c';
 
-        var gameState = {
-            currentUser: null,
-            isLoggedIn: false,
-            diamonds: 0
-        };
+        // PayPal Configuration
+        var PAYPAL_CLIENT_ID = 'ARItOSiEuqCdGhT7vEXmY5kQt3HOjUu0cq7cOypXivdsQOARvW43mw9CpyAGaFEzevWpOJ7G2C0eIKiT';
 
-        function sanitizeInput(input) {
-            if (typeof input !== 'string') return '';
-            return input.trim().replace(/[<>\"'&]/g, function(match) {
-                var escape = {
-                    '<': '&lt;',
-                    '>': '&gt;',
-                    '"': '&quot;',
-                    "'": '&#x27;',
-                    '&': '&amp;'
-                };
-                return escape[match];
-            });
-        }
-
-        function validateEmail(email) {
-            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-        }
-
-        function showError(elementId, message) {
-            var errorElement = document.getElementById(elementId);
-            if (errorElement) {
-                errorElement.textContent = message;
-                errorElement.style.display = 'block';
-                setTimeout(function() {
-                    errorElement.style.display = 'none';
-                }, 5000);
+        // Initialize EmailJS
+        function initEmailJS() {
+            console.log('Checking EmailJS availability...');
+            console.log('typeof emailjs:', typeof emailjs);
+            console.log('Public key:', EMAILJS_PUBLIC_KEY);
+            
+            if (typeof emailjs !== 'undefined' && EMAILJS_PUBLIC_KEY !== 'YOUR_EMAILJS_PUBLIC_KEY') {
+                try {
+                    emailjs.init(EMAILJS_PUBLIC_KEY);
+                    console.log('EmailJS initialized successfully');
+                    return true;
+                } catch (error) {
+                    console.error('EmailJS initialization error:', error);
+                    return false;
+                }
+            } else {
+                console.log('EmailJS not available or not configured');
+                console.log('emailjs undefined:', typeof emailjs === 'undefined');
+                console.log('Public key not set:', EMAILJS_PUBLIC_KEY === 'YOUR_EMAILJS_PUBLIC_KEY');
+                return false;
             }
         }
 
-        function showLoginForm() {
-            document.getElementById('loginForm').style.display = 'block';
-            document.getElementById('signupForm').style.display = 'none';
-        }
+        // Initialize PayPal Buttons
+        function initPayPalButtons() {
+            // PayPal button for title screen
+            if (typeof paypal !== 'undefined' && document.getElementById('titlePaypalButton')) {
+                paypal.Buttons({
+                    createOrder: function(data, actions) {
+                        return actions.order.create({
+                            purchase_units: [{
+                                amount: {
+                                    value: '0.99',
+                                    currency_code: 'USD'
+                                },
+                                description: '20 Diamonds for RandoFight'
+                            }]
+                        });
+                    },
+                    onApprove: function(data, actions) {
+                        return actions.order.capture().then(function(details) {
+                            console.log('PayPal payment successful:', details);
+                            processSuccessfulPayment(details);
+                        });
+                    },
+                    onError: function(err) {
+                        console.error('PayPal payment error:', err);
+                        alert('Payment failed. Please try again.');
+                    },
+                    onCancel: function(data) {
+                        console.log('PayPal payment cancelled:', data);
+                        alert('Payment was cancelled.');
+                    },
+                    style: {
+                        color: 'blue',
+                        shape: 'pill',
+                        label: 'pay',
+                        height: 40
+                    }
+                }).render('#titlePaypalButton');
+            }
 
-        function showSignupForm() {
-            document.getElementById('loginForm').style.display = 'none';
-            document.getElementById('signupForm').style.display = 'block';
-        }
-
-        function hideAll() {
-            var screens = document.querySelectorAll('.game-screen');
-            for (var i = 0; i < screens.length; i++) {
-                screens[i].style.display = 'none';
+            // PayPal button for fighter screen
+            if (typeof paypal !== 'undefined' && document.getElementById('fighterPaypalButton')) {
+                paypal.Buttons({
+                    createOrder: function(data, actions) {
+                        return actions.order.create({
+                            purchase_units: [{
+                                amount: {
+                                    value: '0.99',
+                                    currency_code: 'USD'
+                                },
+                                description: '20 Diamonds for RandoFight'
+                            }]
+                        });
+                    },
+                    onApprove: function(data, actions) {
+                        return actions.order.capture().then(function(details) {
+                            console.log('PayPal payment successful:', details);
+                            processSuccessfulPayment(details);
+                        });
+                    },
+                    onError: function(err) {
+                        console.error('PayPal payment error:', err);
+                        alert('Payment failed. Please try again.');
+                    },
+                    onCancel: function(data) {
+                        console.log('PayPal payment cancelled:', data);
+                        alert('Payment was cancelled.');
+                    },
+                    style: {
+                        color: 'blue',
+                        shape: 'pill',
+                        label: 'pay',
+                        height: 40
+                    }
+                }).render('#fighterPaypalButton');
             }
         }
 
-        function showTitleScreen() {
-            hideAll();
-            document.getElementById('titleScreen').style.display = 'block';
+        function processSuccessfulPayment(paymentDetails) {
+            console.log('Processing PayPal payment:', paymentDetails);
+            
+            gameState.diamonds += 20;
+            saveToSupabase();
+            updateDiamondDisplay();
+            updateFightStatus();
+            alert('Payment successful! 20 Diamonds have been added to your account.');
         }
 
-        function showLoginScreen() {
-            hideAll();
-            document.getElementById('loginScreen').style.display = 'block';
+        // Fallback purchase function for when PayPal is not available
+        function purchaseDiamonds() {
+            if (typeof paypal !== 'undefined') {
+                console.log('PayPal is available, use PayPal buttons');
+                alert('Please use the PayPal button to purchase diamonds.');
+            } else {
+                console.log('PayPal not available, using test purchase');
+                gameState.diamonds += 20;
+                saveToSupabase();
+                updateDiamondDisplay();
+                updateFightStatus();
+                alert('20 Diamonds purchased! (Test Mode - PayPal not loaded)');
+            }
+        }
+
+        function getUserId() {
+            if (gameState.currentUser && gameState.currentUser.user_id) {
+                return gameState.currentUser.user_id;
+            }
+            var userId = localStorage.getItem('randofight_user_id');
+            if (!userId) {
+                userId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                localStorage.setItem('randofight_user_id', userId);
+            }
+            return userId;
+        }
+
+        // Authentication functions
+        function checkExistingSession() {
+            try {
+                var session = localStorage.getItem('randofight_session');
+                console.log('Checking session:', session ? 'Found' : 'Not found');
+                
+                if (session) {
+                    var sessionData = JSON.parse(session);
+                    console.log('Session data:', sessionData);
+                    
+                    var thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000);
+                    if (sessionData.loginTime > thirtyDaysAgo) {
+                        gameState.currentUser = sessionData;
+                        gameState.isLoggedIn = true;
+                        
+                        var usernameElement = document.getElementById('usernameDisplay');
+                        if (usernameElement) {
+                            usernameElement.textContent = sessionData.username;
+                        }
+                        
+                        console.log('Restored session for:', sessionData.username);
+                        return true;
+                    } else {
+                        console.log('Session expired, removing...');
+                        localStorage.removeItem('randofight_session');
+                    }
+                } else {
+                    console.log('No session found in localStorage');
+                }
+            } catch (error) {
+                console.error('Session restore error:', error);
+                localStorage.removeItem('randofight_session');
+            }
+            return false;
         }
 
         async function hashPassword(password) {
@@ -185,22 +501,57 @@
             return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
         }
 
+        function showLoginForm() {
+            document.getElementById('loginForm').style.display = 'block';
+            document.getElementById('signupForm').style.display = 'none';
+            document.getElementById('forgotPasswordForm').style.display = 'none';
+            document.getElementById('resetPasswordForm').style.display = 'none';
+        }
+
+        function showSignupForm() {
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('signupForm').style.display = 'block';
+            document.getElementById('forgotPasswordForm').style.display = 'none';
+            document.getElementById('resetPasswordForm').style.display = 'none';
+        }
+
+        function showForgotPasswordForm() {
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('signupForm').style.display = 'none';
+            document.getElementById('forgotPasswordForm').style.display = 'block';
+            document.getElementById('resetPasswordForm').style.display = 'none';
+        }
+
+        function showResetPasswordForm() {
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('signupForm').style.display = 'none';
+            document.getElementById('forgotPasswordForm').style.display = 'none';
+            document.getElementById('resetPasswordForm').style.display = 'block';
+        }
+
+        function showLoginScreen() {
+            console.log('Showing login screen...');
+            hideAll();
+            var loginScreen = document.getElementById('loginScreen');
+            if (loginScreen) {
+                loginScreen.style.display = 'block';
+                console.log('Login screen displayed');
+            } else {
+                console.error('Login screen element not found!');
+            }
+            showLoginForm();
+        }
+
         function loginUser() {
-            var email = sanitizeInput(document.getElementById('loginEmail').value);
+            var email = document.getElementById('loginEmail').value.trim();
             var password = document.getElementById('loginPassword').value;
             
             if (!email || !password) {
-                showError('loginError', 'Please enter both email and password.');
+                alert('Please enter both email and password.');
                 return;
             }
-
-            if (!validateEmail(email)) {
-                showError('loginError', 'Please enter a valid email address.');
-                return;
-            }
-
-            document.getElementById('loginBtn').disabled = true;
-            document.getElementById('loginBtn').textContent = 'Loading...';
+            
+            console.log('Attempting login for:', email);
             
             hashPassword(password).then(function(hashedPassword) {
                 return fetch(SUPABASE_URL + '/rest/v1/users?email=eq.' + encodeURIComponent(email), {
@@ -213,13 +564,14 @@
             })
             .then(function(response) {
                 if (!response.ok) {
-                    throw new Error('Login failed');
+                    throw new Error('Login failed: ' + response.status);
                 }
                 return response.json();
             })
             .then(function(users) {
                 if (users.length === 0) {
-                    throw new Error('Invalid email or password');
+                    alert('No account found with this email. Please create an account first.');
+                    return;
                 }
                 
                 var user = users[0];
@@ -229,53 +581,58 @@
                         gameState.currentUser = user;
                         gameState.isLoggedIn = true;
                         
-                        document.getElementById('usernameDisplay').textContent = sanitizeInput(user.username);
+                        localStorage.setItem('randofight_session', JSON.stringify({
+                            user_id: user.user_id,
+                            email: user.email,
+                            username: user.username,
+                            loginTime: Date.now()
+                        }));
+                        
+                        document.getElementById('usernameDisplay').textContent = user.username;
+                        console.log('Login successful for:', user.username);
+                        
                         document.getElementById('loginEmail').value = '';
                         document.getElementById('loginPassword').value = '';
                         
                         loadFromSupabase();
                         showTitleScreen();
                     } else {
-                        throw new Error('Invalid email or password');
+                        alert('Incorrect password. Please try again.');
                     }
                 });
             })
             .catch(function(error) {
-                showError('loginError', error.message || 'Login failed. Please try again.');
-            })
-            .finally(function() {
-                document.getElementById('loginBtn').disabled = false;
-                document.getElementById('loginBtn').textContent = 'Login';
+                console.error('Login error:', error);
+                alert('Login failed. Please check your connection and try again.');
             });
         }
 
         function signupUser() {
-            var email = sanitizeInput(document.getElementById('signupEmail').value);
+            var email = document.getElementById('signupEmail').value.trim();
             var password = document.getElementById('signupPassword').value;
-            var username = sanitizeInput(document.getElementById('signupUsername').value);
+            var username = document.getElementById('signupUsername').value.trim();
             
             if (!email || !password || !username) {
-                showError('signupError', 'Please fill in all fields.');
-                return;
-            }
-            
-            if (!validateEmail(email)) {
-                showError('signupError', 'Please enter a valid email address.');
+                alert('Please fill in all fields.');
                 return;
             }
             
             if (password.length < 6) {
-                showError('signupError', 'Password must be at least 6 characters long.');
+                alert('Password must be at least 6 characters long.');
+                return;
+            }
+            
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                alert('Please enter a valid email address.');
                 return;
             }
             
             if (username.length < 3) {
-                showError('signupError', 'Username must be at least 3 characters long.');
+                alert('Username must be at least 3 characters long.');
                 return;
             }
-
-            document.getElementById('signupBtn').disabled = true;
-            document.getElementById('signupBtn').textContent = 'Creating...';
+            
+            console.log('Attempting signup for:', email);
             
             fetch(SUPABASE_URL + '/rest/v1/users?email=eq.' + encodeURIComponent(email), {
                 method: 'GET',
@@ -289,7 +646,25 @@
             })
             .then(function(existingUsers) {
                 if (existingUsers.length > 0) {
-                    throw new Error('An account with this email already exists.');
+                    alert('An account with this email already exists. Please use a different email or login instead.');
+                    return Promise.reject('Email exists');
+                }
+                
+                return fetch(SUPABASE_URL + '/rest/v1/users?username=eq.' + encodeURIComponent(username), {
+                    method: 'GET',
+                    headers: {
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Authorization': 'Bearer ' + SUPABASE_ANON_KEY
+                    }
+                });
+            })
+            .then(function(response) {
+                return response.json();
+            })
+            .then(function(existingUsernames) {
+                if (existingUsernames.length > 0) {
+                    alert('Username "' + username + '" is already taken. Please choose a different username.');
+                    return Promise.reject('Username exists');
                 }
                 
                 return hashPassword(password);
@@ -314,40 +689,54 @@
                 });
             })
             .then(function(response) {
-                if (!response.ok) {
-                    throw new Error('Account creation failed');
+                if (response && response.ok) {
+                    alert('Account created successfully! Please login with your new credentials.');
+                    showLoginForm();
+                    document.getElementById('signupEmail').value = '';
+                    document.getElementById('signupPassword').value = '';
+                    document.getElementById('signupUsername').value = '';
+                } else if (response) {
+                    throw new Error('Signup failed: ' + response.status);
                 }
-                
-                alert('Account created successfully! Please login with your new credentials.');
-                
-                document.getElementById('signupEmail').value = '';
-                document.getElementById('signupPassword').value = '';
-                document.getElementById('signupUsername').value = '';
-                
-                showLoginForm();
             })
             .catch(function(error) {
-                showError('signupError', error.message || 'Account creation failed. Please try again.');
-            })
-            .finally(function() {
-                document.getElementById('signupBtn').disabled = false;
-                document.getElementById('signupBtn').textContent = 'Create Account';
+                if (error !== 'Email exists' && error !== 'Username exists') {
+                    console.error('Signup error:', error);
+                    alert('Account creation failed. Please try again.');
+                }
             });
         }
 
         function logoutUser() {
             gameState.currentUser = null;
             gameState.isLoggedIn = false;
+            gameState.fighters = [];
+            gameState.currentFighter = null;
             gameState.diamonds = 0;
+            
+            localStorage.removeItem('randofight_session');
+            
             showLoginScreen();
+            console.log('User logged out');
         }
 
-        function loadFromSupabase() {
-            if (!gameState.isLoggedIn) return;
+        function sendPasswordReset() {
+            var email = document.getElementById('resetEmail').value.trim();
             
-            var userId = getUserId();
+            if (!email) {
+                alert('Please enter your email address.');
+                return;
+            }
             
-            fetch(SUPABASE_URL + '/rest/v1/game_data?user_id=eq.' + encodeURIComponent(userId), {
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                alert('Please enter a valid email address.');
+                return;
+            }
+            
+            console.log('Sending password reset for:', email);
+            
+            // Check if user exists
+            fetch(SUPABASE_URL + '/rest/v1/users?email=eq.' + encodeURIComponent(email), {
                 method: 'GET',
                 headers: {
                     'apikey': SUPABASE_ANON_KEY,
@@ -355,107 +744,266 @@
                 }
             })
             .then(function(response) {
-                if (response.ok) {
-                    return response.json();
-                }
-                throw new Error('Load failed');
+                return response.json();
             })
-            .then(function(data) {
-                if (data && data.length > 0) {
-                    var gameData = data[0];
-                    gameState.diamonds = gameData.diamonds || 0;
-                    updateDiamondDisplay();
+            .then(function(users) {
+                if (users.length === 0) {
+                    // Don't reveal if email exists or not for security
+                    alert('If an account with this email exists, you will receive a password reset link shortly.');
+                    return;
                 }
+                
+                var user = users[0];
+                
+                // Generate reset token
+                var resetToken = generateResetToken();
+                var resetExpiry = new Date(Date.now() + 60 * 60 * 1000).toISOString(); // 1 hour from now
+                
+                // Store reset token in database
+                return fetch(SUPABASE_URL + '/rest/v1/password_resets', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Authorization': 'Bearer ' + SUPABASE_ANON_KEY
+                    },
+                    body: JSON.stringify({
+                        user_id: user.user_id,
+                        reset_token: resetToken,
+                        expires_at: resetExpiry,
+                        created_at: new Date().toISOString()
+                    })
+                })
+                .then(function(response) {
+                    if (response.ok) {
+                        // Wait a moment for EmailJS to be available, then try to send email
+                        setTimeout(function() {
+                            if (initEmailJS()) {
+                                sendResetEmail(email, user.username, resetToken);
+                            } else {
+                                // Fallback to demo mode
+                                console.log('EmailJS failed, falling back to demo mode');
+                                localStorage.setItem('reset_token_demo', resetToken);
+                                localStorage.setItem('reset_user_id', user.user_id);
+                                
+                                alert('EmailJS not available - Demo Mode:\n\nPassword reset link: \n' + window.location.origin + window.location.pathname + '?reset=' + resetToken + '\n\nCopy this link and paste it in your browser to reset your password.');
+                            }
+                        }, 2000);
+                        
+                        showLoginForm();
+                        document.getElementById('resetEmail').value = '';
+                    } else {
+                        throw new Error('Failed to create reset token');
+                    }
+                });
             })
-            .catch(function(e) {
-                console.error('Load failed:', e);
+            .catch(function(error) {
+                console.error('Password reset error:', error);
+                alert('If an account with this email exists, you will receive a password reset link shortly.');
             });
         }
 
-        function purchaseDiamonds() {
-            // PayPal Standard integration for static sites
-            var paypalForm = document.createElement('form');
-            paypalForm.action = 'https://www.paypal.com/cgi-bin/webscr';
-            paypalForm.method = 'post';
-            paypalForm.target = '_blank';
+        function sendResetEmail(email, username, resetToken) {
+            var resetLink = window.location.origin + window.location.pathname + '?reset=' + resetToken;
             
-            var formFields = {
-                'cmd': '_xclick',
-                'business': 'your-paypal-email@example.com', // Replace with your PayPal email
-                'item_name': 'RandoFight - 20 Diamonds',
-                'item_number': 'DIAMONDS_20',
-                'amount': '0.99',
-                'currency_code': 'USD',
-                'return': window.location.origin + window.location.pathname + '?payment=success',
-                'cancel_return': window.location.origin + window.location.pathname + '?payment=cancelled',
-                'notify_url': 'https://your-webhook-url.com/paypal-ipn', // Optional: for server verification
-                'custom': getUserId() // Pass user ID for verification
+            console.log('Sending email to:', email);
+            console.log('Reset link:', resetLink);
+            
+            var templateParams = {
+                to_email: email,
+                to_name: username,
+                reset_link: resetLink,
+                game_name: 'RandoFight',
+                expiry_time: '1 hour'
             };
             
-            // Create hidden form fields
-            for (var field in formFields) {
-                var input = document.createElement('input');
-                input.type = 'hidden';
-                input.name = field;
-                input.value = formFields[field];
-                paypalForm.appendChild(input);
-            }
+            console.log('Template parameters:', templateParams);
             
-            // Add form to page and submit
-            document.body.appendChild(paypalForm);
-            paypalForm.submit();
-            document.body.removeChild(paypalForm);
+            emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, templateParams)
+                .then(function(response) {
+                    console.log('Email sent successfully:', response);
+                    alert('Password reset instructions have been sent to your email address. Please check your inbox (and spam folder) for the reset link.');
+                })
+                .catch(function(error) {
+                    console.error('EmailJS error:', error);
+                    
+                    // Check if it's a template/configuration issue
+                    if (error.status === 422) {
+                        console.error('Template error - check your EmailJS template configuration');
+                        alert('Email template configuration error. Please check:\n\n1. Your EmailJS template exists\n2. Template uses {{to_email}} variable\n3. Email service is properly connected\n\nFalling back to demo mode...');
+                    }
+                    
+                    // Fallback to demo mode if email fails
+                    localStorage.setItem('reset_token_demo', resetToken);
+                    
+                    alert('Email service error - Demo Mode:\n\nPassword reset link: \n' + resetLink + '\n\nCopy this link and paste it in your browser to reset your password.');
+                });
         }
 
-        function checkPaymentStatus() {
+        function generateResetToken() {
+            var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+            var token = '';
+            for (var i = 0; i < 32; i++) {
+                token += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return token;
+        }
+
+        function resetPassword() {
+            var newPassword = document.getElementById('newPassword').value;
+            var confirmPassword = document.getElementById('confirmPassword').value;
+            var resetToken = getResetTokenFromURL();
+            
+            if (!newPassword || !confirmPassword) {
+                alert('Please fill in all fields.');
+                return;
+            }
+            
+            if (newPassword.length < 6) {
+                alert('Password must be at least 6 characters long.');
+                return;
+            }
+            
+            if (newPassword !== confirmPassword) {
+                alert('Passwords do not match.');
+                return;
+            }
+            
+            if (!resetToken) {
+                alert('Invalid or missing reset token.');
+                return;
+            }
+            
+            console.log('Resetting password with token:', resetToken);
+            
+            // Verify reset token and get user
+            fetch(SUPABASE_URL + '/rest/v1/password_resets?reset_token=eq.' + encodeURIComponent(resetToken), {
+                method: 'GET',
+                headers: {
+                    'apikey': SUPABASE_ANON_KEY,
+                    'Authorization': 'Bearer ' + SUPABASE_ANON_KEY
+                }
+            })
+            .then(function(response) {
+                return response.json();
+            })
+            .then(function(resetTokens) {
+                if (resetTokens.length === 0) {
+                    alert('Invalid or expired reset token.');
+                    return;
+                }
+                
+                var resetRecord = resetTokens[0];
+                var expiryTime = new Date(resetRecord.expires_at).getTime();
+                
+                if (Date.now() > expiryTime) {
+                    alert('Reset token has expired. Please request a new password reset.');
+                    return;
+                }
+                
+                // Hash the new password
+                return hashPassword(newPassword).then(function(hashedPassword) {
+                    // Update user password
+                    return fetch(SUPABASE_URL + '/rest/v1/users?user_id=eq.' + encodeURIComponent(resetRecord.user_id), {
+                        method: 'PATCH',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'apikey': SUPABASE_ANON_KEY,
+                            'Authorization': 'Bearer ' + SUPABASE_ANON_KEY
+                        },
+                        body: JSON.stringify({
+                            password_hash: hashedPassword
+                        })
+                    })
+                    .then(function(response) {
+                        if (response.ok) {
+                            // Delete used reset token
+                            return fetch(SUPABASE_URL + '/rest/v1/password_resets?reset_token=eq.' + encodeURIComponent(resetToken), {
+                                method: 'DELETE',
+                                headers: {
+                                    'apikey': SUPABASE_ANON_KEY,
+                                    'Authorization': 'Bearer ' + SUPABASE_ANON_KEY
+                                }
+                            });
+                        } else {
+                            throw new Error('Failed to update password');
+                        }
+                    })
+                    .then(function() {
+                        // Clear demo tokens
+                        localStorage.removeItem('reset_token_demo');
+                        localStorage.removeItem('reset_user_id');
+                        
+                        alert('Password updated successfully! You can now login with your new password.');
+                        
+                        // Clear URL parameter and redirect to clean login
+                        window.history.replaceState({}, document.title, window.location.pathname);
+                        showLoginForm();
+                        
+                        // Clear form
+                        document.getElementById('newPassword').value = '';
+                        document.getElementById('confirmPassword').value = '';
+                    });
+                });
+            })
+            .catch(function(error) {
+                console.error('Password reset error:', error);
+                alert('Failed to reset password. Please try again.');
+            });
+        }
+
+        function checkForPasswordReset() {
+            console.log('Checking for password reset...');
+            
+            // Check URL first
             var urlParams = new URLSearchParams(window.location.search);
-            var paymentStatus = urlParams.get('payment');
+            var tokenFromURL = urlParams.get('reset');
+            console.log('URL reset token:', tokenFromURL);
             
-            if (paymentStatus === 'success') {
-                // Payment completed - award diamonds
-                gameState.diamonds += 20;
-                updateDiamondDisplay();
-                saveToSupabase();
-                
-                // Clean URL
-                window.history.replaceState({}, document.title, window.location.pathname);
-                
-                alert('Payment successful! 20 Diamonds have been added to your account.');
-            } else if (paymentStatus === 'cancelled') {
-                // Payment cancelled
-                window.history.replaceState({}, document.title, window.location.pathname);
-                alert('Payment was cancelled.');
+            // Check localStorage
+            var tokenFromDemo = localStorage.getItem('reset_token_demo');
+            console.log('Demo token from localStorage:', tokenFromDemo);
+            
+            var resetToken = tokenFromURL || tokenFromDemo;
+            
+            if (resetToken) {
+                console.log('Password reset token found:', resetToken, 'showing reset form');
+                showResetPasswordForm();
+                return true;
+            } else {
+                console.log('No reset token found');
+                return false;
             }
         }
 
-        function getUserId() {
-            if (gameState.currentUser && gameState.currentUser.user_id) {
-                return gameState.currentUser.user_id;
+        function getResetTokenFromURL() {
+            var urlParams = new URLSearchParams(window.location.search);
+            var tokenFromURL = urlParams.get('reset');
+            
+            if (!tokenFromURL) {
+                var tokenFromDemo = localStorage.getItem('reset_token_demo');
+                if (tokenFromDemo) {
+                    console.log('Using demo reset token from localStorage');
+                    return tokenFromDemo;
+                }
             }
-            var userId = localStorage.getItem('randofight_user_id');
-            if (!userId) {
-                userId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-                localStorage.setItem('randofight_user_id', userId);
-            }
-            return userId;
+            
+            return tokenFromURL;
         }
 
-        function updateDiamondDisplay() {
-            var titleDiamonds = document.getElementById('titleDiamonds');
-            if (titleDiamonds) titleDiamonds.textContent = gameState.diamonds;
-            var diamonds = document.getElementById('diamonds');
-            if (diamonds) diamonds.textContent = gameState.diamonds;
-        }
-
+        // Game functions
         function saveToSupabase() {
-            if (!gameState.isLoggedIn) return;
-            
             var userId = getUserId();
             var gameData = {
                 user_id: userId,
+                fighters: gameState.fighters,
                 diamonds: gameState.diamonds,
+                fight_cooldown_end: gameState.fightCooldownEnd,
+                unlocked_slots: gameState.unlockedSlots,
                 updated_at: new Date().toISOString()
             };
+
+            console.log('Saving to Supabase via REST API:', gameData);
 
             fetch(SUPABASE_URL + '/rest/v1/game_data', {
                 method: 'POST',
@@ -466,24 +1014,947 @@
                     'Prefer': 'resolution=merge-duplicates'
                 },
                 body: JSON.stringify(gameData)
-            }).catch(function(e) {
-                console.error('Save failed:', e);
+            })
+            .then(function(response) {
+                if (response.ok) {
+                    console.log('Saved to Supabase successfully!');
+                } else {
+                    console.error('Supabase save error:', response.status, response.statusText);
+                    return response.text().then(function(text) {
+                        console.error('Error details:', text);
+                        throw new Error('Save failed: ' + response.status);
+                    });
+                }
+            })
+            .catch(function(e) {
+                console.error('Save failed, using localStorage fallback:', e);
+                saveGameData();
             });
         }
 
-        function initGame() {
-            console.log('RandoFight Production initialized successfully');
+        function loadFromSupabase() {
+            var userId = getUserId();
+            console.log('Loading from Supabase via REST API for user:', userId);
             
-            if (typeof emailjs !== 'undefined') {
-                emailjs.init(EMAILJS_PUBLIC_KEY);
-                console.log('EmailJS initialized');
+            fetch(SUPABASE_URL + '/rest/v1/game_data?user_id=eq.' + encodeURIComponent(userId), {
+                method: 'GET',
+                headers: {
+                    'apikey': SUPABASE_ANON_KEY,
+                    'Authorization': 'Bearer ' + SUPABASE_ANON_KEY
+                }
+            })
+            .then(function(response) {
+                if (!response.ok) {
+                    throw new Error('Load failed: ' + response.status);
+                }
+                return response.json();
+            })
+            .then(function(data) {
+                console.log('Raw Supabase response:', data);
+                
+                if (data && data.length > 0) {
+                    var gameData = data[0];
+                    console.log('Loading data from Supabase:', gameData);
+                    gameState.fighters = gameData.fighters || [];
+                    gameState.diamonds = gameData.diamonds || 0;
+                    gameState.fightCooldownEnd = gameData.fight_cooldown_end || 0;
+                    gameState.unlockedSlots = gameData.unlocked_slots || [true, false, false, false, false];
+                    console.log('Game loaded from cloud successfully!');
+                } else {
+                    console.log('No saved data found in Supabase - starting fresh');
+                }
+                
+                updateFighterSlots();
+                updateDiamondDisplay();
+            })
+            .catch(function(e) {
+                console.error('Load failed, using localStorage fallback:', e);
+                loadGameData();
+                updateFighterSlots();
+                updateDiamondDisplay();
+            });
+        }
+
+        function saveGameData() {
+            try {
+                var gameData = JSON.stringify({
+                    fighters: gameState.fighters,
+                    diamonds: gameState.diamonds,
+                    fightCooldownEnd: gameState.fightCooldownEnd,
+                    unlockedSlots: gameState.unlockedSlots
+                });
+                localStorage.setItem('randofight_gamedata', gameData);
+                console.log('Game saved to localStorage');
+            } catch (e) {
+                console.log('Save failed:', e);
+            }
+        }
+
+        function loadGameData() {
+            try {
+                var gameData = localStorage.getItem('randofight_gamedata');
+                if (gameData) {
+                    var data = JSON.parse(gameData);
+                    gameState.fighters = data.fighters || [];
+                    gameState.diamonds = data.diamonds || 0;
+                    gameState.fightCooldownEnd = data.fightCooldownEnd || 0;
+                    gameState.unlockedSlots = data.unlockedSlots || [true, false, false, false, false];
+                    console.log('Game loaded from localStorage');
+                } else {
+                    console.log('No saved data found');
+                }
+            } catch (e) {
+                console.log('Load failed:', e);
+            }
+        }
+
+        function hideAll() {
+            var screens = document.querySelectorAll('.game-screen');
+            for (var i = 0; i < screens.length; i++) {
+                screens[i].style.display = 'none';
+            }
+        }
+
+        function updateDiamondDisplay() {
+            var titleDiamonds = document.getElementById('titleDiamonds');
+            if (titleDiamonds) {
+                titleDiamonds.textContent = gameState.diamonds;
+            }
+            var diamondsDisplay = document.getElementById('diamonds');
+            if (diamondsDisplay) {
+                diamondsDisplay.textContent = gameState.diamonds;
+            }
+        }
+
+        function showTitleScreen() {
+            hideAll();
+            document.getElementById('titleScreen').style.display = 'block';
+            updateFighterSlots();
+            updateDiamondDisplay();
+            
+            // Initialize PayPal buttons when title screen is shown
+            setTimeout(function() {
+                initPayPalButtons();
+            }, 100);
+        }
+
+        function showCreationScreen() {
+            hideAll();
+            document.getElementById('creationScreen').style.display = 'block';
+            document.getElementById('fighterName').value = '';
+        }
+
+        function showFighterScreen() {
+            hideAll();
+            document.getElementById('fighterScreen').style.display = 'block';
+            updateFighterDisplay();
+            updateFightStatus();
+            
+            // Initialize PayPal buttons when fighter screen is shown
+            setTimeout(function() {
+                initPayPalButtons();
+            }, 100);
+        }
+
+        function showLeaderboard() {
+            hideAll();
+            document.getElementById('leaderboardScreen').style.display = 'block';
+            updateLeaderboard();
+        }
+
+        function checkNameAvailability(name) {
+            console.log('Checking if name "' + name + '" is available...');
+            
+            return fetch(SUPABASE_URL + '/rest/v1/game_data?select=fighters', {
+                method: 'GET',
+                headers: {
+                    'apikey': SUPABASE_ANON_KEY,
+                    'Authorization': 'Bearer ' + SUPABASE_ANON_KEY
+                }
+            })
+            .then(function(response) {
+                if (!response.ok) {
+                    throw new Error('Failed to check name availability: ' + response.status);
+                }
+                return response.json();
+            })
+            .then(function(allPlayers) {
+                console.log('Checking name against', allPlayers.length, 'players...');
+                
+                for (var i = 0; i < allPlayers.length; i++) {
+                    var playerData = allPlayers[i];
+                    
+                    if (!playerData.fighters || !Array.isArray(playerData.fighters)) {
+                        continue;
+                    }
+                    
+                    for (var j = 0; j < playerData.fighters.length; j++) {
+                        var fighter = playerData.fighters[j];
+                        
+                        if (fighter && fighter.name && fighter.name.toLowerCase() === name.toLowerCase()) {
+                            console.log('Name "' + name + '" is already taken');
+                            return false;
+                        }
+                    }
+                }
+                
+                console.log('Name "' + name + '" is available');
+                return true;
+            })
+            .catch(function(error) {
+                console.error('Error checking name availability:', error);
+                for (var i = 0; i < gameState.fighters.length; i++) {
+                    var fighter = gameState.fighters[i];
+                    if (fighter && fighter.name && fighter.name.toLowerCase() === name.toLowerCase()) {
+                        return false;
+                    }
+                }
+                return true;
+            });
+        }
+
+        function createFighter() {
+            var name = document.getElementById('fighterName').value.trim();
+            if (!name) {
+                alert('Please enter a fighter name!');
+                return;
+            }
+
+            checkNameAvailability(name)
+                .then(function(isAvailable) {
+                    if (!isAvailable) {
+                        alert('Fighter name "' + name + '" is already taken. Please choose a different name.');
+                        return;
+                    }
+                    
+                    var fighter = {
+                        name: name,
+                        birthplace: 'Unknown',
+                        level: 1,
+                        exp: 0,
+                        expRequired: 100,
+                        hp: 100,
+                        maxHp: 100,
+                        wins: 0,
+                        stats: { strength: 1, toughness: 1, agility: 1, luck: 1, speed: 1 },
+                        specialAttack: null,
+                        equipment: {
+                            weapon: { name: 'Wooden Stick', type: 'weapon', slot: 'weapon', power: 5, level: 1, rarity: 'common', statType: 'Damage' },
+                            offHand: null, helmet: null, shoulders: null, gloves: null, chest: null, greaves: null, boots: null
+                        }
+                    };
+
+                    gameState.fighters[gameState.currentSlotIndex] = fighter;
+                    
+                    var isFirstFighter = gameState.fighters.filter(function(f) { return f !== null && f !== undefined; }).length === 1;
+                    if (isFirstFighter && gameState.diamonds === 0) {
+                        gameState.diamonds = 10;
+                        alert('Welcome to RandoFight! You have received 10 free diamonds to get you started!');
+                    }
+                    
+                    saveToSupabase();
+                    gameState.currentFighter = fighter;
+                    showFighterScreen();
+                })
+                .catch(function(error) {
+                    console.error('Error checking name availability:', error);
+                    alert('Unable to verify name availability. Please try again.');
+                });
+        }
+
+        function selectFighter(slotIndex) {
+            if (!gameState.unlockedSlots[slotIndex]) return;
+            
+            if (gameState.fighters[slotIndex]) {
+                gameState.currentFighter = gameState.fighters[slotIndex];
+                showFighterScreen();
+            } else {
+                gameState.currentSlotIndex = slotIndex;
+                showCreationScreen();
+            }
+        }
+
+        function purchaseSlot(slotIndex) {
+            if (gameState.unlockedSlots[slotIndex]) {
+                return;
             }
             
-            // Check for completed PayPal payments
-            checkPaymentStatus();
+            if (gameState.diamonds < 100) {
+                alert('You need 100 diamonds to unlock this slot! You currently have ' + gameState.diamonds + ' diamonds.');
+                return;
+            }
             
-            showLoginScreen();
+            gameState.diamonds -= 100;
+            gameState.unlockedSlots[slotIndex] = true;
+            updateDiamondDisplay();
+            updateFighterSlots();
+            saveToSupabase();
+            alert('Fighter slot ' + (slotIndex + 1) + ' unlocked!');
         }
+
+        function updateFighterSlots() {
+            for (var i = 0; i < 5; i++) {
+                var slotContainer = document.getElementById('slot-container-' + i);
+                if (!slotContainer) continue;
+
+                var fighter = gameState.fighters[i];
+                slotContainer.innerHTML = '';
+                slotContainer.className = 'fighter-slot';
+                
+                var slotNumber = document.createElement('div');
+                slotNumber.className = 'slot-number';
+                slotNumber.textContent = 'Slot ' + (i + 1);
+                slotContainer.appendChild(slotNumber);
+                
+                if (fighter) {
+                    var fighterContent = document.createElement('div');
+                    fighterContent.innerHTML = 
+                        '<div class="fighter-name">' + fighter.name + '</div>' +
+                        '<div class="fighter-level">Level ' + fighter.level + '</div>' +
+                        '<div class="fighter-wins">' + fighter.wins + ' wins</div>';
+                    slotContainer.appendChild(fighterContent);
+                    slotContainer.onclick = function(index) {
+                        return function() { selectFighter(index); };
+                    }(i);
+                } else if (gameState.unlockedSlots[i]) {
+                    var emptyContent = document.createElement('div');
+                    emptyContent.innerHTML = 
+                        '<div class="fighter-name">Empty Slot</div>' +
+                        '<div>Click to create fighter</div>';
+                    slotContainer.appendChild(emptyContent);
+                    slotContainer.onclick = function(index) {
+                        return function() { selectFighter(index); };
+                    }(i);
+                } else {
+                    slotContainer.classList.add('locked');
+                    var lockedContent = document.createElement('div');
+                    lockedContent.innerHTML = 'Purchase this slot for 100 💎';
+                    slotContainer.appendChild(lockedContent);
+                    slotContainer.onclick = function(index) {
+                        return function() { purchaseSlot(index); };
+                    }(i);
+                }
+            }
+        }
+
+        function deleteFighter() {
+            if (!gameState.currentFighter) {
+                alert('No fighter selected to delete!');
+                return;
+            }
+            
+            var fighterName = gameState.currentFighter.name;
+            createDeleteModal(fighterName);
+        }
+
+        function createDeleteModal(fighterName) {
+            var existingModal = document.getElementById('deleteModal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+            
+            var modalHTML = 
+                '<div id="deleteModal" style="display: block; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000;">' +
+                    '<div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #1a1a2e; padding: 30px; border-radius: 10px; border: 2px solid #e74c3c; max-width: 400px; text-align: center;">' +
+                        '<h3 style="color: #e74c3c; margin-bottom: 20px;">Delete Fighter</h3>' +
+                        '<p style="margin-bottom: 20px;">Are you sure you want to delete <span style="color: #4ecdc4; font-weight: bold;">' + fighterName + '</span>?</p>' +
+                        '<p style="color: #888; font-size: 0.9em; margin-bottom: 25px;">This action cannot be undone!</p>' +
+                        '<div style="display: flex; gap: 15px; justify-content: center;">' +
+                            '<button class="btn" style="background: #e74c3c; color: #fff;" onclick="confirmDelete()">Delete</button>' +
+                            '<button class="btn btn-secondary" onclick="cancelDelete()">Cancel</button>' +
+                        '</div>' +
+                    '</div>' +
+                '</div>';
+            
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+        }
+
+        function confirmDelete() {
+            var fighterName = gameState.currentFighter.name;
+            
+            try {
+                for (var i = 0; i < gameState.fighters.length; i++) {
+                    if (gameState.fighters[i] && gameState.fighters[i].name === fighterName) {
+                        gameState.fighters[i] = null;
+                        break;
+                    }
+                }
+                
+                gameState.currentFighter = null;
+                saveToSupabase();
+                
+                var modal = document.getElementById('deleteModal');
+                if (modal) {
+                    modal.remove();
+                }
+                
+                alert(fighterName + ' has been deleted.');
+                showTitleScreen();
+                
+            } catch (e) {
+                console.error('Error deleting fighter:', e);
+                alert('Error deleting fighter: ' + e.message);
+            }
+        }
+
+        function cancelDelete() {
+            var modal = document.getElementById('deleteModal');
+            if (modal) {
+                modal.remove();
+            }
+        }
+
+        function updateFighterDisplay() {
+            var fighter = gameState.currentFighter;
+            if (!fighter) return;
+
+            var specialDisplay;
+            if (fighter.specialAttack && fighter.specialAttack.name) {
+                var specialDamage = Math.floor(fighter.level * 10 + ((fighter.stats.strength - 1) * 3 + 10));
+                specialDisplay = '<div class="stat-row"><span>Special Attack:</span> <span class="special">' + fighter.specialAttack.name + ' (' + specialDamage + ' damage)</span></div>';
+            } else {
+                specialDisplay = '<div class="stat-row"><span>Special Attack:</span> <span style="color: #888;">Unlocks at Level 10</span></div>';
+            }
+
+            var strengthBonus = (fighter.stats.strength - 1) * 2;
+            var toughnessBonus = fighter.stats.toughness >= 2 ? (fighter.stats.toughness - 1) * 3 : 0;
+            var speedBonus = (fighter.stats.speed - 1) * 5;
+            var luckBonus = fighter.stats.luck >= 2 ? (fighter.stats.luck - 1) * 3 : 0;
+
+            var statsHTML = 
+                '<div class="stat-row"><span>Name:</span> <span>' + fighter.name + '</span></div>' +
+                '<div class="stat-row"><span>Level:</span> <span>' + fighter.level + '</span></div>' +
+                '<div class="stat-row"><span>EXP:</span> <span>' + fighter.exp + '/' + fighter.expRequired + '</span></div>' +
+                '<div class="stat-row"><span>Wins:</span> <span class="fighter-wins">' + fighter.wins + '</span></div>' +
+                '<div class="stat-row"><span>HP:</span> <span>' + fighter.hp + '/' + fighter.maxHp + '</span></div>' +
+                '<hr style="margin: 10px 0; border-color: rgba(255,255,255,0.2);">' +
+                '<div class="stat-row"><span>Strength <span style="color: #888; font-size: 0.8em;">(+' + strengthBonus + ' damage)</span>:</span> <span>' + fighter.stats.strength + '</span></div>' +
+                '<div class="stat-row"><span>Toughness <span style="color: #888; font-size: 0.8em;">(-' + toughnessBonus + '% damage taken)</span>:</span> <span>' + fighter.stats.toughness + '</span></div>' +
+                '<div class="stat-row"><span>Agility <span style="color: #888; font-size: 0.8em;">(dodge chance)</span>:</span> <span>' + fighter.stats.agility + '</span></div>' +
+                '<div class="stat-row"><span>Luck <span style="color: #888; font-size: 0.8em;">(+' + luckBonus + '% crit chance)</span>:</span> <span>' + fighter.stats.luck + '</span></div>' +
+                '<div class="stat-row"><span>Speed <span style="color: #888; font-size: 0.8em;">(+' + speedBonus + '% attack speed)</span>:</span> <span>' + fighter.stats.speed + '</span></div>' +
+                '<hr style="margin: 10px 0; border-color: rgba(255,255,255,0.2);">' +
+                specialDisplay;
+            
+            document.getElementById('fighterStats').innerHTML = statsHTML;
+
+            var equipmentElement = document.getElementById('fighterEquipment');
+            equipmentElement.innerHTML = '';
+            
+            for (var i = 0; i < equipmentSlots.length; i++) {
+                var slot = equipmentSlots[i];
+                var item = fighter.equipment[slot.toLowerCase().replace('-', '')];
+                var slotDiv = document.createElement('div');
+                slotDiv.className = 'equipment-slot';
+                
+                if (item && item.statType) {
+                    slotDiv.innerHTML = 
+                        '<div class="slot-name">' + slot + '</div>' +
+                        '<div class="item-content">' +
+                            '<div class="item-power">+' + item.power + ' ' + item.statType + '</div>' +
+                            '<div class="item-name ' + item.rarity + '">' + item.name + '</div>' +
+                        '</div>';
+                } else {
+                    slotDiv.innerHTML = 
+                        '<div class="slot-name">' + slot + '</div>' +
+                        '<div class="item-content">' +
+                            '<div class="item-name">Empty</div>' +
+                        '</div>';
+                }
+                equipmentElement.appendChild(slotDiv);
+            }
+        }
+
+        function updateFightStatus() {
+            var now = Date.now();
+            var fightBtn = document.getElementById('fightBtn');
+            var fightWithoutRestBtn = document.getElementById('fightWithoutRestBtn');
+            var cooldownTimer = document.getElementById('cooldownTimer');
+            var diamondsDisplay = document.getElementById('diamonds');
+
+            if (diamondsDisplay) {
+                diamondsDisplay.textContent = gameState.diamonds;
+            }
+
+            if (fightWithoutRestBtn) {
+                fightWithoutRestBtn.disabled = gameState.diamonds <= 0;
+                fightWithoutRestBtn.textContent = 'Fight 💎';
+            }
+
+            if (now < gameState.fightCooldownEnd) {
+                var timeLeft = gameState.fightCooldownEnd - now;
+                var seconds = Math.ceil(timeLeft / 1000);
+                
+                if (fightBtn) {
+                    fightBtn.disabled = true;
+                    fightBtn.textContent = 'Resting (' + seconds + 's)';
+                }
+                
+                if (cooldownTimer) {
+                    cooldownTimer.textContent = 'Rest time remaining: ' + seconds + ' seconds';
+                }
+            } else {
+                if (fightBtn) {
+                    fightBtn.disabled = false;
+                    fightBtn.textContent = 'Find Fight';
+                }
+                
+                if (cooldownTimer) {
+                    cooldownTimer.textContent = '';
+                }
+            }
+        }
+
+        function findFight() {
+            var now = Date.now();
+            if (now < gameState.fightCooldownEnd) {
+                alert('You must rest before fighting again!');
+                return;
+            }
+            if (!gameState.currentFighter) {
+                alert('No fighter selected!');
+                return;
+            }
+            
+            console.log('Looking for opponents for level', gameState.currentFighter.level, 'fighter...');
+            findOpponentFromSupabase(gameState.currentFighter.level)
+                .then(function(opponent) {
+                    if (opponent) {
+                        console.log('Found real player opponent:', opponent.name, 'Level', opponent.level);
+                        startFight(gameState.currentFighter, opponent);
+                    } else {
+                        console.log('No real players found, generating AI opponent');
+                        var botOpponent = generateOpponent(gameState.currentFighter.level);
+                        startFight(gameState.currentFighter, botOpponent);
+                    }
+                })
+                .catch(function(error) {
+                    console.error('Matchmaking error, using AI opponent:', error);
+                    var botOpponent = generateOpponent(gameState.currentFighter.level);
+                    startFight(gameState.currentFighter, botOpponent);
+                });
+        }
+
+        function fightWithoutRest() {
+            if (gameState.diamonds <= 0) {
+                alert('You need Diamonds to fight without rest!');
+                return;
+            }
+            gameState.diamonds--;
+            saveToSupabase();
+            updateDiamondDisplay();
+            
+            console.log('Looking for opponents for diamond fight...');
+            findOpponentFromSupabase(gameState.currentFighter.level)
+                .then(function(opponent) {
+                    if (opponent) {
+                        console.log('Found real player opponent for diamond fight:', opponent.name);
+                        startFight(gameState.currentFighter, opponent);
+                    } else {
+                        console.log('No real players found for diamond fight, generating AI opponent');
+                        var botOpponent = generateOpponent(gameState.currentFighter.level);
+                        startFight(gameState.currentFighter, botOpponent);
+                    }
+                })
+                .catch(function(error) {
+                    console.error('Diamond fight matchmaking error, using AI opponent:', error);
+                    var botOpponent = generateOpponent(gameState.currentFighter.level);
+                    startFight(gameState.currentFighter, botOpponent);
+                });
+        }
+
+        function findOpponentFromSupabase(playerLevel) {
+            var minLevel = Math.max(1, playerLevel - 3);
+            var maxLevel = playerLevel + 3;
+            var currentUserId = getUserId();
+            
+            console.log('Searching for opponents between level', minLevel, 'and', maxLevel);
+            
+            return fetch(SUPABASE_URL + '/rest/v1/game_data?select=*', {
+                method: 'GET',
+                headers: {
+                    'apikey': SUPABASE_ANON_KEY,
+                    'Authorization': 'Bearer ' + SUPABASE_ANON_KEY
+                }
+            })
+            .then(function(response) {
+                if (!response.ok) {
+                    throw new Error('Failed to fetch opponents: ' + response.status);
+                }
+                return response.json();
+            })
+            .then(function(allPlayers) {
+                console.log('Found', allPlayers.length, 'total players in database');
+                
+                var validOpponents = [];
+                
+                for (var i = 0; i < allPlayers.length; i++) {
+                    var playerData = allPlayers[i];
+                    
+                    if (playerData.user_id === currentUserId) {
+                        continue;
+                    }
+                    
+                    if (!playerData.fighters || !Array.isArray(playerData.fighters)) {
+                        continue;
+                    }
+                    
+                    for (var j = 0; j < playerData.fighters.length; j++) {
+                        var fighter = playerData.fighters[j];
+                        
+                        if (fighter && fighter.level >= minLevel && fighter.level <= maxLevel) {
+                            var opponent = {
+                                name: fighter.name + '_' + playerData.user_id.slice(-4),
+                                birthplace: fighter.birthplace || 'Unknown',
+                                level: fighter.level,
+                                hp: fighter.maxHp || (100 + (fighter.level - 1) * 20),
+                                maxHp: fighter.maxHp || (100 + (fighter.level - 1) * 20),
+                                currentHp: fighter.maxHp || (100 + (fighter.level - 1) * 20),
+                                wins: fighter.wins || 0,
+                                stats: fighter.stats || { strength: 1, toughness: 1, agility: 1, luck: 1, speed: 1 },
+                                equipment: fighter.equipment || { weapon: { name: 'Basic Weapon', rarity: 'common' } },
+                                specialAttack: fighter.specialAttack || null,
+                                isRealPlayer: true,
+                                originalUserId: playerData.user_id
+                            };
+                            
+                            validOpponents.push(opponent);
+                        }
+                    }
+                }
+                
+                console.log('Found', validOpponents.length, 'valid opponents');
+                
+                if (validOpponents.length === 0) {
+                    return null;
+                }
+                
+                var randomIndex = Math.floor(Math.random() * validOpponents.length);
+                return validOpponents[randomIndex];
+            })
+            .catch(function(error) {
+                console.error('Error finding opponents:', error);
+                return null;
+            });
+        }
+
+        function generateOpponent(level) {
+            var names = ['ShadowKnight92', 'DragonSlayer', 'IronFist2024', 'BlazeFighter', 'StormWarrior', 'NightHunter', 'FlameStrike', 'IceBlade77', 'ThunderFist', 'DarkRaven'];
+            var places = ['New York', 'London', 'Tokyo', 'Paris', 'Sydney'];
+            
+            var opponentLevel = Math.max(1, level + Math.floor(Math.random() * 3) - 1);
+            var opponentMaxHp = Math.floor(100 + (opponentLevel - 1) * 20);
+
+            return {
+                name: names[Math.floor(Math.random() * names.length)],
+                birthplace: places[Math.floor(Math.random() * places.length)],
+                level: opponentLevel,
+                hp: opponentMaxHp,
+                maxHp: opponentMaxHp,
+                currentHp: opponentMaxHp,
+                wins: Math.floor(opponentLevel * 3),
+                stats: {
+                    strength: Math.floor(1 + (opponentLevel - 1) * 2),
+                    toughness: Math.floor(1 + (opponentLevel - 1) * 2),
+                    agility: Math.floor(1 + (opponentLevel - 1) * 2),
+                    luck: Math.floor(1 + (opponentLevel - 1) * 2),
+                    speed: Math.floor(1 + (opponentLevel - 1) * 2)
+                },
+                equipment: {
+                    weapon: { name: 'Iron Sword', rarity: 'common' }
+                },
+                specialAttack: {
+                    name: specialAttacks[Math.floor(Math.random() * specialAttacks.length)]
+                },
+                isRealPlayer: false,
+                isBot: true
+            };
+        }
+
+        function updateLeaderboard() {
+            var content = document.getElementById('leaderboardContent');
+            var leaderboard = [];
+
+            for (var i = 0; i < gameState.fighters.length; i++) {
+                var fighter = gameState.fighters[i];
+                if (fighter) {
+                    leaderboard.push({
+                        name: fighter.name,
+                        wins: fighter.wins,
+                        level: fighter.level
+                    });
+                }
+            }
+
+            leaderboard.sort(function(a, b) {
+                return b.wins - a.wins;
+            });
+            
+            if (leaderboard.length === 0) {
+                content.innerHTML = 
+                    '<div style="text-align: center; padding: 20px; color: #888;">' +
+                        '<p>No fighters yet!</p>' +
+                        '<p>Create some fighters and start winning battles to appear on the leaderboard!</p>' +
+                    '</div>';
+                return;
+            }
+            
+            var html = '';
+            for (var i = 0; i < leaderboard.length; i++) {
+                var entry = leaderboard[i];
+                var rank = i + 1;
+                var medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : rank + '.';
+                
+                html += 
+                    '<div class="leaderboard-entry">' +
+                        '<span>' + medal + ' ' + entry.name + ' (Level ' + entry.level + ')</span>' +
+                        '<span>' + entry.wins + ' wins</span>' +
+                    '</div>';
+            }
+            
+            content.innerHTML = html;
+        }
+
+        function startFight(player, opponent) {
+            hideAll();
+            document.getElementById('fightScreen').style.display = 'block';
+            
+            player.currentHp = player.maxHp;
+            opponent.currentHp = opponent.maxHp;
+
+            document.getElementById('player1Name').textContent = player.name + ' (Level ' + player.level + ', ' + player.wins + ' wins)';
+            document.getElementById('player2Name').textContent = opponent.name + ' (Level ' + opponent.level + ', ' + opponent.wins + ' wins)';
+            
+            document.getElementById('player1HPText').textContent = Math.floor(player.currentHp) + '/' + player.maxHp;
+            document.getElementById('player2HPText').textContent = Math.floor(opponent.currentHp) + '/' + opponent.maxHp;
+            document.getElementById('player1HP').style.width = '100%';
+            document.getElementById('player2HP').style.width = '100%';
+
+            var fightLog = document.getElementById('fightLog');
+            fightLog.innerHTML = '';
+
+            addToFightLog('<div class="story-title">' + player.name + ' vs ' + opponent.name + '</div>');
+            addToFightLog('Fight begins!');
+            
+            setTimeout(function() { simulateFight(player, opponent); }, 1500);
+        }
+
+        function addToFightLog(message) {
+            var fightLog = document.getElementById('fightLog');
+            var p = document.createElement('p');
+            p.innerHTML = message;
+            fightLog.appendChild(p);
+            fightLog.scrollTop = fightLog.scrollHeight;
+        }
+
+        function simulateFight(player, opponent) {
+            var round = 1;
+            var maxRounds = 50;
+            
+            function fightRound() {
+                if (round > maxRounds || player.currentHp <= 0 || opponent.currentHp <= 0) {
+                    endCombat();
+                    return;
+                }
+                
+                addToFightLog('<strong>Round ' + round + '</strong>');
+                
+                // Player attacks
+                if (player.currentHp > 0) {
+                    performAttack(player, opponent, 'player');
+                }
+                
+                // Check if opponent is defeated
+                if (opponent.currentHp <= 0) {
+                    setTimeout(endCombat, 1000);
+                    return;
+                }
+                
+                // Opponent attacks
+                if (opponent.currentHp > 0) {
+                    performAttack(opponent, player, 'opponent');
+                }
+                
+                // Check if player is defeated
+                if (player.currentHp <= 0) {
+                    setTimeout(endCombat, 1000);
+                    return;
+                }
+                
+                round++;
+                setTimeout(fightRound, 2000);
+            }
+            
+            function performAttack(attacker, defender, attackerType) {
+                var baseDamage = 10 + (attacker.stats.strength - 1) * 2;
+                
+                // Equipment bonus
+                if (attacker.equipment && attacker.equipment.weapon) {
+                    baseDamage += attacker.equipment.weapon.power || 0;
+                }
+                
+                // Random damage variation (±20%)
+                var damage = Math.floor(baseDamage * (0.8 + Math.random() * 0.4));
+                
+                // Dodge chance based on agility
+                var dodgeChance = (defender.stats.agility - 1) * 5;
+                if (Math.random() * 100 < dodgeChance) {
+                    addToFightLog('<span class="dodge">' + defender.name + ' dodges ' + attacker.name + '\'s attack!</span>');
+                    return;
+                }
+                
+                // Critical hit chance based on luck
+                var critChance = (attacker.stats.luck - 1) * 3;
+                var isCrit = Math.random() * 100 < critChance;
+                if (isCrit) {
+                    damage = Math.floor(damage * 1.5);
+                    addToFightLog('<span class="critical">' + attacker.name + ' lands a critical hit!</span>');
+                }
+                
+                // Damage reduction based on toughness
+                var damageReduction = (defender.stats.toughness - 1) * 3;
+                damage = Math.floor(damage * (1 - damageReduction / 100));
+                
+                // Apply damage
+                defender.currentHp = Math.max(0, defender.currentHp - damage);
+                
+                addToFightLog('<span class="damage">' + attacker.name + ' deals ' + damage + ' damage to ' + defender.name + '!</span>');
+                
+                // Update HP bars
+                if (attackerType === 'player') {
+                    var opponentHpPercent = (opponent.currentHp / opponent.maxHp) * 100;
+                    document.getElementById('player2HP').style.width = opponentHpPercent + '%';
+                    document.getElementById('player2HPText').textContent = Math.floor(opponent.currentHp) + '/' + opponent.maxHp;
+                } else {
+                    var playerHpPercent = (player.currentHp / player.maxHp) * 100;
+                    document.getElementById('player1HP').style.width = playerHpPercent + '%';
+                    document.getElementById('player1HPText').textContent = Math.floor(player.currentHp) + '/' + player.maxHp;
+                }
+            }
+            
+            function endCombat() {
+                var playerWon = player.currentHp > 0;
+                
+                if (playerWon) {
+                    addToFightLog('<span class="victory">🎉 ' + player.name + ' is victorious! 🎉</span>');
+                    
+                    // Award experience and diamonds
+                    var expGained = Math.floor(20 + opponent.level * 5);
+                    var diamondsGained = Math.floor(1 + opponent.level * 0.5);
+                    
+                    player.exp += expGained;
+                    player.wins++;
+                    gameState.diamonds += diamondsGained;
+                    
+                    addToFightLog('<span class="exp-gain">Gained ' + expGained + ' EXP and ' + diamondsGained + ' diamonds!</span>');
+                    
+                    // Check for level up
+                    while (player.exp >= player.expRequired) {
+                        levelUp(player);
+                    }
+                    
+                } else {
+                    addToFightLog('<span class="defeat">💀 ' + player.name + ' has been defeated! 💀</span>');
+                    
+                    // Small consolation reward
+                    var consolationExp = Math.floor(5 + opponent.level);
+                    player.exp += consolationExp;
+                    addToFightLog('<span class="exp-gain">Gained ' + consolationExp + ' consolation EXP!</span>');
+                }
+                
+                // Set cooldown (5 minutes)
+                gameState.fightCooldownEnd = Date.now() + (5 * 60 * 1000);
+                
+                // Restore player HP
+                player.hp = player.maxHp;
+                player.currentHp = player.maxHp;
+                
+                saveToSupabase();
+                document.getElementById('endFightBtn').style.display = 'block';
+            }
+            
+            function levelUp(fighter) {
+                fighter.level++;
+                fighter.exp -= fighter.expRequired;
+                fighter.expRequired = Math.floor(fighter.expRequired * 1.2);
+                fighter.maxHp += 20;
+                fighter.hp = fighter.maxHp;
+                fighter.currentHp = fighter.maxHp;
+                
+                // Increase stats
+                fighter.stats.strength += Math.floor(Math.random() * 2) + 1;
+                fighter.stats.toughness += Math.floor(Math.random() * 2) + 1;
+                fighter.stats.agility += Math.floor(Math.random() * 2) + 1;
+                fighter.stats.luck += Math.floor(Math.random() * 2) + 1;
+                fighter.stats.speed += Math.floor(Math.random() * 2) + 1;
+                
+                addToFightLog('<span class="level-up">🔥 ' + fighter.name + ' reached Level ' + fighter.level + '! 🔥</span>');
+                
+                // Unlock special attack at level 10
+                if (fighter.level === 10) {
+                    fighter.specialAttack = {
+                        name: specialAttacks[Math.floor(Math.random() * specialAttacks.length)]
+                    };
+                    addToFightLog('<span class="special">✨ ' + fighter.name + ' learned ' + fighter.specialAttack.name + '! ✨</span>');
+                }
+            }
+            
+            fightRound();
+        }
+
+        function endFight() {
+            document.getElementById('endFightBtn').style.display = 'none';
+            showFighterScreen();
+        }
+
+        function initGame() {
+            console.log('RandoFight initializing...');
+            
+            // Force clear any password reset tokens first
+            console.log('Clearing any existing reset tokens...');
+            localStorage.removeItem('reset_token_demo');
+            localStorage.removeItem('reset_user_id');
+            
+            // Initialize EmailJS early
+            setTimeout(function() {
+                initEmailJS();
+            }, 1000);
+            
+            try {
+                // Check if this is a password reset link first (only URL parameters, not localStorage)
+                var urlParams = new URLSearchParams(window.location.search);
+                var tokenFromURL = urlParams.get('reset');
+                
+                if (tokenFromURL) {
+                    console.log('URL reset token found:', tokenFromURL);
+                    showResetPasswordForm();
+                    return;
+                }
+                
+                // Check for existing login session
+                if (checkExistingSession()) {
+                    console.log('Valid session found, loading game data...');
+                    loadFromSupabase();
+                    showTitleScreen();
+                } else {
+                    console.log('No valid session, showing login screen...');
+                    showLoginScreen();
+                }
+            } catch (error) {
+                console.error('Init error, forcing login screen:', error);
+                showLoginScreen();
+            }
+            
+            setInterval(updateFightStatus, 1000);
+        }
+
+        // Add a manual cleanup function you can call from browser console
+        window.clearResetTokens = function() {
+            localStorage.removeItem('reset_token_demo');
+            localStorage.removeItem('reset_user_id');
+            console.log('Reset tokens cleared');
+            location.reload();
+        };
 
         window.addEventListener('load', initGame);
     </script>
