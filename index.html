@@ -384,13 +384,13 @@
             }
             
             var modalHTML = 
-                '<div id="paypalModal" style="display: block; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000;">' +
-                    '<div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #1a1a2e; padding: 30px; border-radius: 10px; border: 2px solid #4ecdc4; max-width: 400px; text-align: center; width: 90%;">' +
-                        '<h3 style="color: #4ecdc4; margin-bottom: 20px;">Purchase Diamonds</h3>' +
-                        '<p style="margin-bottom: 20px; color: #fff;">You are about to purchase <span style="color: #ffd93d; font-weight: bold;">20 Diamonds 💎</span> for <span style="color: #4ecdc4; font-weight: bold;">$0.99 USD</span></p>' +
-                        '<div style="margin-bottom: 20px; font-size: 0.9em; color: #ccc;">Secure payment powered by PayPal</div>' +
-                        '<div id="modalPaypalButton" style="margin-bottom: 15px;"></div>' +
-                        '<button class="btn btn-secondary" onclick="closePayPalModal()" style="width: 100%;">Cancel</button>' +
+                '<div id="paypalModal" style="display: block; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; overflow-y: auto;">' +
+                    '<div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #1a1a2e; padding: 20px; border-radius: 10px; border: 2px solid #4ecdc4; max-width: 400px; text-align: center; width: 90%; max-height: 90vh; overflow-y: auto;">' +
+                        '<h3 style="color: #4ecdc4; margin-bottom: 15px;">Purchase Diamonds</h3>' +
+                        '<p style="margin-bottom: 15px; color: #fff; font-size: 0.9em;">You are about to purchase <span style="color: #ffd93d; font-weight: bold;">20 Diamonds 💎</span> for <span style="color: #4ecdc4; font-weight: bold;">$0.99 USD</span></p>' +
+                        '<div style="margin-bottom: 15px; font-size: 0.8em; color: #ccc;">Secure payment powered by PayPal</div>' +
+                        '<div id="modalPaypalButton" style="margin-bottom: 15px; min-height: 50px;"></div>' +
+                        '<button class="btn btn-secondary" onclick="closePayPalModal()" style="width: 100%; padding: 8px;">Cancel</button>' +
                     '</div>' +
                 '</div>';
             
@@ -430,7 +430,7 @@
                         color: 'blue',
                         shape: 'pill',
                         label: 'pay',
-                        height: 45,
+                        height: 40,
                         tagline: false
                     }
                 }).render('#modalPaypalButton');
