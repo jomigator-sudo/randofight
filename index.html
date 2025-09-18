@@ -370,112 +370,142 @@
                 }
             }
             
-            // Replace PayPal buttons with regular buttons that open modals
+            // Replace PayPal buttons with Shop buttons
             if (titleContainer) {
-                titleContainer.innerHTML = '<button class="btn btn-primary" onclick="showPayPalModal()">Buy 20 💎 ($0.99)</button>';
+                titleContainer.innerHTML = '<button class="btn btn-primary" onclick="showDiamondShop()">Shop</button>';
             }
             
             if (fighterContainer) {
-                fighterContainer.innerHTML = '<button class="btn btn-primary" onclick="showPayPalModal()">Buy 20 💎 ($0.99)</button>';
+                fighterContainer.innerHTML = '<button class="btn btn-primary" onclick="showDiamondShop()">Shop</button>';
             }
         }
 
-        // Show PayPal Modal
-        function showPayPalModal() {
-            var existingModal = document.getElementById('paypalModal');
+        // Show Diamond Shop Modal
+        function showDiamondShop() {
+            var existingModal = document.getElementById('diamondShopModal');
             if (existingModal) {
                 existingModal.remove();
             }
             
             var modalHTML = 
-                '<div id="paypalModal" style="display: block; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; overflow-y: auto;">' +
-                    '<div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #1a1a2e; padding: 20px; border-radius: 10px; border: 2px solid #4ecdc4; max-width: 400px; text-align: center; width: 90%; max-height: 90vh; overflow-y: auto;">' +
-                        '<h3 style="color: #4ecdc4; margin-bottom: 15px;">Purchase Diamonds</h3>' +
-                        '<p style="margin-bottom: 15px; color: #fff; font-size: 0.9em;">You are about to purchase <span style="color: #ffd93d; font-weight: bold;">20 Diamonds 💎</span> for <span style="color: #4ecdc4; font-weight: bold;">$0.99 USD</span></p>' +
-                        '<div style="margin-bottom: 15px; font-size: 0.8em; color: #ccc;">Secure payment powered by PayPal</div>' +
-                        '<div id="modalPaypalButton" style="margin-bottom: 15px; min-height: 50px;"></div>' +
-                        '<button class="btn btn-secondary" onclick="closePayPalModal()" style="width: 100%; padding: 8px;">Cancel</button>' +
+                '<div id="diamondShopModal" style="display: block; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; overflow-y: auto;">' +
+                    '<div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #1a1a2e; padding: 20px; border-radius: 10px; border: 2px solid #4ecdc4; max-width: 450px; text-align: center; width: 90%; max-height: 90vh; overflow-y: auto;">' +
+                        '<h3 style="color: #4ecdc4; margin-bottom: 20px;">Diamond Shop</h3>' +
+                        '<p style="margin-bottom: 20px; color: #ccc; font-size: 0.9em;">Purchase diamonds to unlock slots, fight without cooldown, and more!</p>' +
+                        '<div style="display: grid; gap: 15px; margin-bottom: 20px;">' +
+                            '<div class="diamond-pack" style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px; border: 1px solid #666;">' +
+                                '<div style="color: #ffd93d; font-size: 1.1em; font-weight: bold; margin-bottom: 5px;">20 💎</div>' +
+                                '<div style="color: #4ecdc4; font-size: 1.2em; margin-bottom: 10px;">$0.99</div>' +
+                                '<div id="pack1Button" style="min-height: 40px;"></div>' +
+                            '</div>' +
+                            '<div class="diamond-pack" style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px; border: 1px solid #666;">' +
+                                '<div style="color: #ffd93d; font-size: 1.1em; font-weight: bold; margin-bottom: 5px;">45 💎</div>' +
+                                '<div style="color: #4ecdc4; font-size: 1.2em; margin-bottom: 10px;">$1.99</div>' +
+                                '<div id="pack2Button" style="min-height: 40px;"></div>' +
+                            '</div>' +
+                            '<div class="diamond-pack" style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px; border: 1px solid #666; border-color: #ff6b6b;">' +
+                                '<div style="color: #ff6b6b; font-size: 0.8em; margin-bottom: 5px;">POPULAR</div>' +
+                                '<div style="color: #ffd93d; font-size: 1.1em; font-weight: bold; margin-bottom: 5px;">125 💎</div>' +
+                                '<div style="color: #4ecdc4; font-size: 1.2em; margin-bottom: 10px;">$4.99</div>' +
+                                '<div id="pack3Button" style="min-height: 40px;"></div>' +
+                            '</div>' +
+                            '<div class="diamond-pack" style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px; border: 1px solid #666; border-color: #ffd700;">' +
+                                '<div style="color: #ffd700; font-size: 0.8em; margin-bottom: 5px;">BEST VALUE</div>' +
+                                '<div style="color: #ffd93d; font-size: 1.1em; font-weight: bold; margin-bottom: 5px;">300 💎</div>' +
+                                '<div style="color: #4ecdc4; font-size: 1.2em; margin-bottom: 10px;">$9.99</div>' +
+                                '<div id="pack4Button" style="min-height: 40px;"></div>' +
+                            '</div>' +
+                        '</div>' +
+                        '<button class="btn btn-secondary" onclick="closeDiamondShop()" style="width: 100%; padding: 8px;">Close</button>' +
                     '</div>' +
                 '</div>';
             
             document.body.insertAdjacentHTML('beforeend', modalHTML);
             
-            // Initialize PayPal button in modal
+            // Initialize PayPal buttons for each pack
             if (typeof paypal !== 'undefined') {
-                paypal.Buttons({
-                    createOrder: function(data, actions) {
-                        return actions.order.create({
-                            purchase_units: [{
-                                amount: {
-                                    value: '0.99',
-                                    currency_code: 'USD'
-                                },
-                                description: '20 Diamonds for RandoFight'
-                            }]
-                        });
-                    },
-                    onApprove: function(data, actions) {
-                        return actions.order.capture().then(function(details) {
-                            console.log('PayPal payment successful:', details);
-                            closePayPalModal();
-                            processSuccessfulPayment(details);
-                        });
-                    },
-                    onError: function(err) {
-                        console.error('PayPal payment error:', err);
-                        alert('Payment failed. Please try again.');
-                        closePayPalModal();
-                    },
-                    onCancel: function(data) {
-                        console.log('PayPal payment cancelled:', data);
-                        closePayPalModal();
-                    },
-                    style: {
-                        color: 'blue',
-                        shape: 'pill',
-                        label: 'pay',
-                        height: 40,
-                        tagline: false
-                    }
-                }).render('#modalPaypalButton');
+                initShopPayPalButton('pack1Button', '0.99', 20);
+                initShopPayPalButton('pack2Button', '1.99', 45);
+                initShopPayPalButton('pack3Button', '4.99', 125);
+                initShopPayPalButton('pack4Button', '9.99', 300);
             } else {
                 // Fallback if PayPal not available
-                document.getElementById('modalPaypalButton').innerHTML = 
-                    '<button class="btn btn-primary" onclick="fallbackPurchase()" style="width: 100%;">Purchase (Test Mode)</button>';
+                document.getElementById('pack1Button').innerHTML = '<button class="btn btn-primary" onclick="fallbackPurchase(20)" style="width: 100%; font-size: 0.9em;">Purchase (Test)</button>';
+                document.getElementById('pack2Button').innerHTML = '<button class="btn btn-primary" onclick="fallbackPurchase(45)" style="width: 100%; font-size: 0.9em;">Purchase (Test)</button>';
+                document.getElementById('pack3Button').innerHTML = '<button class="btn btn-primary" onclick="fallbackPurchase(125)" style="width: 100%; font-size: 0.9em;">Purchase (Test)</button>';
+                document.getElementById('pack4Button').innerHTML = '<button class="btn btn-primary" onclick="fallbackPurchase(300)" style="width: 100%; font-size: 0.9em;">Purchase (Test)</button>';
             }
         }
 
-        function closePayPalModal() {
-            var modal = document.getElementById('paypalModal');
+        function initShopPayPalButton(containerId, price, diamonds) {
+            paypal.Buttons({
+                createOrder: function(data, actions) {
+                    return actions.order.create({
+                        purchase_units: [{
+                            amount: {
+                                value: price,
+                                currency_code: 'USD'
+                            },
+                            description: diamonds + ' Diamonds for RandoFight'
+                        }]
+                    });
+                },
+                onApprove: function(data, actions) {
+                    return actions.order.capture().then(function(details) {
+                        console.log('PayPal payment successful:', details);
+                        closeDiamondShop();
+                        processSuccessfulPayment(details, diamonds);
+                    });
+                },
+                onError: function(err) {
+                    console.error('PayPal payment error:', err);
+                    alert('Payment failed. Please try again.');
+                },
+                onCancel: function(data) {
+                    console.log('PayPal payment cancelled:', data);
+                },
+                style: {
+                    color: 'blue',
+                    shape: 'pill',
+                    label: 'pay',
+                    height: 35,
+                    tagline: false
+                }
+            }).render('#' + containerId);
+        }
+
+        function closeDiamondShop() {
+            var modal = document.getElementById('diamondShopModal');
             if (modal) {
                 modal.remove();
             }
         }
 
-        function fallbackPurchase() {
-            closePayPalModal();
-            gameState.diamonds += 20;
-            saveToSupabase();
-            updateDiamondDisplay();
-            updateFightStatus();
-            alert('20 Diamonds purchased! (Test Mode - PayPal not loaded)');
-        }
-
-        function processSuccessfulPayment(paymentDetails) {
+        function processSuccessfulPayment(paymentDetails, diamonds) {
             console.log('Processing PayPal payment:', paymentDetails);
             
-            gameState.diamonds += 20;
+            gameState.diamonds += diamonds || 20;
             saveToSupabase();
             updateDiamondDisplay();
             updateFightStatus();
-            alert('Payment successful! 20 Diamonds have been added to your account.');
+            alert('Payment successful! ' + (diamonds || 20) + ' Diamonds have been added to your account.');
+        }
+
+        // Fallback purchase function for when PayPal is not available
+        function fallbackPurchase(diamonds) {
+            closeDiamondShop();
+            gameState.diamonds += diamonds || 20;
+            saveToSupabase();
+            updateDiamondDisplay();
+            updateFightStatus();
+            alert((diamonds || 20) + ' Diamonds purchased! (Test Mode - PayPal not loaded)');
         }
 
         // Fallback purchase function for when PayPal is not available
         function purchaseDiamonds() {
             if (typeof paypal !== 'undefined') {
-                console.log('PayPal is available, use PayPal buttons');
-                alert('Please use the PayPal button to purchase diamonds.');
+                console.log('PayPal is available, opening diamond shop');
+                showDiamondShop();
             } else {
                 console.log('PayPal not available, using test purchase');
                 gameState.diamonds += 20;
@@ -840,28 +870,52 @@
             }
             
             // Change the cloud save message to local save for guests
-            var cloudSaveMessage = document.querySelector('[style*="background: rgba(34, 197, 94, 0.2)"]');
+            var cloudSaveMessage = document.querySelector('div[style*="background: rgba(34, 197, 94, 0.2)"]');
             if (cloudSaveMessage) {
                 cloudSaveMessage.innerHTML = '<p style="color: #f59e0b; font-size: 0.9em; margin: 0;">⚠️ <strong>Playing as Guest:</strong> Your progress is saved locally. Create an account to sync across devices!</p>';
                 cloudSaveMessage.style.background = 'rgba(245, 158, 11, 0.2)';
                 cloudSaveMessage.style.borderColor = '#f59e0b';
             }
             
-            // Update logout button to show "Create Account" for guests
-            var logoutBtn = document.querySelector('[onclick="logoutUser()"]');
-            if (logoutBtn) {
-                logoutBtn.textContent = 'Create Account';
-                logoutBtn.onclick = function() { 
-                    if (confirm('Creating an account will sync your current progress to the cloud. Continue?')) {
-                        showSignupFormWithData();
+            // Find and update the logout button - try multiple selectors
+            var logoutBtn = document.querySelector('button[onclick="logoutUser()"]') || 
+                           document.querySelector('.btn-secondary[onclick="logoutUser()"]') ||
+                           document.querySelector('button:contains("Logout")');
+            
+            // If we can't find it by onclick, find it by text content
+            if (!logoutBtn) {
+                var allButtons = document.querySelectorAll('button');
+                for (var i = 0; i < allButtons.length; i++) {
+                    if (allButtons[i].textContent.includes('Logout')) {
+                        logoutBtn = allButtons[i];
+                        break;
                     }
-                };
+                }
+            }
+            
+            if (logoutBtn) {
+                console.log('Found logout button, updating for guest mode');
+                logoutBtn.textContent = 'Create Account';
+                // Remove the old onclick attribute and add new one
+                logoutBtn.removeAttribute('onclick');
+                logoutBtn.addEventListener('click', createAccountFromGuest);
+                
+                // Also update the attribute as backup
+                logoutBtn.setAttribute('onclick', 'createAccountFromGuest()');
+            } else {
+                console.log('Could not find logout button to update');
             }
             
             // Initialize PayPal buttons when title screen is shown
             setTimeout(function() {
                 initPayPalButtons();
             }, 100);
+        }
+
+        function createAccountFromGuest() {
+            if (confirm('Creating an account will sync your current progress to the cloud. Continue?')) {
+                showSignupFormWithData();
+            }
         }
 
         function showSignupFormWithData() {
@@ -871,6 +925,12 @@
             // Add a notice about data transfer
             var signupForm = document.getElementById('signupForm');
             if (signupForm) {
+                // Remove any existing notices first
+                var existingNotice = signupForm.querySelector('[style*="background: rgba(34, 197, 94"]');
+                if (existingNotice) {
+                    existingNotice.remove();
+                }
+                
                 var notice = document.createElement('div');
                 notice.innerHTML = '<div style="background: rgba(34, 197, 94, 0.2); border: 1px solid #22c55e; border-radius: 5px; padding: 10px; margin-bottom: 15px;">' +
                     '<p style="color: #22c55e; font-size: 0.9em; margin: 0;">📤 <strong>Data Transfer:</strong> Your current progress will be saved to your new account!</p>' +
