@@ -1785,18 +1785,24 @@
         }
 
         function simulateFight(player, opponent) {
-            var round = 1;
-            var maxRounds = 50;
+            var turnCount = 1;
+            var maxTurns = 100;
             
-            function fightRound() {
-                if (round > maxRounds || player.currentHp <= 0 || opponent.currentHp <= 0) {
+            // Arrays for varied combat text
+            var attackVerbs = ['strikes', 'slashes', 'punches', 'kicks', 'smashes', 'hammers', 'pounds', 'batters', 'thrashes', 'wallops'];
+            var dodgeTexts = ['sidesteps the attack', 'ducks under the blow', 'weaves away', 'rolls to safety', 'leaps back', 'twists away', 'slips aside', 'dances away from danger', 'evades with grace', 'narrowly avoids the strike'];
+            var critTexts = ['finds a weak spot', 'lands a devastating blow', 'strikes with perfect form', 'connects with brutal force', 'delivers a crushing hit', 'finds an opening', 'strikes with deadly precision', 'unleashes their full power'];
+            var weaponHits = ['blade cuts deep', 'weapon finds its mark', 'steel bites flesh', 'iron meets bone', 'weapon strikes true', 'blade slices through defenses'];
+            var bodyParts = ['chest', 'shoulder', 'arm', 'leg', 'ribs', 'side', 'back'];
+            var painSounds = ['grunts in pain', 'winces', 'staggers', 'reels back', 'stumbles', 'cries out', 'gasps'];
+            
+            function fightTurn() {
+                if (turnCount > maxTurns || player.currentHp <= 0 || opponent.currentHp <= 0) {
                     endCombat();
                     return;
                 }
                 
-                addToFightLog('<strong>Round ' + round + '</strong>');
-                
-                // Player attacks
+                // Player attacks first
                 if (player.currentHp > 0) {
                     performAttack(player, opponent, 'player');
                 }
@@ -1807,19 +1813,22 @@
                     return;
                 }
                 
-                // Opponent attacks
-                if (opponent.currentHp > 0) {
-                    performAttack(opponent, player, 'opponent');
-                }
-                
-                // Check if player is defeated
-                if (player.currentHp <= 0) {
-                    setTimeout(endCombat, 1000);
-                    return;
-                }
-                
-                round++;
-                setTimeout(fightRound, 2000);
+                // Small delay between attacks
+                setTimeout(function() {
+                    // Opponent attacks
+                    if (opponent.currentHp > 0) {
+                        performAttack(opponent, player, 'opponent');
+                    }
+                    
+                    // Check if player is defeated
+                    if (player.currentHp <= 0) {
+                        setTimeout(endCombat, 1000);
+                        return;
+                    }
+                    
+                    turnCount++;
+                    setTimeout(fightTurn, 1500);
+                }, 800);
             }
             
             function performAttack(attacker, defender, attackerType) {
@@ -1830,32 +1839,91 @@
                     baseDamage += attacker.equipment.weapon.power || 0;
                 }
                 
-                // Random damage variation (±20%)
-                var damage = Math.floor(baseDamage * (0.8 + Math.random() * 0.4));
+                // Random damage variation (±25%)
+                var damage = Math.floor(baseDamage * (0.75 + Math.random() * 0.5));
                 
-                // Dodge chance based on agility
-                var dodgeChance = (defender.stats.agility - 1) * 5;
+                // Dodge chance based on agility (fixed and working)
+                var dodgeChance = Math.min(25, (defender.stats.agility - 1) * 4); // Cap at 25% dodge
                 if (Math.random() * 100 < dodgeChance) {
-                    addToFightLog('<span class="dodge">' + defender.name + ' dodges ' + attacker.name + '\'s attack!</span>');
+                    var dodgeText = dodgeTexts[Math.floor(Math.random() * dodgeTexts.length)];
+                    addToFightLog('<span class="dodge">' + defender.name + ' ' + dodgeText + '!</span>');
                     return;
                 }
                 
                 // Critical hit chance based on luck
-                var critChance = (attacker.stats.luck - 1) * 3;
+                var critChance = Math.min(20, (attacker.stats.luck - 1) * 3); // Cap at 20%
                 var isCrit = Math.random() * 100 < critChance;
-                if (isCrit) {
-                    damage = Math.floor(damage * 1.5);
-                    addToFightLog('<span class="critical">' + attacker.name + ' lands a critical hit!</span>');
-                }
                 
                 // Damage reduction based on toughness
-                var damageReduction = (defender.stats.toughness - 1) * 3;
+                var damageReduction = Math.min(50, (defender.stats.toughness - 1) * 3); // Cap at 50%
                 damage = Math.floor(damage * (1 - damageReduction / 100));
+                
+                // Generate varied attack text
+                var attackVerb = attackVerbs[Math.floor(Math.random() * attackVerbs.length)];
+                var bodyPart = bodyParts[Math.floor(Math.random() * bodyParts.length)];
+                var painSound = painSounds[Math.floor(Math.random() * painSounds.length)];
+                
+                var attackText = '';
+                
+                if (isCrit) {
+                    damage = Math.floor(damage * 1.75);
+                    var critText = critTexts[Math.floor(Math.random() * critTexts.length)];
+                    attackText = '<span class="critical">' + attacker.name + ' ' + critText + ' and ' + attackVerb + ' ' + defender.name + "'s " + bodyPart + ' for ' + damage + ' critical damage!</span>';
+                } else if (attacker.equipment && attacker.equipment.weapon && Math.random() < 0.3) {
+                    var weaponHit = weaponHits[Math.floor(Math.random() * weaponHits.length)];
+                    attackText = attacker.name + "'s " + weaponHit + ' - ' + defender.name + ' ' + painSound + ' as they take <span class="damage">' + damage + ' damage</span>!';
+                } else {
+                    // Regular attack variations
+                    var attackVariations = [
+                        attacker.name + ' ' + attackVerb + ' ' + defender.name + "'s " + bodyPart + ' for <span class="damage">' + damage + ' damage</span>!',
+                        attacker.name + ' lands a solid hit on ' + defender.name + "'s " + bodyPart + ' dealing <span class="damage">' + damage + ' damage</span>!',
+                        defender.name + ' ' + painSound + ' as ' + attacker.name + "'s attack connects for <span class=\"damage\">" + damage + ' damage</span>!',
+                        attacker.name + ' catches ' + defender.name + ' off-guard, dealing <span class="damage">' + damage + ' damage</span> to their ' + bodyPart + '!'
+                    ];
+                    attackText = attackVariations[Math.floor(Math.random() * attackVariations.length)];
+                }
                 
                 // Apply damage
                 defender.currentHp = Math.max(0, defender.currentHp - damage);
                 
-                addToFightLog('<span class="damage">' + attacker.name + ' deals ' + damage + ' damage to ' + defender.name + '!</span>');
+                addToFightLog(attackText);
+                
+                // Special attack chance for high-level fighters (10% chance if level >= 10)
+                if (attacker.level >= 10 && attacker.specialAttack && Math.random() < 0.1) {
+                    setTimeout(function() {
+                        performSpecialAttack(attacker, defender, attackerType);
+                    }, 500);
+                }
+                
+                // Update HP bars
+                if (attackerType === 'player') {
+                    var opponentHpPercent = (opponent.currentHp / opponent.maxHp) * 100;
+                    document.getElementById('player2HP').style.width = opponentHpPercent + '%';
+                    document.getElementById('player2HPText').textContent = Math.floor(opponent.currentHp) + '/' + opponent.maxHp;
+                } else {
+                    var playerHpPercent = (player.currentHp / player.maxHp) * 100;
+                    document.getElementById('player1HP').style.width = playerHpPercent + '%';
+                    document.getElementById('player1HPText').textContent = Math.floor(player.currentHp) + '/' + player.maxHp;
+                }
+            }
+            
+            function performSpecialAttack(attacker, defender, attackerType) {
+                if (defender.currentHp <= 0) return; // Don't attack if already defeated
+                
+                var specialDamage = Math.floor(attacker.level * 8 + ((attacker.stats.strength - 1) * 4 + 15));
+                var damageReduction = Math.min(50, (defender.stats.toughness - 1) * 3);
+                specialDamage = Math.floor(specialDamage * (1 - damageReduction / 100));
+                
+                defender.currentHp = Math.max(0, defender.currentHp - specialDamage);
+                
+                var specialTexts = [
+                    attacker.name + ' channels their energy and unleashes <span class="special">' + attacker.specialAttack.name + '</span> for ' + specialDamage + ' devastating damage!',
+                    'With a battle cry, ' + attacker.name + ' executes their signature move <span class="special">' + attacker.specialAttack.name + '</span> dealing ' + specialDamage + ' damage!',
+                    attacker.name + ' focuses their power and strikes with <span class="special">' + attacker.specialAttack.name + '</span> - ' + defender.name + ' reels from the ' + specialDamage + ' damage!',
+                    'The air crackles with energy as ' + attacker.name + ' performs <span class="special">' + attacker.specialAttack.name + '</span> for ' + specialDamage + ' massive damage!'
+                ];
+                
+                addToFightLog(specialTexts[Math.floor(Math.random() * specialTexts.length)]);
                 
                 // Update HP bars
                 if (attackerType === 'player') {
@@ -1873,7 +1941,13 @@
                 var playerWon = player.currentHp > 0;
                 
                 if (playerWon) {
-                    addToFightLog('<span class="victory">🎉 ' + player.name + ' is victorious! 🎉</span>');
+                    var victoryTexts = [
+                        '<span class="victory">🎉 ' + player.name + ' emerges victorious from the battle! 🎉</span>',
+                        '<span class="victory">🎉 Victory belongs to ' + player.name + '! 🎉</span>',
+                        '<span class="victory">🎉 ' + player.name + ' stands triumphant over their fallen opponent! 🎉</span>',
+                        '<span class="victory">🎉 ' + player.name + ' proves their superiority in combat! 🎉</span>'
+                    ];
+                    addToFightLog(victoryTexts[Math.floor(Math.random() * victoryTexts.length)]);
                     
                     // Award experience and diamonds
                     var expGained = Math.floor(20 + opponent.level * 5);
@@ -1891,12 +1965,18 @@
                     }
                     
                 } else {
-                    addToFightLog('<span class="defeat">💀 ' + player.name + ' has been defeated! 💀</span>');
+                    var defeatTexts = [
+                        '<span class="defeat">💀 ' + player.name + ' has been defeated in battle! 💀</span>',
+                        '<span class="defeat">💀 ' + player.name + ' falls to their opponent! 💀</span>',
+                        '<span class="defeat">💀 ' + opponent.name + ' proves too strong for ' + player.name + '! 💀</span>',
+                        '<span class="defeat">💀 ' + player.name + ' fought valiantly but could not prevail! 💀</span>'
+                    ];
+                    addToFightLog(defeatTexts[Math.floor(Math.random() * defeatTexts.length)]);
                     
                     // Small consolation reward
                     var consolationExp = Math.floor(5 + opponent.level);
                     player.exp += consolationExp;
-                    addToFightLog('<span class="exp-gain">Gained ' + consolationExp + ' consolation EXP!</span>');
+                    addToFightLog('<span class="exp-gain">Gained ' + consolationExp + ' consolation EXP for the effort!</span>');
                 }
                 
                 // Set cooldown (5 minutes)
@@ -1925,18 +2005,23 @@
                 fighter.stats.luck += Math.floor(Math.random() * 2) + 1;
                 fighter.stats.speed += Math.floor(Math.random() * 2) + 1;
                 
-                addToFightLog('<span class="level-up">🔥 ' + fighter.name + ' reached Level ' + fighter.level + '! 🔥</span>');
+                var levelUpTexts = [
+                    '<span class="level-up">🔥 ' + fighter.name + ' has grown stronger and reached Level ' + fighter.level + '! 🔥</span>',
+                    '<span class="level-up">🔥 Through combat experience, ' + fighter.name + ' advances to Level ' + fighter.level + '! 🔥</span>',
+                    '<span class="level-up">🔥 ' + fighter.name + ' feels their power increase as they reach Level ' + fighter.level + '! 🔥</span>'
+                ];
+                addToFightLog(levelUpTexts[Math.floor(Math.random() * levelUpTexts.length)]);
                 
                 // Unlock special attack at level 10
                 if (fighter.level === 10) {
                     fighter.specialAttack = {
                         name: specialAttacks[Math.floor(Math.random() * specialAttacks.length)]
                     };
-                    addToFightLog('<span class="special">✨ ' + fighter.name + ' learned ' + fighter.specialAttack.name + '! ✨</span>');
+                    addToFightLog('<span class="special">✨ ' + fighter.name + ' has mastered the art of ' + fighter.specialAttack.name + '! ✨</span>');
                 }
             }
             
-            fightRound();
+            fightTurn();
         }
 
         function endFight() {
