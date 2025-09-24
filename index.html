@@ -1952,6 +1952,21 @@
 
         function updateLeaderboard() {
     var content = document.getElementById('leaderboardContent');
+    
+    // Check if user is a guest
+    if (gameState.currentUser && gameState.currentUser.isGuest) {
+        content.innerHTML = 
+            '<div style="text-align: center; padding: 40px 20px;">' +
+                '<div style="background: rgba(245, 158, 11, 0.2); border: 2px solid #f59e0b; border-radius: 10px; padding: 30px; max-width: 500px; margin: 0 auto;">' +
+                    '<h3 style="color: #f59e0b; margin-bottom: 20px;">📊 Global Leaderboard</h3>' +
+                    '<p style="color: #ccc; margin-bottom: 20px; font-size: 1.1em;">You\'re playing as a guest!</p>' +
+                    '<p style="color: #888; margin-bottom: 25px;">Create an account to enter the leaderboards and compete with players worldwide. Your current progress will be saved!</p>' +
+                    '<button class="btn btn-primary" onclick="createAccountFromGuest()" style="padding: 12px 30px; font-size: 1.1em;">Create Account</button>' +
+                '</div>' +
+            '</div>';
+        return;
+    }
+    
     content.innerHTML = '<div style="text-align: center; padding: 20px; color: #888;">Loading leaderboard...</div>';
     
     fetch('https://pmsbxvqavkoboxyhqjcc.supabase.co/rest/v1/game_data?select=fighters', {
@@ -1969,6 +1984,7 @@
     })
     .then(function(allPlayers) {
         var leaderboard = [];
+        var currentUserFighters = [];
         
         // Collect all fighters from all players
         for (var i = 0; i < allPlayers.length; i++) {
@@ -1977,11 +1993,20 @@
                 for (var j = 0; j < playerData.fighters.length; j++) {
                     var fighter = playerData.fighters[j];
                     if (fighter && fighter.name) {
-                        leaderboard.push({
+                        var fighterEntry = {
                             name: fighter.name,
                             wins: fighter.wins || 0,
-                            level: fighter.level || 1
-                        });
+                            level: fighter.level || 1,
+                            isCurrentUser: false
+                        };
+                        
+                        // Check if this fighter belongs to the current user
+                        if (gameState.currentUser && playerData.user_id === gameState.currentUser.user_id) {
+                            fighterEntry.isCurrentUser = true;
+                            currentUserFighters.push(fighterEntry.name);
+                        }
+                        
+                        leaderboard.push(fighterEntry);
                     }
                 }
             }
@@ -2010,9 +2035,13 @@
             var rank = i + 1;
             var medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : rank + '.';
             
+            // Highlight current user's fighters
+            var highlightStyle = entry.isCurrentUser ? ' style="background: rgba(78, 205, 196, 0.1); border-radius: 5px;"' : '';
+            var yourFighterTag = entry.isCurrentUser ? ' <span style="color: #4ecdc4; font-size: 0.8em;">(You)</span>' : '';
+            
             html += 
-                '<div class="leaderboard-entry">' +
-                    '<span>' + medal + ' ' + entry.name + ' (Level ' + entry.level + ')</span>' +
+                '<div class="leaderboard-entry"' + highlightStyle + '>' +
+                    '<span>' + medal + ' ' + entry.name + yourFighterTag + ' (Level ' + entry.level + ')</span>' +
                     '<span>' + entry.wins + ' wins</span>' +
                 '</div>';
         }
