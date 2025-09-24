@@ -1951,48 +1951,83 @@
         }
 
         function updateLeaderboard() {
-            var content = document.getElementById('leaderboardContent');
-            var leaderboard = [];
-
-            for (var i = 0; i < gameState.fighters.length; i++) {
-                var fighter = gameState.fighters[i];
-                if (fighter) {
-                    leaderboard.push({
-                        name: fighter.name,
-                        wins: fighter.wins,
-                        level: fighter.level
-                    });
+    var content = document.getElementById('leaderboardContent');
+    content.innerHTML = '<div style="text-align: center; padding: 20px; color: #888;">Loading leaderboard...</div>';
+    
+    fetch('https://pmsbxvqavkoboxyhqjcc.supabase.co/rest/v1/game_data?select=fighters', {
+        method: 'GET',
+        headers: {
+            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBtc2J4dnFhdmtvYm94eWhxamNjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc2NjA2OTMsImV4cCI6MjA3MzIzNjY5M30.9-0-glSFo66fOktfR6ineO8J4Ra8RLVXwytCb9jca9U',
+            'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBtc2J4dnFhdmtvYm94eWhxamNjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc2NjA2OTMsImV4cCI6MjA3MzIzNjY5M30.9-0-glSFo66fOktfR6ineO8J4Ra8RLVXwytCb9jca9U'
+        }
+    })
+    .then(function(response) {
+        if (!response.ok) {
+            throw new Error('Failed to fetch leaderboard');
+        }
+        return response.json();
+    })
+    .then(function(allPlayers) {
+        var leaderboard = [];
+        
+        // Collect all fighters from all players
+        for (var i = 0; i < allPlayers.length; i++) {
+            var playerData = allPlayers[i];
+            if (playerData.fighters && Array.isArray(playerData.fighters)) {
+                for (var j = 0; j < playerData.fighters.length; j++) {
+                    var fighter = playerData.fighters[j];
+                    if (fighter && fighter.name) {
+                        leaderboard.push({
+                            name: fighter.name,
+                            wins: fighter.wins || 0,
+                            level: fighter.level || 1
+                        });
+                    }
                 }
             }
-
-            leaderboard.sort(function(a, b) {
-                return b.wins - a.wins;
-            });
-            
-            if (leaderboard.length === 0) {
-                content.innerHTML = 
-                    '<div style="text-align: center; padding: 20px; color: #888;">' +
-                        '<p>No fighters yet!</p>' +
-                        '<p>Create some fighters and start winning battles to appear on the leaderboard!</p>' +
-                    '</div>';
-                return;
-            }
-            
-            var html = '';
-            for (var i = 0; i < leaderboard.length; i++) {
-                var entry = leaderboard[i];
-                var rank = i + 1;
-                var medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : rank + '.';
-                
-                html += 
-                    '<div class="leaderboard-entry">' +
-                        '<span>' + medal + ' ' + entry.name + ' (Level ' + entry.level + ')</span>' +
-                        '<span>' + entry.wins + ' wins</span>' +
-                    '</div>';
-            }
-            
-            content.innerHTML = html;
         }
+        
+        // Sort by wins (descending)
+        leaderboard.sort(function(a, b) {
+            return b.wins - a.wins;
+        });
+        
+        if (leaderboard.length === 0) {
+            content.innerHTML = 
+                '<div style="text-align: center; padding: 20px; color: #888;">' +
+                    '<p>No fighters yet!</p>' +
+                    '<p>Be the first to create a fighter!</p>' +
+                '</div>';
+            return;
+        }
+        
+        // Show top 50 fighters
+        var html = '';
+        var displayCount = Math.min(50, leaderboard.length);
+        
+        for (var i = 0; i < displayCount; i++) {
+            var entry = leaderboard[i];
+            var rank = i + 1;
+            var medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : rank + '.';
+            
+            html += 
+                '<div class="leaderboard-entry">' +
+                    '<span>' + medal + ' ' + entry.name + ' (Level ' + entry.level + ')</span>' +
+                    '<span>' + entry.wins + ' wins</span>' +
+                '</div>';
+        }
+        
+        content.innerHTML = html;
+    })
+    .catch(function(error) {
+        console.error('Leaderboard error:', error);
+        content.innerHTML = 
+            '<div style="text-align: center; padding: 20px; color: #888;">' +
+                '<p>Failed to load leaderboard</p>' +
+                '<p>Please check your connection and try again</p>' +
+            '</div>';
+    });
+}
 
         function startFight(player, opponent) {
             hideAll();
