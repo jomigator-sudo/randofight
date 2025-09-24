@@ -1883,7 +1883,7 @@
                         
                         if (fighter && fighter.level >= minLevel && fighter.level <= maxLevel) {
                             var opponent = {
-                                name: fighter.name + '_' + playerData.user_id.slice(-4),
+                                name: fighter.name,
                                 birthplace: fighter.birthplace || 'Unknown',
                                 level: fighter.level,
                                 hp: fighter.maxHp || (100 + (fighter.level - 1) * 20),
