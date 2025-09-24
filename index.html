@@ -1785,137 +1785,157 @@
         }
 
         function findFight() {
-            var now = Date.now();
-            if (now < gameState.fightCooldownEnd) {
-                alert('You must rest before fighting again!');
-                return;
-            }
-            if (!gameState.currentFighter) {
-                alert('No fighter selected!');
-                return;
-            }
-            
-            console.log('Looking for opponents for level', gameState.currentFighter.level, 'fighter...');
-            findOpponentFromSupabase(gameState.currentFighter.level)
-                .then(function(opponent) {
-                    if (opponent) {
-                        console.log('Found real player opponent:', opponent.name, 'Level', opponent.level);
-                        startFight(gameState.currentFighter, opponent);
-                    } else {
-                        console.log('No real players found, generating AI opponent');
-                        var botOpponent = generateOpponent(gameState.currentFighter.level);
-                        startFight(gameState.currentFighter, botOpponent);
-                    }
-                })
-                .catch(function(error) {
-                    console.error('Matchmaking error, using AI opponent:', error);
+    var now = Date.now();
+    if (now < gameState.fightCooldownEnd) {
+        alert('You must rest before fighting again!');
+        return;
+    }
+    if (!gameState.currentFighter) {
+        alert('No fighter selected!');
+        return;
+    }
+    
+    // Levels 1-5 always fight bots
+    if (gameState.currentFighter.level <= 5) {
+        console.log('Level', gameState.currentFighter.level, 'fighter - matching with bot opponent');
+        var botOpponent = generateOpponent(gameState.currentFighter.level);
+        startFight(gameState.currentFighter, botOpponent);
+    } else {
+        // Level 6+ can fight real players
+        console.log('Looking for real opponents for level', gameState.currentFighter.level, 'fighter...');
+        findOpponentFromSupabase(gameState.currentFighter.level)
+            .then(function(opponent) {
+                if (opponent) {
+                    console.log('Found real player opponent:', opponent.name, 'Level', opponent.level);
+                    startFight(gameState.currentFighter, opponent);
+                } else {
+                    console.log('No real players found, generating AI opponent');
                     var botOpponent = generateOpponent(gameState.currentFighter.level);
                     startFight(gameState.currentFighter, botOpponent);
-                });
-        }
-
-        function fightWithoutRest() {
-            if (gameState.diamonds <= 0) {
-                alert('You need Diamonds to fight without rest!');
-                return;
-            }
-            gameState.diamonds--;
-            saveToSupabase();
-            updateDiamondDisplay();
-            
-            console.log('Looking for opponents for diamond fight...');
-            findOpponentFromSupabase(gameState.currentFighter.level)
-                .then(function(opponent) {
-                    if (opponent) {
-                        console.log('Found real player opponent for diamond fight:', opponent.name);
-                        startFight(gameState.currentFighter, opponent);
-                    } else {
-                        console.log('No real players found for diamond fight, generating AI opponent');
-                        var botOpponent = generateOpponent(gameState.currentFighter.level);
-                        startFight(gameState.currentFighter, botOpponent);
-                    }
-                })
-                .catch(function(error) {
-                    console.error('Diamond fight matchmaking error, using AI opponent:', error);
-                    var botOpponent = generateOpponent(gameState.currentFighter.level);
-                    startFight(gameState.currentFighter, botOpponent);
-                });
-        }
-
-        function findOpponentFromSupabase(playerLevel) {
-            var minLevel = Math.max(1, playerLevel - 3);
-            var maxLevel = playerLevel + 3;
-            var currentUserId = getUserId();
-            
-            console.log('Searching for opponents between level', minLevel, 'and', maxLevel);
-            
-            return fetch(SUPABASE_URL + '/rest/v1/game_data?select=*', {
-                method: 'GET',
-                headers: {
-                    'apikey': SUPABASE_ANON_KEY,
-                    'Authorization': 'Bearer ' + SUPABASE_ANON_KEY
                 }
-            })
-            .then(function(response) {
-                if (!response.ok) {
-                    throw new Error('Failed to fetch opponents: ' + response.status);
-                }
-                return response.json();
-            })
-            .then(function(allPlayers) {
-                console.log('Found', allPlayers.length, 'total players in database');
-                
-                var validOpponents = [];
-                
-                for (var i = 0; i < allPlayers.length; i++) {
-                    var playerData = allPlayers[i];
-                    
-                    if (playerData.user_id === currentUserId) {
-                        continue;
-                    }
-                    
-                    if (!playerData.fighters || !Array.isArray(playerData.fighters)) {
-                        continue;
-                    }
-                    
-                    for (var j = 0; j < playerData.fighters.length; j++) {
-                        var fighter = playerData.fighters[j];
-                        
-                        if (fighter && fighter.level >= minLevel && fighter.level <= maxLevel) {
-                            var opponent = {
-                                name: fighter.name,
-                                birthplace: fighter.birthplace || 'Unknown',
-                                level: fighter.level,
-                                hp: fighter.maxHp || (100 + (fighter.level - 1) * 20),
-                                maxHp: fighter.maxHp || (100 + (fighter.level - 1) * 20),
-                                currentHp: fighter.maxHp || (100 + (fighter.level - 1) * 20),
-                                wins: fighter.wins || 0,
-                                stats: fighter.stats || { strength: 1, toughness: 1, agility: 1, luck: 1, speed: 1 },
-                                equipment: fighter.equipment || { weapon: { name: 'Basic Weapon', rarity: 'common' } },
-                                specialAttack: fighter.specialAttack || null,
-                                isRealPlayer: true,
-                                originalUserId: playerData.user_id
-                            };
-                            
-                            validOpponents.push(opponent);
-                        }
-                    }
-                }
-                
-                console.log('Found', validOpponents.length, 'valid opponents');
-                
-                if (validOpponents.length === 0) {
-                    return null;
-                }
-                
-                var randomIndex = Math.floor(Math.random() * validOpponents.length);
-                return validOpponents[randomIndex];
             })
             .catch(function(error) {
-                console.error('Error finding opponents:', error);
-                return null;
+                console.error('Matchmaking error, using AI opponent:', error);
+                var botOpponent = generateOpponent(gameState.currentFighter.level);
+                startFight(gameState.currentFighter, botOpponent);
             });
+    }
+}
+
+function fightWithoutRest() {
+    if (gameState.diamonds <= 0) {
+        alert('You need Diamonds to fight without rest!');
+        return;
+    }
+    gameState.diamonds--;
+    saveToSupabase();
+    updateDiamondDisplay();
+    
+    // Same logic for diamond fights - levels 1-5 fight bots only
+    if (gameState.currentFighter.level <= 5) {
+        console.log('Level', gameState.currentFighter.level, 'diamond fight - matching with bot opponent');
+        var botOpponent = generateOpponent(gameState.currentFighter.level);
+        startFight(gameState.currentFighter, botOpponent);
+    } else {
+        console.log('Looking for opponents for diamond fight...');
+        findOpponentFromSupabase(gameState.currentFighter.level)
+            .then(function(opponent) {
+                if (opponent) {
+                    console.log('Found real player opponent for diamond fight:', opponent.name);
+                    startFight(gameState.currentFighter, opponent);
+                } else {
+                    console.log('No real players found for diamond fight, generating AI opponent');
+                    var botOpponent = generateOpponent(gameState.currentFighter.level);
+                    startFight(gameState.currentFighter, botOpponent);
+                }
+            })
+            .catch(function(error) {
+                console.error('Diamond fight matchmaking error, using AI opponent:', error);
+                var botOpponent = generateOpponent(gameState.currentFighter.level);
+                startFight(gameState.currentFighter, botOpponent);
+            });
+    }
+}
+
+        function findOpponentFromSupabase(playerLevel) {
+    // Only look for real players if the current fighter is level 6+
+    if (playerLevel <= 5) {
+        return Promise.resolve(null);
+    }
+    
+    var minLevel = Math.max(6, playerLevel - 3);  // Minimum level 6 for PvP
+    var maxLevel = playerLevel + 3;
+    var currentUserId = getUserId();
+    
+    console.log('Searching for opponents between level', minLevel, 'and', maxLevel);
+    
+    return fetch(SUPABASE_URL + '/rest/v1/game_data?select=*', {
+        method: 'GET',
+        headers: {
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': 'Bearer ' + SUPABASE_ANON_KEY
         }
+    })
+    .then(function(response) {
+        if (!response.ok) {
+            throw new Error('Failed to fetch opponents: ' + response.status);
+        }
+        return response.json();
+    })
+    .then(function(allPlayers) {
+        console.log('Found', allPlayers.length, 'total players in database');
+        
+        var validOpponents = [];
+        
+        for (var i = 0; i < allPlayers.length; i++) {
+            var playerData = allPlayers[i];
+            
+            if (playerData.user_id === currentUserId) {
+                continue;
+            }
+            
+            if (!playerData.fighters || !Array.isArray(playerData.fighters)) {
+                continue;
+            }
+            
+            for (var j = 0; j < playerData.fighters.length; j++) {
+                var fighter = playerData.fighters[j];
+                
+                if (fighter && fighter.level >= minLevel && fighter.level <= maxLevel) {
+                    var opponent = {
+                        name: fighter.name,  // Removed the suffix as requested
+                        birthplace: fighter.birthplace || 'Unknown',
+                        level: fighter.level,
+                        hp: fighter.maxHp || (100 + (fighter.level - 1) * 20),
+                        maxHp: fighter.maxHp || (100 + (fighter.level - 1) * 20),
+                        currentHp: fighter.maxHp || (100 + (fighter.level - 1) * 20),
+                        wins: fighter.wins || 0,
+                        stats: fighter.stats || { strength: 1, toughness: 1, agility: 1, luck: 1, speed: 1 },
+                        equipment: fighter.equipment || { weapon: { name: 'Basic Weapon', rarity: 'common' } },
+                        specialAttack: fighter.specialAttack || null,
+                        isRealPlayer: true,
+                        originalUserId: playerData.user_id
+                    };
+                    
+                    validOpponents.push(opponent);
+                }
+            }
+        }
+        
+        console.log('Found', validOpponents.length, 'valid opponents');
+        
+        if (validOpponents.length === 0) {
+            return null;
+        }
+        
+        var randomIndex = Math.floor(Math.random() * validOpponents.length);
+        return validOpponents[randomIndex];
+    })
+    .catch(function(error) {
+        console.error('Error finding opponents:', error);
+        return null;
+    });
+}
 
         function generateOpponent(level) {
             var names = ['ShadowKnight92', 'DragonSlayer', 'IronFist2024', 'BlazeFighter', 'StormWarrior', 'NightHunter', 'FlameStrike', 'IceBlade77', 'ThunderFist', 'DarkRaven'];
