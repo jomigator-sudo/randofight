@@ -1945,37 +1945,69 @@ function fightWithoutRest() {
 }
 
         function generateOpponent(level) {
-            var names = ['ShadowKnight92', 'DragonSlayer', 'IronFist2024', 'BlazeFighter', 'StormWarrior', 'NightHunter', 'FlameStrike', 'IceBlade77', 'ThunderFist', 'DarkRaven'];
-            var places = ['New York', 'London', 'Tokyo', 'Paris', 'Sydney'];
-            
-            var opponentLevel = Math.max(1, level + Math.floor(Math.random() * 3) - 1);
-            var opponentMaxHp = Math.floor(100 + (opponentLevel - 1) * 20);
-
-            return {
-                name: names[Math.floor(Math.random() * names.length)],
-                birthplace: places[Math.floor(Math.random() * places.length)],
-                level: opponentLevel,
-                hp: opponentMaxHp,
-                maxHp: opponentMaxHp,
-                currentHp: opponentMaxHp,
-                wins: Math.floor(opponentLevel * 3),
-                stats: {
-                    strength: Math.floor(1 + (opponentLevel - 1) * 2),
-                    toughness: Math.floor(1 + (opponentLevel - 1) * 2),
-                    agility: Math.floor(1 + (opponentLevel - 1) * 2),
-                    luck: Math.floor(1 + (opponentLevel - 1) * 2),
-                    speed: Math.floor(1 + (opponentLevel - 1) * 2)
-                },
-                equipment: {
-                    weapon: { name: 'Iron Sword', rarity: 'common' }
-                },
-                specialAttack: {
-                    name: specialAttacks[Math.floor(Math.random() * specialAttacks.length)]
-                },
-                isRealPlayer: false,
-                isBot: true
-            };
+    var names = ['ShadowKnight92', 'DragonSlayer', 'IronFist2024', 'BlazeFighter', 'StormWarrior', 'NightHunter', 'FlameStrike', 'IceBlade77', 'ThunderFist', 'DarkRaven'];
+    var places = ['New York', 'London', 'Tokyo', 'Paris', 'Sydney'];
+    
+    var opponentLevel = Math.max(1, level + Math.floor(Math.random() * 3) - 1);
+    var opponentMaxHp = Math.floor(100 + (opponentLevel - 1) * 20);
+    
+    // More balanced stat distribution for bots
+    // Start with base stats of 1 each (5 total)
+    var totalStatPoints = 5 + (opponentLevel - 1); // Same as players: 1 point per level
+    
+    // Distribute the extra points randomly among stats
+    var stats = {
+        strength: 1,
+        toughness: 1,
+        agility: 1,
+        luck: 1,
+        speed: 1
+    };
+    
+    // Distribute the extra stat points (same as player would have)
+    var extraPoints = opponentLevel - 1;
+    var statNames = ['strength', 'toughness', 'agility', 'luck', 'speed'];
+    
+    for (var i = 0; i < extraPoints; i++) {
+        // Random distribution with slight preference for strength and toughness
+        var weights = [30, 30, 15, 15, 10]; // Strength and toughness weighted higher
+        var totalWeight = weights.reduce(function(sum, w) { return sum + w; }, 0);
+        var random = Math.random() * totalWeight;
+        
+        var currentWeight = 0;
+        for (var j = 0; j < statNames.length; j++) {
+            currentWeight += weights[j];
+            if (random <= currentWeight) {
+                stats[statNames[j]]++;
+                break;
+            }
         }
+    }
+
+    return {
+        name: names[Math.floor(Math.random() * names.length)],
+        birthplace: places[Math.floor(Math.random() * places.length)],
+        level: opponentLevel,
+        hp: opponentMaxHp,
+        maxHp: opponentMaxHp,
+        currentHp: opponentMaxHp,
+        wins: Math.floor(opponentLevel * 3),
+        stats: stats,
+        equipment: {
+            weapon: { 
+                name: 'Iron Sword', 
+                rarity: 'common',
+                power: Math.floor(5 + opponentLevel * 1.5), // Scale weapon power with level
+                statType: 'Damage'
+            }
+        },
+        specialAttack: opponentLevel >= 10 ? {
+            name: specialAttacks[Math.floor(Math.random() * specialAttacks.length)]
+        } : null, // Only level 10+ bots get special attacks
+        isRealPlayer: false,
+        isBot: true
+    };
+}
 
         function updateLeaderboard() {
     var content = document.getElementById('leaderboardContent');
