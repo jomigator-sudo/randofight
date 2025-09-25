@@ -2213,10 +2213,15 @@ function fightWithoutRest() {
     
     // Equipment bonus
     var weaponName = 'fists'; // Default if no weapon
+    var weaponRarity = 'common'; // Default rarity
     if (attacker.equipment && attacker.equipment.weapon) {
         baseDamage += attacker.equipment.weapon.power || 0;
         weaponName = attacker.equipment.weapon.name || 'weapon';
+        weaponRarity = attacker.equipment.weapon.rarity || 'common';
     }
+    
+    // Create colored weapon text
+    var weaponText = '<span class="' + weaponRarity + '">' + weaponName + '</span>';
     
     // Random damage variation (±25%)
     var damage = Math.floor(baseDamage * (0.75 + Math.random() * 0.5));
@@ -2238,7 +2243,7 @@ function fightWithoutRest() {
     var damageReduction = Math.min(50, (defender.stats.toughness - 1) * 3); // Cap at 50%
     damage = Math.floor(damage * (1 - damageReduction / 100));
     
-    // Generate varied attack text with weapon names
+    // Generate varied attack text with colored weapon names
     var attackVerbs = ['strikes with', 'swings', 'attacks with', 'wields', 'slashes with', 'thrusts', 'batters with'];
     var bodyParts = ['chest', 'shoulder', 'arm', 'leg', 'ribs', 'side', 'back'];
     var painSounds = ['grunts in pain', 'winces', 'staggers', 'reels back', 'stumbles', 'cries out', 'gasps'];
@@ -2248,21 +2253,21 @@ function fightWithoutRest() {
     if (isCrit) {
         damage = Math.floor(damage * 1.75);
         var critTexts = [
-            '<span class="critical">' + attacker.name + ' finds a weak spot with their ' + weaponName + ' and deals ' + damage + ' critical damage!</span>',
-            '<span class="critical">' + attacker.name + ' lands a devastating blow with their ' + weaponName + ' for ' + damage + ' critical damage!</span>',
-            '<span class="critical">Critical hit! ' + attacker.name + '\'s ' + weaponName + ' strikes true for ' + damage + ' damage!</span>',
-            '<span class="critical">' + attacker.name + ' delivers a perfect strike with their ' + weaponName + ', dealing ' + damage + ' critical damage!</span>'
+            '<span class="critical">' + attacker.name + ' finds a weak spot with their ' + weaponText + ' and deals ' + damage + ' critical damage!</span>',
+            '<span class="critical">' + attacker.name + ' lands a devastating blow with their ' + weaponText + ' for ' + damage + ' critical damage!</span>',
+            '<span class="critical">Critical hit! ' + attacker.name + '\'s ' + weaponText + ' strikes true for ' + damage + ' damage!</span>',
+            '<span class="critical">' + attacker.name + ' delivers a perfect strike with their ' + weaponText + ', dealing ' + damage + ' critical damage!</span>'
         ];
         attackText = critTexts[Math.floor(Math.random() * critTexts.length)];
     } else {
-        // Regular attack variations with weapon names
+        // Regular attack variations with colored weapon names
         var attackVariations = [
-            attacker.name + ' strikes with their ' + weaponName + ', dealing <span class="damage">' + damage + ' damage</span> to ' + defender.name + '!',
-            attacker.name + '\'s ' + weaponName + ' hits ' + defender.name + '\'s ' + bodyParts[Math.floor(Math.random() * bodyParts.length)] + ' for <span class="damage">' + damage + ' damage</span>!',
-            defender.name + ' ' + painSounds[Math.floor(Math.random() * painSounds.length)] + ' as ' + attacker.name + '\'s ' + weaponName + ' connects for <span class="damage">' + damage + ' damage</span>!',
-            attacker.name + ' ' + attackVerbs[Math.floor(Math.random() * attackVerbs.length)] + ' their ' + weaponName + ', dealing <span class="damage">' + damage + ' damage</span>!',
-            'The ' + weaponName + ' in ' + attacker.name + '\'s hands finds its mark, causing <span class="damage">' + damage + ' damage</span>!',
-            attacker.name + ' swings their ' + weaponName + ' powerfully, inflicting <span class="damage">' + damage + ' damage</span> on ' + defender.name + '!'
+            attacker.name + ' strikes with their ' + weaponText + ', dealing <span class="damage">' + damage + ' damage</span> to ' + defender.name + '!',
+            attacker.name + '\'s ' + weaponText + ' hits ' + defender.name + '\'s ' + bodyParts[Math.floor(Math.random() * bodyParts.length)] + ' for <span class="damage">' + damage + ' damage</span>!',
+            defender.name + ' ' + painSounds[Math.floor(Math.random() * painSounds.length)] + ' as ' + attacker.name + '\'s ' + weaponText + ' connects for <span class="damage">' + damage + ' damage</span>!',
+            attacker.name + ' ' + attackVerbs[Math.floor(Math.random() * attackVerbs.length)] + ' their ' + weaponText + ', dealing <span class="damage">' + damage + ' damage</span>!',
+            'The ' + weaponText + ' in ' + attacker.name + '\'s hands finds its mark, causing <span class="damage">' + damage + ' damage</span>!',
+            attacker.name + ' swings their ' + weaponText + ' powerfully, inflicting <span class="damage">' + damage + ' damage</span> on ' + defender.name + '!'
         ];
         attackText = attackVariations[Math.floor(Math.random() * attackVariations.length)];
     }
