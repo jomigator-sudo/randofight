@@ -89,91 +89,100 @@
         <h1 class="title">RandoFight</h1>
 
         <!-- Login Screen -->
-        <div id="loginScreen" class="game-screen" style="display: block;">
-            <div style="text-align: center; margin-bottom: 30px;">
-                <h2 style="color: #4ecdc4; font-size: 2.5em; margin-bottom: 10px;">Welcome to RandoFight</h2>
-                <p style="color: #ccc; font-size: 1.1em;">Login or create an account to save your progress</p>
+<div id="loginScreen" class="game-screen" style="display: block;">
+    <div style="text-align: center; margin-bottom: 30px;">
+        <h2 style="color: #4ecdc4; font-size: 2.5em; margin-bottom: 10px;">Welcome to RandoFight</h2>
+        <p style="color: #ccc; font-size: 1.1em;">Login or create an account to save your progress</p>
+    </div>
+
+    <div class="creation-form">
+        <div id="loginForm">
+            <h3 style="text-align: center; margin-bottom: 20px; color: #4ecdc4;">Login</h3>
+            <div class="form-group">
+                <label for="loginEmail">Email:</label>
+                <input type="email" id="loginEmail" placeholder="Enter your email">
             </div>
-
-            <div class="creation-form">
-                <div id="loginForm">
-                    <h3 style="text-align: center; margin-bottom: 20px; color: #4ecdc4;">Login</h3>
-                    <div class="form-group">
-                        <label for="loginEmail">Email:</label>
-                        <input type="email" id="loginEmail" placeholder="Enter your email">
-                    </div>
-                    <div class="form-group">
-                        <label for="loginPassword">Password:</label>
-                        <input type="password" id="loginPassword" placeholder="Enter your password">
-                    </div>
-                    <div style="text-align: center; margin-top: 20px;">
-                        <button class="btn btn-primary" onclick="loginUser()">Login</button>
-                        <button class="btn btn-secondary" onclick="showSignupForm()">Create Account</button>
-                    </div>
-                    <div style="text-align: center; margin-top: 15px;">
-                        <button class="btn" style="background: #6c757d; color: #fff; font-size: 0.9em;" onclick="showForgotPasswordForm()">Forgot Password?</button>
-                    </div>
-                    <div style="text-align: center; margin-top: 20px; border-top: 1px solid #444; padding-top: 15px;">
-                        <button class="btn" style="background: #28a745; color: #fff; font-size: 1em; padding: 12px 24px;" onclick="playAsGuest()">Play as Guest</button>
-                        <p style="color: #888; font-size: 0.8em; margin-top: 10px;">Play without an account (progress saved locally)</p>
-                    </div>
-                </div>
-
-                <div id="signupForm" style="display: none;">
-                    <h3 style="text-align: center; margin-bottom: 20px; color: #4ecdc4;">Create Account</h3>
-                    <div class="form-group">
-                        <label for="signupEmail">Email:</label>
-                        <input type="email" id="signupEmail" placeholder="Enter your email">
-                    </div>
-                    <div class="form-group">
-                        <label for="signupPassword">Password:</label>
-                        <input type="password" id="signupPassword" placeholder="Choose a password (min 6 characters)">
-                    </div>
-                    <div class="form-group">
-                        <label for="signupUsername">Username:</label>
-                        <input type="text" id="signupUsername" placeholder="Choose a username" maxlength="20">
-                    </div>
-                    <div style="text-align: center; margin-top: 20px;">
-                        <button class="btn btn-primary" onclick="signupUser()">Create Account</button>
-                        <button class="btn btn-secondary" onclick="showLoginForm()">Back to Login</button>
-                    </div>
-                </div>
-
-                <div id="forgotPasswordForm" style="display: none;">
-                    <h3 style="text-align: center; margin-bottom: 20px; color: #4ecdc4;">Reset Password</h3>
-                    <p style="text-align: center; margin-bottom: 20px; color: #ccc; font-size: 0.9em;">
-                        Enter your email address and we'll send you a link to reset your password.
-                    </p>
-                    <div class="form-group">
-                        <label for="resetEmail">Email:</label>
-                        <input type="email" id="resetEmail" placeholder="Enter your email address">
-                    </div>
-                    <div style="text-align: center; margin-top: 20px;">
-                        <button class="btn btn-primary" onclick="sendPasswordReset()">Send Reset Link</button>
-                        <button class="btn btn-secondary" onclick="showLoginForm()">Back to Login</button>
-                    </div>
-                </div>
-
-                <div id="resetPasswordForm" style="display: none;">
-                    <h3 style="text-align: center; margin-bottom: 20px; color: #4ecdc4;">Set New Password</h3>
-                    <p style="text-align: center; margin-bottom: 20px; color: #ccc; font-size: 0.9em;">
-                        Enter your new password below.
-                    </p>
-                    <div class="form-group">
-                        <label for="newPassword">New Password:</label>
-                        <input type="password" id="newPassword" placeholder="Enter new password (min 6 characters)">
-                    </div>
-                    <div class="form-group">
-                        <label for="confirmPassword">Confirm Password:</label>
-                        <input type="password" id="confirmPassword" placeholder="Confirm new password">
-                    </div>
-                    <div style="text-align: center; margin-top: 20px;">
-                        <button class="btn btn-primary" onclick="resetPassword()">Update Password</button>
-                        <button class="btn btn-secondary" onclick="showLoginForm()">Back to Login</button>
-                    </div>
-                </div>
+            <div class="form-group">
+                <label for="loginPassword">Password:</label>
+                <input type="password" id="loginPassword" placeholder="Enter your password">
+            </div>
+            <div style="text-align: center; margin-top: 20px;">
+                <button class="btn btn-primary" onclick="loginUser()">Login</button>
+                <button class="btn btn-secondary" onclick="showSignupForm()">Create Account</button>
+            </div>
+            <div style="text-align: center; margin-top: 15px;">
+                <button class="btn" style="background: #6c757d; color: #fff; font-size: 0.9em;" onclick="showForgotPasswordForm()">Forgot Password?</button>
+            </div>
+            <div style="text-align: center; margin-top: 20px; border-top: 1px solid #444; padding-top: 15px;">
+                <button class="btn" style="background: #28a745; color: #fff; font-size: 1em; padding: 12px 24px;" onclick="playAsGuest()">Play as Guest</button>
+                <p style="color: #888; font-size: 0.8em; margin-top: 10px;">Play without an account (progress saved locally)</p>
             </div>
         </div>
+
+        <div id="signupForm" style="display: none;">
+            <h3 style="text-align: center; margin-bottom: 20px; color: #4ecdc4;">Create Account</h3>
+            <div class="form-group">
+                <label for="signupEmail">Email:</label>
+                <input type="email" id="signupEmail" placeholder="Enter your email">
+            </div>
+            <div class="form-group">
+                <label for="signupPassword">Password:</label>
+                <input type="password" id="signupPassword" placeholder="Choose a password (min 6 characters)">
+            </div>
+            <div class="form-group">
+                <label for="signupUsername">Username:</label>
+                <input type="text" id="signupUsername" placeholder="Choose a username" maxlength="20">
+            </div>
+            <div style="text-align: center; margin-top: 20px;">
+                <button class="btn btn-primary" onclick="signupUser()">Create Account</button>
+                <button class="btn btn-secondary" onclick="showLoginForm()">Back to Login</button>
+            </div>
+        </div>
+
+        <div id="forgotPasswordForm" style="display: none;">
+            <h3 style="text-align: center; margin-bottom: 20px; color: #4ecdc4;">Reset Password</h3>
+            <p style="text-align: center; margin-bottom: 20px; color: #ccc; font-size: 0.9em;">
+                Enter your email address and we'll send you a link to reset your password.
+            </p>
+            <div class="form-group">
+                <label for="resetEmail">Email:</label>
+                <input type="email" id="resetEmail" placeholder="Enter your email address">
+            </div>
+            <div style="text-align: center; margin-top: 20px;">
+                <button class="btn btn-primary" onclick="sendPasswordReset()">Send Reset Link</button>
+                <button class="btn btn-secondary" onclick="showLoginForm()">Back to Login</button>
+            </div>
+        </div>
+
+        <div id="resetPasswordForm" style="display: none;">
+            <h3 style="text-align: center; margin-bottom: 20px; color: #4ecdc4;">Set New Password</h3>
+            <p style="text-align: center; margin-bottom: 20px; color: #ccc; font-size: 0.9em;">
+                Enter your new password below.
+            </p>
+            <div class="form-group">
+                <label for="newPassword">New Password:</label>
+                <input type="password" id="newPassword" placeholder="Enter new password (min 6 characters)">
+            </div>
+            <div class="form-group">
+                <label for="confirmPassword">Confirm Password:</label>
+                <input type="password" id="confirmPassword" placeholder="Confirm new password">
+            </div>
+            <div style="text-align: center; margin-top: 20px;">
+                <button class="btn btn-primary" onclick="resetPassword()">Update Password</button>
+                <button class="btn btn-secondary" onclick="showLoginForm()">Back to Login</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Developer Credits -->
+    <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #333;">
+        <p style="color: #888; font-size: 0.9em; margin-bottom: 5px;">Made by JM Contreras, Ninja Roo Games</p>
+        <p style="color: #888; font-size: 0.85em;">
+            Contact Us: 
+            <a href="mailto:ninjaroogames@gmail.com" style="color: #4ecdc4; text-decoration: none;">ninjaroogames@gmail.com</a>
+        </p>
+    </div>
+</div>
 
         <!-- Character Select Screen -->
         <div id="titleScreen" class="game-screen" style="display: none;">
