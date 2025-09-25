@@ -1795,11 +1795,16 @@
         return;
     }
     
+    // Set cooldown immediately when regular fight starts
+    gameState.fightCooldownEnd = Date.now() + (60 * 1000);
+    saveToSupabase();
+    updateFightStatus();
+    
     // Levels 1-5 always fight bots
     if (gameState.currentFighter.level <= 5) {
         console.log('Level', gameState.currentFighter.level, 'fighter - matching with bot opponent');
         var botOpponent = generateOpponent(gameState.currentFighter.level);
-        startFight(gameState.currentFighter, botOpponent);
+        startFight(gameState.currentFighter, botOpponent, false); // false = not a diamond fight
     } else {
         // Level 6+ can fight real players
         console.log('Looking for real opponents for level', gameState.currentFighter.level, 'fighter...');
@@ -1807,17 +1812,17 @@
             .then(function(opponent) {
                 if (opponent) {
                     console.log('Found real player opponent:', opponent.name, 'Level', opponent.level);
-                    startFight(gameState.currentFighter, opponent);
+                    startFight(gameState.currentFighter, opponent, false); // false = not a diamond fight
                 } else {
                     console.log('No real players found, generating AI opponent');
                     var botOpponent = generateOpponent(gameState.currentFighter.level);
-                    startFight(gameState.currentFighter, botOpponent);
+                    startFight(gameState.currentFighter, botOpponent, false); // false = not a diamond fight
                 }
             })
             .catch(function(error) {
                 console.error('Matchmaking error, using AI opponent:', error);
                 var botOpponent = generateOpponent(gameState.currentFighter.level);
-                startFight(gameState.currentFighter, botOpponent);
+                startFight(gameState.currentFighter, botOpponent, false); // false = not a diamond fight
             });
     }
 }
@@ -1831,28 +1836,30 @@ function fightWithoutRest() {
     saveToSupabase();
     updateDiamondDisplay();
     
+    // DON'T set cooldown for diamond fights
+    
     // Same logic for diamond fights - levels 1-5 fight bots only
     if (gameState.currentFighter.level <= 5) {
         console.log('Level', gameState.currentFighter.level, 'diamond fight - matching with bot opponent');
         var botOpponent = generateOpponent(gameState.currentFighter.level);
-        startFight(gameState.currentFighter, botOpponent);
+        startFight(gameState.currentFighter, botOpponent, true); // true = diamond fight
     } else {
         console.log('Looking for opponents for diamond fight...');
         findOpponentFromSupabase(gameState.currentFighter.level)
             .then(function(opponent) {
                 if (opponent) {
                     console.log('Found real player opponent for diamond fight:', opponent.name);
-                    startFight(gameState.currentFighter, opponent);
+                    startFight(gameState.currentFighter, opponent, true); // true = diamond fight
                 } else {
                     console.log('No real players found for diamond fight, generating AI opponent');
                     var botOpponent = generateOpponent(gameState.currentFighter.level);
-                    startFight(gameState.currentFighter, botOpponent);
+                    startFight(gameState.currentFighter, botOpponent, true); // true = diamond fight
                 }
             })
             .catch(function(error) {
                 console.error('Diamond fight matchmaking error, using AI opponent:', error);
                 var botOpponent = generateOpponent(gameState.currentFighter.level);
-                startFight(gameState.currentFighter, botOpponent);
+                startFight(gameState.currentFighter, botOpponent, true); // true = diamond fight
             });
     }
 }
@@ -2078,29 +2085,32 @@ function fightWithoutRest() {
     });
 }
 
-        function startFight(player, opponent) {
-            hideAll();
-            document.getElementById('fightScreen').style.display = 'block';
-            
-            player.currentHp = player.maxHp;
-            opponent.currentHp = opponent.maxHp;
+        function startFight(player, opponent, isDiamondFight) {
+    hideAll();
+    document.getElementById('fightScreen').style.display = 'block';
+    
+    player.currentHp = player.maxHp;
+    opponent.currentHp = opponent.maxHp;
+    
+    // Store whether this is a diamond fight
+    player.isDiamondFight = isDiamondFight;
 
-            document.getElementById('player1Name').textContent = player.name + ' (Level ' + player.level + ', ' + player.wins + ' wins)';
-            document.getElementById('player2Name').textContent = opponent.name + ' (Level ' + opponent.level + ', ' + opponent.wins + ' wins)';
-            
-            document.getElementById('player1HPText').textContent = Math.floor(player.currentHp) + '/' + player.maxHp;
-            document.getElementById('player2HPText').textContent = Math.floor(opponent.currentHp) + '/' + opponent.maxHp;
-            document.getElementById('player1HP').style.width = '100%';
-            document.getElementById('player2HP').style.width = '100%';
+    document.getElementById('player1Name').textContent = player.name + ' (Level ' + player.level + ', ' + player.wins + ' wins)';
+    document.getElementById('player2Name').textContent = opponent.name + ' (Level ' + opponent.level + ', ' + opponent.wins + ' wins)';
+    
+    document.getElementById('player1HPText').textContent = Math.floor(player.currentHp) + '/' + player.maxHp;
+    document.getElementById('player2HPText').textContent = Math.floor(opponent.currentHp) + '/' + opponent.maxHp;
+    document.getElementById('player1HP').style.width = '100%';
+    document.getElementById('player2HP').style.width = '100%';
 
-            var fightLog = document.getElementById('fightLog');
-            fightLog.innerHTML = '';
+    var fightLog = document.getElementById('fightLog');
+    fightLog.innerHTML = '';
 
-            addToFightLog('<div class="story-title">' + player.name + ' vs ' + opponent.name + '</div>');
-            addToFightLog('Fight begins!');
-            
-            setTimeout(function() { simulateFight(player, opponent); }, 1500);
-        }
+    addToFightLog('<div class="story-title">' + player.name + ' vs ' + opponent.name + '</div>');
+    addToFightLog('Fight begins!');
+    
+    setTimeout(function() { simulateFight(player, opponent); }, 1500);
+}
 
         function addToFightLog(message) {
             var fightLog = document.getElementById('fightLog');
@@ -2264,75 +2274,75 @@ function fightWithoutRest() {
             }
             
             function endCombat() {
-                var playerWon = player.currentHp > 0;
+    var playerWon = player.currentHp > 0;
+    
+    if (playerWon) {
+        var victoryTexts = [
+            '<span class="victory">🎉 ' + player.name + ' emerges victorious from the battle! 🎉</span>',
+            '<span class="victory">🎉 Victory belongs to ' + player.name + '! 🎉</span>',
+            '<span class="victory">🎉 ' + player.name + ' stands triumphant over their fallen opponent! 🎉</span>',
+            '<span class="victory">🎉 ' + player.name + ' proves their superiority in combat! 🎉</span>'
+        ];
+        addToFightLog(victoryTexts[Math.floor(Math.random() * victoryTexts.length)]);
+        
+        // Award experience (always)
+        var expGained = Math.floor(20 + opponent.level * 5);
+        player.exp += expGained;
+        player.wins++;
+        
+        addToFightLog('<span class="exp-gain">Gained ' + expGained + ' EXP!</span>');
+        
+        // Rare diamond drop (15% chance)
+        var diamondDropChance = 15;
+        if (Math.random() * 100 < diamondDropChance) {
+            var diamondsGained = Math.floor(1 + opponent.level * 0.3);
+            gameState.diamonds += diamondsGained;
+            addToFightLog('<span class="exp-gain">✨ Found ' + diamondsGained + ' rare diamonds in the aftermath! ✨</span>');
+        }
+        
+        // Equipment drop system (25% chance)
+        var equipmentDropChance = 25;
+        if (Math.random() * 100 < equipmentDropChance) {
+            var droppedItem = generateUpgradeItem(player, opponent.level);
+            if (droppedItem) {
+                addToFightLog('<span class="' + droppedItem.rarity + '">🎁 ' + opponent.name + ' dropped: ' + droppedItem.name + ' (+' + droppedItem.power + ' ' + droppedItem.statType + ')!</span>');
                 
-                if (playerWon) {
-                    var victoryTexts = [
-                        '<span class="victory">🎉 ' + player.name + ' emerges victorious from the battle! 🎉</span>',
-                        '<span class="victory">🎉 Victory belongs to ' + player.name + '! 🎉</span>',
-                        '<span class="victory">🎉 ' + player.name + ' stands triumphant over their fallen opponent! 🎉</span>',
-                        '<span class="victory">🎉 ' + player.name + ' proves their superiority in combat! 🎉</span>'
-                    ];
-                    addToFightLog(victoryTexts[Math.floor(Math.random() * victoryTexts.length)]);
-                    
-                    // Award experience (always)
-                    var expGained = Math.floor(20 + opponent.level * 5);
-                    player.exp += expGained;
-                    player.wins++;
-                    
-                    addToFightLog('<span class="exp-gain">Gained ' + expGained + ' EXP!</span>');
-                    
-                    // Rare diamond drop (15% chance)
-                    var diamondDropChance = 15;
-                    if (Math.random() * 100 < diamondDropChance) {
-                        var diamondsGained = Math.floor(1 + opponent.level * 0.3);
-                        gameState.diamonds += diamondsGained;
-                        addToFightLog('<span class="exp-gain">✨ Found ' + diamondsGained + ' rare diamonds in the aftermath! ✨</span>');
-                    }
-                    
-                    // Equipment drop system (25% chance)
-                    var equipmentDropChance = 25;
-                    if (Math.random() * 100 < equipmentDropChance) {
-                        var droppedItem = generateUpgradeItem(player, opponent.level);
-                        if (droppedItem) {
-                            addToFightLog('<span class="' + droppedItem.rarity + '">🎁 ' + opponent.name + ' dropped: ' + droppedItem.name + ' (+' + droppedItem.power + ' ' + droppedItem.statType + ')!</span>');
-                            
-                            // Always equip since it's guaranteed to be better
-                            player.equipment[droppedItem.slot] = droppedItem;
-                            addToFightLog('<span class="exp-gain">🔧 ' + droppedItem.name + ' equipped automatically!</span>');
-                        }
-                    }
-                    
-                    // Check for level up
-                    while (player.exp >= player.expRequired) {
-                        levelUp(player);
-                    }
-                    
-                } else {
-                    var defeatTexts = [
-                        '<span class="defeat">💀 ' + player.name + ' has been defeated in battle! 💀</span>',
-                        '<span class="defeat">💀 ' + player.name + ' falls to their opponent! 💀</span>',
-                        '<span class="defeat">💀 ' + opponent.name + ' proves too strong for ' + player.name + '! 💀</span>',
-                        '<span class="defeat">💀 ' + player.name + ' fought valiantly but could not prevail! 💀</span>'
-                    ];
-                    addToFightLog(defeatTexts[Math.floor(Math.random() * defeatTexts.length)]);
-                    
-                    // Small consolation reward
-                    var consolationExp = Math.floor(5 + opponent.level);
-                    player.exp += consolationExp;
-                    addToFightLog('<span class="exp-gain">Gained ' + consolationExp + ' consolation EXP for the effort!</span>');
-                }
-                
-                // Set cooldown (60 seconds)
-                gameState.fightCooldownEnd = Date.now() + (60 * 1000);
-                
-                // Restore player HP
-                player.hp = player.maxHp;
-                player.currentHp = player.maxHp;
-                
-                saveToSupabase();
-                document.getElementById('endFightBtn').style.display = 'block';
+                // Always equip since it's guaranteed to be better
+                player.equipment[droppedItem.slot] = droppedItem;
+                addToFightLog('<span class="exp-gain">🔧 ' + droppedItem.name + ' equipped automatically!</span>');
             }
+        }
+        
+        // Check for level up
+        while (player.exp >= player.expRequired) {
+            levelUp(player);
+        }
+        
+    } else {
+        var defeatTexts = [
+            '<span class="defeat">💀 ' + player.name + ' has been defeated in battle! 💀</span>',
+            '<span class="defeat">💀 ' + player.name + ' falls to their opponent! 💀</span>',
+            '<span class="defeat">💀 ' + opponent.name + ' proves too strong for ' + player.name + '! 💀</span>',
+            '<span class="defeat">💀 ' + player.name + ' fought valiantly but could not prevail! 💀</span>'
+        ];
+        addToFightLog(defeatTexts[Math.floor(Math.random() * defeatTexts.length)]);
+        
+        // Small consolation reward
+        var consolationExp = Math.floor(5 + opponent.level);
+        player.exp += consolationExp;
+        addToFightLog('<span class="exp-gain">Gained ' + consolationExp + ' consolation EXP for the effort!</span>');
+    }
+    
+    // DON'T set cooldown here - it was already set in findFight() if needed
+    // Diamond fights don't set cooldown at all
+    
+    // Restore player HP
+    player.hp = player.maxHp;
+    player.currentHp = player.maxHp;
+    
+    saveToSupabase();
+    document.getElementById('endFightBtn').style.display = 'block';
+}
             
             // Generate upgrade items that are always better than current gear
             function generateUpgradeItem(player, opponentLevel) {
