@@ -78,10 +78,28 @@
         .mythic { color: #ff0000; }
         .paypal-button-container { margin: 10px 0; display: inline-block; }
         @media (max-width: 768px) {
-            .fighter-details { grid-template-columns: 1fr; }
-            .fighters-display { grid-template-columns: 1fr; }
-            .title { font-size: 2em; }
-        }
+    .fighter-details { grid-template-columns: 1fr; }
+    .fighters-display { grid-template-columns: 1fr; }
+    .title { font-size: 2em; }
+    
+    /* Fix for overlapping logout button on mobile */
+    #titleScreen > button[onclick="logoutUser()"] {
+        position: static;
+        margin: 10px auto;
+        display: block;
+    }
+    
+    #fighterScreen > .btn[onclick*="deleteFighter"] {
+        position: static;
+        margin: 10px auto;
+        display: block;
+    }
+    
+    /* Adjust top margin for mobile */
+    #titleScreen > div[style*="margin-top: 60px"] {
+        margin-top: 20px !important;
+    }
+}
         .game-screen {
     display: none;
     position: relative;
