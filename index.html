@@ -146,7 +146,12 @@
 </head>
 <body>
     <div class="container">
-        <h1 class="title">RandoFight</h1>
+    <!-- Navigation header with back button and title -->
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+        <button id="globalBackBtn" class="btn btn-secondary" onclick="handleBackButton()" style="display: none;">← Back</button>
+        <h1 class="title" style="margin: 0; flex-grow: 1; text-align: center;">RandoFight</h1>
+        <div style="width: 80px;"></div> <!-- Spacer for centering -->
+    </div>
 
         <!-- Login Screen -->
 <div id="loginScreen" class="game-screen" style="display: block;">
@@ -246,14 +251,18 @@
 
 <!-- Character Select Screen -->
 <div id="titleScreen" class="game-screen" style="display: none;">
-    <button class="btn btn-secondary" style="position: absolute; top: 20px; right: 20px;" onclick="logoutUser()">Logout</button>
-    <div style="text-align: center; margin-bottom: 30px; margin-top: 60px;">
-        <h2 style="color: #4ecdc4; font-size: 2.5em; margin-bottom: 10px;">Character Select</h2>
+    <div style="text-align: center; margin-bottom: 30px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+            <div style="width: 80px;"></div> <!-- Spacer -->
+            <h2 style="color: #4ecdc4; font-size: 2.5em; margin: 0;">Character Select</h2>
+            <button class="btn btn-secondary" onclick="logoutUser()" style="padding: 8px 16px;">Logout</button>
+        </div>
         <p style="color: #ccc; font-size: 1.1em;">Welcome back, <span id="usernameDisplay">Player</span>!</p>
         <div style="background: rgba(34, 197, 94, 0.2); border: 1px solid #22c55e; border-radius: 5px; padding: 10px; margin: 15px auto; max-width: 600px;">
             <p style="color: #22c55e; font-size: 0.9em; margin: 0;">✅ <strong>Cloud Save Enabled:</strong> Your characters are automatically saved and will persist across devices and sessions!</p>
         </div>
     </div>
+    <!-- rest of the content remains the same -->
 
     <div class="ui-buttons">
         <span style="color: #ffd93d; font-size: 1.2em; margin-right: 20px;">Diamonds: <span id="titleDiamonds">0</span> 💎</span>
@@ -298,7 +307,6 @@
 
         <!-- Fighter Creation Screen -->
         <div id="creationScreen" class="game-screen">
-            <button class="btn btn-secondary back-btn" onclick="showTitleScreen()">← Back</button>
             <div class="creation-form">
                 <h2 style="text-align: center; margin-bottom: 20px; color: #4ecdc4;">Create New Fighter</h2>
                 <div class="form-group">
@@ -317,10 +325,8 @@
 
 <!-- Fighter Details Screen -->
 <div id="fighterScreen" class="game-screen">
-    <button class="btn btn-secondary back-btn" onclick="showTitleScreen()">← Back</button>
-    <button class="btn" style="background: #e74c3c; color: #fff; position: absolute; top: 20px; right: 20px;" onclick="console.log('Delete button clicked'); deleteFighter();">Delete Fighter</button>
-    <div style="text-align: center; margin-bottom: 20px; margin-top: 60px;">
-        <div style="display: flex; justify-content: center; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; align-items: center;">
+    <div style="text-align: center; margin-bottom: 20px; padding-top: 10px;">
+        <div style="display: flex; justify-content: center; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; align-items: center; padding: 0 10px;">
             <button class="btn btn-fight" onclick="findFight()" id="fightBtn" style="padding: 10px 18px; font-size: 0.9em;">Find Fight</button>
             <button class="btn btn-primary" onclick="fightWithoutRest()" id="fightWithoutRestBtn" style="padding: 10px 18px; font-size: 0.9em;">Fight 💎</button>
             <button class="btn" style="background: #ffd93d; color: #333; padding: 10px 18px; font-size: 0.9em;" onclick="showWeeklyTournamentFromFighter()">🏆 Weekly Tournament</button>
@@ -341,6 +347,11 @@
             <h3 class="panel-title">Equipment</h3>
             <div id="fighterEquipment" class="equipment-grid"></div>
         </div>
+    </div>
+    
+    <!-- Delete Fighter button at bottom center -->
+    <div style="text-align: center; margin: 30px 0 20px 0;">
+        <button class="btn" style="background: #e74c3c; color: #fff; padding: 12px 30px;" onclick="deleteFighter();">Delete Fighter</button>
     </div>
 </div>
         <!-- Fight Screen -->
@@ -450,7 +461,52 @@
                 fighterContainer.innerHTML = '<button class="btn btn-primary" onclick="showDiamondShop()">Shop</button>';
             }
         }
+function handleBackButton() {
+    // Determine which screen is currently active and go back appropriately
+    if (document.getElementById('fighterScreen').style.display === 'block') {
+        showTitleScreen();
+    } else if (document.getElementById('creationScreen').style.display === 'block') {
+        showTitleScreen();
+    }
+}
 
+// Update showFighterScreen to show the back button
+function showFighterScreen() {
+    hideAll();
+    document.getElementById('fighterScreen').style.display = 'block';
+    document.getElementById('globalBackBtn').style.display = 'block'; // Show back button
+    updateFighterDisplay();
+    updateFightStatus();
+    
+    setTimeout(function() {
+        initPayPalButtons();
+    }, 100);
+}
+
+// Update showTitleScreen to hide the back button
+function showTitleScreen() {
+    hideAll();
+    document.getElementById('globalBackBtn').style.display = 'none'; // Hide back button
+    document.getElementById('titleScreen').style.display = 'block';
+    updateFighterSlots();
+    updateDiamondDisplay();
+    
+    setTimeout(function() {
+        checkWeeklyPrizes();
+    }, 1000);
+    
+    setTimeout(function() {
+        initPayPalButtons();
+    }, 100);
+}
+
+// Update showCreationScreen to show the back button
+function showCreationScreen() {
+    hideAll();
+    document.getElementById('globalBackBtn').style.display = 'block'; // Show back button
+    document.getElementById('creationScreen').style.display = 'block';
+    document.getElementById('fighterName').value = '';
+}
         // Show Diamond Shop Modal
         function showDiamondShop() {
             var existingModal = document.getElementById('diamondShopModal');
