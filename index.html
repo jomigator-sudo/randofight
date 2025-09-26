@@ -82,6 +82,18 @@
             .fighters-display { grid-template-columns: 1fr; }
             .title { font-size: 2em; }
         }
+        .game-screen {
+    display: none;
+    position: relative;
+}
+
+.game-screen * {
+    visibility: inherit;
+}
+
+#fighterScreen:not([style*="display: block"]) .fighter-details {
+    display: none !important;
+}
     </style>
 </head>
 <body>
