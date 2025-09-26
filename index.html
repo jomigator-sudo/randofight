@@ -198,8 +198,8 @@
             <div class="ui-buttons">
     <span style="color: #ffd93d; font-size: 1.2em; margin-right: 20px;">Diamonds: <span id="titleDiamonds">0</span> 💎</span>
     <div id="titlePaypalButton" class="paypal-button-container"></div>
-    <button class="btn btn-secondary" onclick="showLeaderboard()">Leaderboard</button>
-    <button class="btn" style="background: #ffd93d; color: #333;" onclick="showWeeklyTournament()">🏆 Weekly</button>
+<button class="btn btn-secondary" onclick="showGlobalLeaderboard()">Leaderboard</button>
+                <button class="btn" style="background: #ffd93d; color: #333;" onclick="showWeeklyTournament()">🏆 Weekly</button>
 </div>
 
             <div class="fighter-slots">
@@ -309,16 +309,6 @@
                 <button class="btn btn-secondary" onclick="endFight()" id="endFightBtn" style="display: none;">Continue</button>
             </div>
         </div>
-
-        <!-- Leaderboard Screen -->
-        <div id="leaderboardScreen" class="game-screen">
-            <button class="btn btn-secondary back-btn" onclick="showTitleScreen()">← Back</button>
-            <div style="text-align: center; margin-bottom: 20px; margin-top: 60px;">
-                <h2 style="color: #4ecdc4;">Top Fighters</h2>
-            </div>
-            <div id="leaderboardContent" class="leaderboard"></div>
-        </div>
-    </div>
 
     <script>
         // Supabase configuration
@@ -1417,12 +1407,38 @@
         initPayPalButtons();
     }, 100);
 }
+function showGlobalLeaderboard() {
+    var existingModal = document.getElementById('globalLeaderboardModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    var modalHTML = 
+        '<div id="globalLeaderboardModal" style="display: block; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; overflow-y: auto;">' +
+            '<div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #1a1a2e; padding: 20px; border-radius: 10px; border: 2px solid #4ecdc4; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto;">' +
+                '<h2 style="color: #4ecdc4; text-align: center; margin-bottom: 20px;">Top Fighters</h2>' +
+                '<div id="globalLeaderboardContent"></div>' +
+                '<button class="btn btn-secondary" onclick="closeGlobalLeaderboard()" style="width: 100%; margin-top: 20px;">Close</button>' +
+            '</div>' +
+        '</div>';
+    
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    // Update the leaderboard content
+    var tempId = 'globalLeaderboardContent';
+    var originalId = 'leaderboardContent';
+    document.getElementById(tempId).id = originalId;
+    updateLeaderboard();
+    document.getElementById(originalId).id = tempId;
+}
 
-        function showLeaderboard() {
-            hideAll();
-            document.getElementById('leaderboardScreen').style.display = 'block';
-            updateLeaderboard();
-        }
+function closeGlobalLeaderboard() {
+    var modal = document.getElementById('globalLeaderboardModal');
+    if (modal) modal.remove();
+}
+function showLeaderboard() {
+    showGlobalLeaderboard();
+}
 
         function checkNameAvailability(name) {
             console.log('Checking if name "' + name + '" is available...');
