@@ -1599,15 +1599,6 @@ function checkAndClaimWeeklyPrizes() {
         '<div id="weeklyTournamentModal" style="display: block; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; overflow-y: auto;">' +
             '<div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #1a1a2e; padding: 20px; border-radius: 10px; border: 2px solid #ffd93d; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto;">' +
                 '<h2 style="color: #ffd93d; text-align: center; margin-bottom: 20px;">🏆 Weekly Tournament</h2>' +
-                '<div style="margin-bottom: 15px; padding: 10px; background: rgba(255, 215, 0, 0.1); border-radius: 5px;">' +
-                    '<div style="color: #ffd93d; font-size: 0.9em; text-align: center; margin-bottom: 5px;"><strong>Prize Pool:</strong></div>' +
-                    '<div style="color: #ccc; font-size: 0.85em; text-align: center;">' +
-                    '🥇 1st Place: 100 💎<br>' +
-                    '🥈 2nd Place: 50 💎<br>' +
-                    '🥉 3rd Place: 25 💎<br>' +
-                    '🏅 4th-10th Place: 10 💎' +
-                    '</div>' +
-                '</div>' +
                 '<div id="weeklyLeaderboardContent"></div>' +
                 '<button class="btn btn-secondary" onclick="closeWeeklyTournament()" style="width: 100%; margin-top: 20px;">Close</button>' +
             '</div>' +
@@ -1823,13 +1814,7 @@ function updateWeeklyLeaderboard() {
     .then(function(weeklyScores) {
         var html = '<div style="text-align: center; margin-bottom: 15px;">' +
             '<div style="color: #ffd93d; font-size: 0.9em;">⏱️ Resets in: <strong>' + getTimeUntilReset() + '</strong></div>' +
-            '</div>';
-            
-        html += '<div style="margin-bottom: 15px; padding: 10px; background: rgba(255, 215, 0, 0.1); border-radius: 5px;">' +
-            '<div style="color: #ffd93d; font-size: 0.85em; text-align: center;"><strong>Weekly Prizes:</strong></div>' +
-            '<div style="color: #888; font-size: 0.8em; text-align: center; margin-top: 5px;">' +
-            '🥇 1st: 100💎 | 🥈 2nd: 50💎 | 🥉 3rd: 25💎 | 4th-10th: 10💎' +
-            '</div>' +
+            '<div style="color: #888; font-size: 0.8em; margin-top: 5px;">Prizes awarded when timer expires</div>' +
             '</div>';
         
         if (weeklyScores.length === 0) {
@@ -1843,17 +1828,19 @@ function updateWeeklyLeaderboard() {
                 var rank = i + 1;
                 
                 var prizeText = '';
-                if (rank === 1) prizeText = ' 🥇 (100💎)';
-                else if (rank === 2) prizeText = ' 🥈 (50💎)';
-                else if (rank === 3) prizeText = ' 🥉 (25💎)';
+                if (rank === 1) prizeText = ' (100💎)';
+                else if (rank === 2) prizeText = ' (50💎)';
+                else if (rank === 3) prizeText = ' (25💎)';
                 else if (rank >= 4 && rank <= 10) prizeText = ' (10💎)';
+                
+                var medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : rank + '.';
                 
                 var isCurrentUser = entry.user_id === userId;
                 var highlightStyle = isCurrentUser ? ' style="background: rgba(78, 205, 196, 0.1); border-radius: 5px;"' : '';
                 var yourFighterTag = isCurrentUser ? ' <span style="color: #4ecdc4; font-size: 0.8em;">(You)</span>' : '';
                 
                 html += '<div class="leaderboard-entry"' + highlightStyle + '>' +
-                    '<span>' + rank + '. ' + entry.fighter_name + yourFighterTag + prizeText + '</span>' +
+                    '<span>' + medal + ' ' + entry.fighter_name + yourFighterTag + prizeText + '</span>' +
                     '<span>' + entry.wins + ' wins</span>' +
                     '</div>';
             }
@@ -1866,7 +1853,6 @@ function updateWeeklyLeaderboard() {
         content.innerHTML = '<div style="text-align: center; padding: 20px; color: #888;">Failed to load weekly leaderboard</div>';
     });
 }
-
 
         
         function createFighter() {
