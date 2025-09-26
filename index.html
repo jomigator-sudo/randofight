@@ -82,22 +82,52 @@
     .fighters-display { grid-template-columns: 1fr; }
     .title { font-size: 2em; }
     
-    /* Fix for overlapping logout button on mobile */
-    #titleScreen > button[onclick="logoutUser()"] {
-        position: static;
+    /* Fix absolute positioned buttons */
+    .back-btn {
+        position: static !important;
         margin: 10px auto;
         display: block;
     }
     
-    #fighterScreen > .btn[onclick*="deleteFighter"] {
-        position: static;
-        margin: 10px auto;
-        display: block;
+    /* Fix overlapping fight buttons */
+    #fighterScreen > div[style*="margin-top: 60px"] {
+        margin-top: 10px !important;
     }
     
-    /* Adjust top margin for mobile */
-    #titleScreen > div[style*="margin-top: 60px"] {
-        margin-top: 20px !important;
+    /* Stack buttons vertically on mobile */
+    #fighterScreen .btn-fight,
+    #fighterScreen .btn-primary,
+    #fighterScreen .btn[onclick*="showWeeklyTournament"] {
+        display: block !important;
+        width: 100% !important;
+        margin: 5px 0 !important;
+        padding: 12px 20px !important;
+    }
+    
+    /* Fix button container */
+    #fighterScreen > div > div[style*="display: flex"] {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        padding: 0 20px !important;
+    }
+    
+    /* Fix Delete Fighter button */
+    #fighterScreen .btn[onclick*="deleteFighter"] {
+        position: static !important;
+        display: block;
+        margin: 10px auto;
+        width: 90%;
+    }
+    
+    /* Adjust Equipment grid for mobile */
+    .equipment-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+    
+    /* Fix PayPal button container */
+    .paypal-button-container {
+        width: 100% !important;
+        margin: 5px 0 !important;
     }
 }
         .game-screen {
