@@ -82,6 +82,18 @@
             .fighters-display { grid-template-columns: 1fr; }
             .title { font-size: 2em; }
         }
+        .game-screen {
+    display: none;
+    position: relative;
+}
+
+.game-screen * {
+    visibility: inherit;
+}
+
+#fighterScreen:not([style*="display: block"]) .fighter-details {
+    display: none !important;
+}
     </style>
 </head>
 <body>
@@ -184,47 +196,57 @@
     </div>
 </div>
 
-        <!-- Character Select Screen -->
-        <div id="titleScreen" class="game-screen" style="display: none;">
-            <button class="btn btn-secondary" style="position: absolute; top: 20px; right: 20px;" onclick="logoutUser()">Logout</button>
-            <div style="text-align: center; margin-bottom: 30px; margin-top: 60px;">
-                <h2 style="color: #4ecdc4; font-size: 2.5em; margin-bottom: 10px;">Character Select</h2>
-                <p style="color: #ccc; font-size: 1.1em;">Welcome back, <span id="usernameDisplay">Player</span>!</p>
-                <div style="background: rgba(34, 197, 94, 0.2); border: 1px solid #22c55e; border-radius: 5px; padding: 10px; margin: 15px auto; max-width: 600px;">
-                    <p style="color: #22c55e; font-size: 0.9em; margin: 0;">✅ <strong>Cloud Save Enabled:</strong> Your characters are automatically saved and will persist across devices and sessions!</p>
-                </div>
-            </div>
-
-            <div class="ui-buttons">
-                <span style="color: #ffd93d; font-size: 1.2em; margin-right: 20px;">Diamonds: <span id="titleDiamonds">0</span> 💎</span>
-                <div id="titlePaypalButton" class="paypal-button-container"></div>
-                <button class="btn btn-secondary" onclick="showLeaderboard()">Leaderboard</button>
-            </div>
-
-            <div class="fighter-slots">
-                <div class="fighter-slot" id="slot-container-0" onclick="selectFighter(0)">
-                    <div class="slot-number">Slot 1</div>
-                    <div class="fighter-name">Empty Slot</div>
-                    <div>Click to create fighter</div>
-                </div>
-                <div class="fighter-slot locked" id="slot-container-1" onclick="purchaseSlot(1)">
-                    <div class="slot-number">Slot 2</div>
-                    <div>Purchase this slot for 100 💎</div>
-                </div>
-                <div class="fighter-slot locked" id="slot-container-2" onclick="purchaseSlot(2)">
-                    <div class="slot-number">Slot 3</div>
-                    <div>Purchase this slot for 100 💎</div>
-                </div>
-                <div class="fighter-slot locked" id="slot-container-3" onclick="purchaseSlot(3)">
-                    <div class="slot-number">Slot 4</div>
-                    <div>Purchase this slot for 100 💎</div>
-                </div>
-                <div class="fighter-slot locked" id="slot-container-4" onclick="purchaseSlot(4)">
-                    <div class="slot-number">Slot 5</div>
-                    <div>Purchase this slot for 100 💎</div>
-                </div>
-            </div>
+<!-- Character Select Screen -->
+<div id="titleScreen" class="game-screen" style="display: none;">
+    <button class="btn btn-secondary" style="position: absolute; top: 20px; right: 20px;" onclick="logoutUser()">Logout</button>
+    <div style="text-align: center; margin-bottom: 30px; margin-top: 60px;">
+        <h2 style="color: #4ecdc4; font-size: 2.5em; margin-bottom: 10px;">Character Select</h2>
+        <p style="color: #ccc; font-size: 1.1em;">Welcome back, <span id="usernameDisplay">Player</span>!</p>
+        <div style="background: rgba(34, 197, 94, 0.2); border: 1px solid #22c55e; border-radius: 5px; padding: 10px; margin: 15px auto; max-width: 600px;">
+            <p style="color: #22c55e; font-size: 0.9em; margin: 0;">✅ <strong>Cloud Save Enabled:</strong> Your characters are automatically saved and will persist across devices and sessions!</p>
         </div>
+    </div>
+
+    <div class="ui-buttons">
+        <span style="color: #ffd93d; font-size: 1.2em; margin-right: 20px;">Diamonds: <span id="titleDiamonds">0</span> 💎</span>
+        <div id="titlePaypalButton" class="paypal-button-container"></div>
+        <button class="btn btn-secondary" onclick="showGlobalLeaderboard()">Leaderboard</button>
+        <button class="btn" style="background: #ffd93d; color: #333;" onclick="showWeeklyTournament()">🏆 Weekly</button>
+    </div>
+
+    <div class="fighter-slots">
+        <div class="fighter-slot" id="slot-container-0" onclick="selectFighter(0)">
+            <div class="slot-number">Slot 1</div>
+            <div class="fighter-name">Empty Slot</div>
+            <div>Click to create fighter</div>
+        </div>
+        <div class="fighter-slot locked" id="slot-container-1" onclick="purchaseSlot(1)">
+            <div class="slot-number">Slot 2</div>
+            <div>Purchase this slot for 100 💎</div>
+        </div>
+        <div class="fighter-slot locked" id="slot-container-2" onclick="purchaseSlot(2)">
+            <div class="slot-number">Slot 3</div>
+            <div>Purchase this slot for 100 💎</div>
+        </div>
+        <div class="fighter-slot locked" id="slot-container-3" onclick="purchaseSlot(3)">
+            <div class="slot-number">Slot 4</div>
+            <div>Purchase this slot for 100 💎</div>
+        </div>
+        <div class="fighter-slot locked" id="slot-container-4" onclick="purchaseSlot(4)">
+            <div class="slot-number">Slot 5</div>
+            <div>Purchase this slot for 100 💎</div>
+        </div>
+    </div>
+    
+    <!-- Developer Credits -->
+    <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #333;">
+        <p style="color: #888; font-size: 0.9em; margin-bottom: 5px;">Made by JM Contreras, Ninja Roo Games</p>
+        <p style="color: #888; font-size: 0.85em;">
+            Contact Us: 
+            <a href="mailto:ninjaroogames@gmail.com" style="color: #4ecdc4; text-decoration: none;">ninjaroogames@gmail.com</a>
+        </p>
+    </div>
+</div>
 
         <!-- Fighter Creation Screen -->
         <div id="creationScreen" class="game-screen">
@@ -245,33 +267,34 @@
             </div>
         </div>
 
-        <!-- Fighter Details Screen -->
-        <div id="fighterScreen" class="game-screen">
-            <button class="btn btn-secondary back-btn" onclick="showTitleScreen()">← Back</button>
-            <button class="btn" style="background: #e74c3c; color: #fff; position: absolute; top: 20px; right: 20px;" onclick="console.log('Delete button clicked'); deleteFighter();">Delete Fighter</button>
-            <div style="text-align: center; margin-bottom: 20px; margin-top: 60px;">
-                <div style="display: flex; justify-content: center; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; align-items: center;">
-                    <button class="btn btn-fight" onclick="findFight()" id="fightBtn" style="padding: 10px 18px; font-size: 0.9em;">Find Fight</button>
-                    <button class="btn btn-primary" onclick="fightWithoutRest()" id="fightWithoutRestBtn" style="padding: 10px 18px; font-size: 0.9em;">Fight 💎</button>
-                    <div id="fighterPaypalButton" class="paypal-button-container"></div>
-                </div>
-            </div>
-            <div class="fight-status">
-                <div class="diamonds-display">Diamonds: <span id="diamonds">0</span> 💎</div>
-                <div class="cooldown-timer" id="cooldownTimer"></div>
-            </div>
-            <div class="fighter-details">
-                <div class="stats-panel">
-                    <h3 class="panel-title">Fighter Stats</h3>
-                    <div id="fighterStats"></div>
-                </div>
-                <div class="inventory-panel">
-                    <h3 class="panel-title">Equipment</h3>
-                    <div id="fighterEquipment" class="equipment-grid"></div>
-                </div>
-            </div>
+<!-- Fighter Details Screen -->
+<div id="fighterScreen" class="game-screen">
+    <button class="btn btn-secondary back-btn" onclick="showTitleScreen()">← Back</button>
+    <button class="btn" style="background: #e74c3c; color: #fff; position: absolute; top: 20px; right: 20px;" onclick="console.log('Delete button clicked'); deleteFighter();">Delete Fighter</button>
+    <div style="text-align: center; margin-bottom: 20px; margin-top: 60px;">
+        <div style="display: flex; justify-content: center; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; align-items: center;">
+            <button class="btn btn-fight" onclick="findFight()" id="fightBtn" style="padding: 10px 18px; font-size: 0.9em;">Find Fight</button>
+            <button class="btn btn-primary" onclick="fightWithoutRest()" id="fightWithoutRestBtn" style="padding: 10px 18px; font-size: 0.9em;">Fight 💎</button>
+            <button class="btn" style="background: #ffd93d; color: #333; padding: 10px 18px; font-size: 0.9em;" onclick="showWeeklyTournamentFromFighter()">🏆 Weekly Tournament</button>
+            <div id="fighterPaypalButton" class="paypal-button-container"></div>
         </div>
-
+    </div>
+    <div class="fight-status">
+        <div class="diamonds-display">Diamonds: <span id="diamonds">0</span> 💎</div>
+        <div class="cooldown-timer" id="cooldownTimer"></div>
+    </div>
+    
+    <div class="fighter-details">
+        <div class="stats-panel">
+            <h3 class="panel-title">Fighter Stats</h3>
+            <div id="fighterStats"></div>
+        </div>
+        <div class="inventory-panel">
+            <h3 class="panel-title">Equipment</h3>
+            <div id="fighterEquipment" class="equipment-grid"></div>
+        </div>
+    </div>
+</div>
         <!-- Fight Screen -->
         <div id="fightScreen" class="game-screen">
             <div class="fighters-display">
@@ -295,16 +318,7 @@
                 <button class="btn btn-secondary" onclick="endFight()" id="endFightBtn" style="display: none;">Continue</button>
             </div>
         </div>
-
-        <!-- Leaderboard Screen -->
-        <div id="leaderboardScreen" class="game-screen">
-            <button class="btn btn-secondary back-btn" onclick="showTitleScreen()">← Back</button>
-            <div style="text-align: center; margin-bottom: 20px; margin-top: 60px;">
-                <h2 style="color: #4ecdc4;">Top Fighters</h2>
-            </div>
-            <div id="leaderboardContent" class="leaderboard"></div>
         </div>
-    </div>
 
     <script>
         // Supabase configuration
@@ -1369,16 +1383,21 @@
         }
 
         function showTitleScreen() {
-            hideAll();
-            document.getElementById('titleScreen').style.display = 'block';
-            updateFighterSlots();
-            updateDiamondDisplay();
-            
-            // Initialize PayPal buttons when title screen is shown
-            setTimeout(function() {
-                initPayPalButtons();
-            }, 100);
-        }
+    hideAll();
+    document.getElementById('titleScreen').style.display = 'block';
+    updateFighterSlots();
+    updateDiamondDisplay();
+    
+    // Check for weekly prizes when entering title screen
+    setTimeout(function() {
+        checkWeeklyPrizes();
+    }, 1000);
+    
+    // Initialize PayPal buttons when title screen is shown
+    setTimeout(function() {
+        initPayPalButtons();
+    }, 100);
+}
 
         function showCreationScreen() {
             hideAll();
@@ -1387,22 +1406,49 @@
         }
 
         function showFighterScreen() {
-            hideAll();
-            document.getElementById('fighterScreen').style.display = 'block';
-            updateFighterDisplay();
-            updateFightStatus();
-            
-            // Initialize PayPal buttons when fighter screen is shown
-            setTimeout(function() {
-                initPayPalButtons();
-            }, 100);
-        }
+    hideAll();
+    document.getElementById('fighterScreen').style.display = 'block';
+    updateFighterDisplay();
+    updateFightStatus();
+    // Removed updateWeeklyLeaderboard() from here
+    
+    // Initialize PayPal buttons when fighter screen is shown
+    setTimeout(function() {
+        initPayPalButtons();
+    }, 100);
+}
+function showGlobalLeaderboard() {
+    var existingModal = document.getElementById('globalLeaderboardModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    var modalHTML = 
+        '<div id="globalLeaderboardModal" style="display: block; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; overflow-y: auto;">' +
+            '<div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #1a1a2e; padding: 20px; border-radius: 10px; border: 2px solid #4ecdc4; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto;">' +
+                '<h2 style="color: #4ecdc4; text-align: center; margin-bottom: 20px;">Top Fighters</h2>' +
+                '<div id="globalLeaderboardContent"></div>' +
+                '<button class="btn btn-secondary" onclick="closeGlobalLeaderboard()" style="width: 100%; margin-top: 20px;">Close</button>' +
+            '</div>' +
+        '</div>';
+    
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    // Update the leaderboard content
+    var tempId = 'globalLeaderboardContent';
+    var originalId = 'leaderboardContent';
+    document.getElementById(tempId).id = originalId;
+    updateLeaderboard();
+    document.getElementById(originalId).id = tempId;
+}
 
-        function showLeaderboard() {
-            hideAll();
-            document.getElementById('leaderboardScreen').style.display = 'block';
-            updateLeaderboard();
-        }
+function closeGlobalLeaderboard() {
+    var modal = document.getElementById('globalLeaderboardModal');
+    if (modal) modal.remove();
+}
+function showLeaderboard() {
+    showGlobalLeaderboard();
+}
 
         function checkNameAvailability(name) {
             console.log('Checking if name "' + name + '" is available...');
@@ -1454,7 +1500,387 @@
                 return true;
             });
         }
+function showWeeklyTournamentFromFighter() {
+    showWeeklyTournament();
+}
+        // Weekly Leaderboard Functions
+function getWeekStartDate() {
+    var now = new Date();
+    var dayOfWeek = now.getUTCDay();
+    var daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    var weekStart = new Date(now);
+    weekStart.setUTCDate(now.getUTCDate() - daysToMonday);
+    weekStart.setUTCHours(0, 0, 0, 0);
+    return weekStart;
+}
 
+function getWeekEndDate() {
+    var weekStart = getWeekStartDate();
+    var weekEnd = new Date(weekStart);
+    weekEnd.setUTCDate(weekStart.getUTCDate() + 6);
+    weekEnd.setUTCHours(23, 59, 59, 999);
+    return weekEnd;
+}
+
+function getTimeUntilReset() {
+    var now = new Date();
+    var weekEnd = getWeekEndDate();
+    var timeLeft = weekEnd.getTime() - now.getTime();
+    
+    var days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
+    var hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    var minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+    
+    return days + 'd ' + hours + 'h ' + minutes + 'm';
+}
+
+function updateWeeklyLeaderboard() {
+    var content = document.getElementById('weeklyLeaderboardContent');
+    if (!content) return;
+    
+    content.innerHTML = '<div style="text-align: center; padding: 20px; color: #888;">Loading weekly leaderboard...</div>';
+    
+    var weekStart = getWeekStartDate();
+    var weekStartStr = weekStart.toISOString().split('T')[0];
+    
+    fetch('https://pmsbxvqavkoboxyhqjcc.supabase.co/rest/v1/weekly_scores?week_start=eq.' + weekStartStr + '&order=wins.desc', {
+        method: 'GET',
+        headers: {
+            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBtc2J4dnFhdmtvYm94eWhxamNjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc2NjA2OTMsImV4cCI6MjA3MzIzNjY5M30.9-0-glSFo66fOktfR6ineO8J4Ra8RLVXwytCb9jca9U',
+            'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBtc2J4dnFhdmtvYm94eWhxamNjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc2NjA2OTMsImV4cCI6MjA3MzIzNjY5M30.9-0-glSFo66fOktfR6ineO8J4Ra8RLVXwytCb9jca9U'
+        }
+    })
+    .then(function(response) {
+        if (!response.ok) {
+            throw new Error('Failed to fetch weekly leaderboard');
+        }
+        return response.json();
+    })
+    .then(function(weeklyScores) {
+        var html = '<div style="text-align: center; margin-bottom: 15px;">' +
+            '<div style="color: #ffd93d; font-size: 0.9em;">⏱️ Resets in: <strong>' + getTimeUntilReset() + '</strong></div>' +
+            '<div style="color: #888; font-size: 0.8em; margin-top: 5px;">Prizes will be awarded when timer expires</div>' +
+            '</div>';
+        
+        if (weeklyScores.length === 0) {
+            html += '<div style="text-align: center; padding: 20px; color: #888;">No battles yet this week!</div>';
+        } else {
+            var userId = getUserId();
+            var displayCount = Math.min(20, weeklyScores.length);
+            
+            for (var i = 0; i < displayCount; i++) {
+                var entry = weeklyScores[i];
+                var rank = i + 1;
+                
+                var prizeText = '';
+                if (rank === 1) prizeText = ' 🥇';
+                else if (rank === 2) prizeText = ' 🥈';
+                else if (rank === 3) prizeText = ' 🥉';
+                
+                var isCurrentUser = entry.user_id === userId;
+                var highlightStyle = isCurrentUser ? ' style="background: rgba(78, 205, 196, 0.1); border-radius: 5px;"' : '';
+                var yourFighterTag = isCurrentUser ? ' <span style="color: #4ecdc4; font-size: 0.8em;">(You)</span>' : '';
+                
+                html += '<div class="leaderboard-entry"' + highlightStyle + '>' +
+                    '<span>' + rank + '. ' + entry.fighter_name + yourFighterTag + prizeText + '</span>' +
+                    '<span>' + entry.wins + ' wins</span>' +
+                    '</div>';
+            }
+        }
+        
+        content.innerHTML = html;
+    })
+    .catch(function(error) {
+        console.error('Weekly leaderboard error:', error);
+        content.innerHTML = '<div style="text-align: center; padding: 20px; color: #888;">Failed to load weekly leaderboard</div>';
+    });
+}
+
+// Function to track weekly wins (call this when a fighter wins)
+function incrementWeeklyWins(fighter) {
+    var weekStart = getWeekStartDate().toISOString();
+    
+    // Reset weekly wins if it's a new week
+    if (!fighter.weeklyResetDate || fighter.weeklyResetDate !== weekStart) {
+        fighter.weeklyWins = 0;
+        fighter.weeklyResetDate = weekStart;
+    }
+    
+    fighter.weeklyWins = (fighter.weeklyWins || 0) + 1;
+}
+
+// Function to check and claim weekly prizes (call on login)
+function checkAndClaimWeeklyPrizes() {
+    // This would need to track last claim date and compare rankings
+    // Implementation depends on your backend setup
+}
+
+                function showWeeklyTournament() {
+    var existingModal = document.getElementById('weeklyTournamentModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    var modalHTML = 
+        '<div id="weeklyTournamentModal" style="display: block; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; overflow-y: auto;">' +
+            '<div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #1a1a2e; padding: 20px; border-radius: 10px; border: 2px solid #ffd93d; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto;">' +
+                '<h2 style="color: #ffd93d; text-align: center; margin-bottom: 20px;">🏆 Weekly Tournament</h2>' +
+                '<div id="weeklyLeaderboardContent"></div>' +
+                '<button class="btn btn-secondary" onclick="closeWeeklyTournament()" style="width: 100%; margin-top: 20px;">Close</button>' +
+            '</div>' +
+        '</div>';
+    
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    // Update the weekly leaderboard
+    updateWeeklyLeaderboard();
+}
+
+function closeWeeklyTournament() {
+    var modal = document.getElementById('weeklyTournamentModal');
+    if (modal) modal.remove();
+}
+
+// Track weekly wins in database
+function saveWeeklyWin(fighterName) {
+    if (!gameState.currentUser || gameState.currentUser.isGuest) {
+        return; // Don't track for guests
+    }
+    
+    var weekStart = getWeekStartDate();
+    var weekStartStr = weekStart.toISOString().split('T')[0]; // YYYY-MM-DD format
+    var userId = getUserId();
+    
+    // First, try to update existing record
+    fetch('https://pmsbxvqavkoboxyhqjcc.supabase.co/rest/v1/weekly_scores?user_id=eq.' + userId + '&fighter_name=eq.' + encodeURIComponent(fighterName) + '&week_start=eq.' + weekStartStr, {
+        method: 'GET',
+        headers: {
+            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBtc2J4dnFhdmtvYm94eWhxamNjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc2NjA2OTMsImV4cCI6MjA3MzIzNjY5M30.9-0-glSFo66fOktfR6ineO8J4Ra8RLVXwytCb9jca9U',
+            'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBtc2J4dnFhdmtvYm94eWhxamNjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc2NjA2OTMsImV4cCI6MjA3MzIzNjY5M30.9-0-glSFo66fOktfR6ineO8J4Ra8RLVXwytCb9jca9U'
+        }
+    })
+    .then(function(response) {
+        return response.json();
+    })
+    .then(function(data) {
+        if (data.length > 0) {
+            // Update existing record
+            var currentWins = data[0].wins || 0;
+            return fetch('https://pmsbxvqavkoboxyhqjcc.supabase.co/rest/v1/weekly_scores?id=eq.' + data[0].id, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBtc2J4dnFhdmtvYm94eWhxamNjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc2NjA2OTMsImV4cCI6MjA3MzIzNjY5M30.9-0-glSFo66fOktfR6ineO8J4Ra8RLVXwytCb9jca9U',
+                    'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBtc2J4dnFhdmtvYm94eWhxamNjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc2NjA2OTMsImV4cCI6MjA3MzIzNjY5M30.9-0-glSFo66fOktfR6ineO8J4Ra8RLVXwytCb9jca9U'
+                },
+                body: JSON.stringify({
+                    wins: currentWins + 1,
+                    updated_at: new Date().toISOString()
+                })
+            });
+        } else {
+            // Create new record
+            return fetch('https://pmsbxvqavkoboxyhqjcc.supabase.co/rest/v1/weekly_scores', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBtc2J4dnFhdmtvYm94eWhxamNjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc2NjA2OTMsImV4cCI6MjA3MzIzNjY5M30.9-0-glSFo66fOktfR6ineO8J4Ra8RLVXwytCb9jca9U',
+                    'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBtc2J4dnFhdmtvYm94eWhxamNjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc2NjA2OTMsImV4cCI6MjA3MzIzNjY5M30.9-0-glSFo66fOktfR6ineO8J4Ra8RLVXwytCb9jca9U'
+                },
+                body: JSON.stringify({
+                    user_id: userId,
+                    fighter_name: fighterName,
+                    week_start: weekStartStr,
+                    wins: 1
+                })
+            });
+        }
+    })
+    .then(function(response) {
+        console.log('Weekly win tracked successfully');
+    })
+    .catch(function(error) {
+        console.error('Error tracking weekly win:', error);
+    });
+}
+
+// Check and claim prizes on login
+function checkWeeklyPrizes() {
+    if (!gameState.currentUser || gameState.currentUser.isGuest) {
+        return;
+    }
+    
+    var userId = getUserId();
+    var lastWeekStart = new Date();
+    lastWeekStart.setDate(lastWeekStart.getDate() - 7);
+    var lastWeekStartStr = lastWeekStart.toISOString().split('T')[0];
+    
+    // Get last week's scores for this user
+    fetch('https://pmsbxvqavkoboxyhqjcc.supabase.co/rest/v1/weekly_scores?user_id=eq.' + userId + '&week_start=eq.' + lastWeekStartStr + '&prize_claimed=eq.0', {
+        method: 'GET',
+        headers: {
+            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBtc2J4dnFhdmtvYm94eWhxamNjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc2NjA2OTMsImV4cCI6MjA3MzIzNjY5M30.9-0-glSFo66fOktfR6ineO8J4Ra8RLVXwytCb9jca9U',
+            'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBtc2J4dnFhdmtvYm94eWhxamNjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc2NjA2OTMsImV4cCI6MjA3MzIzNjY5M30.9-0-glSFo66fOktfR6ineO8J4Ra8RLVXwytCb9jca9U'
+        }
+    })
+    .then(function(response) {
+        return response.json();
+    })
+    .then(function(userScores) {
+        if (userScores.length === 0) return;
+        
+        // Get all scores for last week to determine rankings
+        return fetch('https://pmsbxvqavkoboxyhqjcc.supabase.co/rest/v1/weekly_scores?week_start=eq.' + lastWeekStartStr + '&order=wins.desc', {
+            method: 'GET',
+            headers: {
+                'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBtc2J4dnFhdmtvYm94eWhxamNjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc2NjA2OTMsImV4cCI6MjA3MzIzNjY5M08.9-0-glSFo66fOktfR6ineO8J4Ra8RLVXwytCb9jca9U',
+                'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBtc2J4dnFhdmtvYm94eWhxamNjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc2NjA2OTMsImV4cCI6MjA3MzIzNjY5M30.9-0-glSFo66fOktfR6ineO8J4Ra8RLVXwytCb9jca9U'
+            }
+        })
+        .then(function(response) {
+            return response.json();
+        })
+        .then(function(allScores) {
+            var prizesToClaim = 0;
+            var fighterRanks = [];
+            
+            // Calculate rank for each user's fighter
+            for (var i = 0; i < userScores.length; i++) {
+                var userScore = userScores[i];
+                var rank = 1;
+                
+                for (var j = 0; j < allScores.length; j++) {
+                    if (allScores[j].fighter_name === userScore.fighter_name) {
+                        rank = j + 1;
+                        break;
+                    }
+                }
+                
+                var prizeAmount = 0;
+                if (rank === 1) prizeAmount = 100;
+                else if (rank === 2) prizeAmount = 50;
+                else if (rank === 3) prizeAmount = 25;
+                else if (rank >= 4 && rank <= 10) prizeAmount = 10;
+                
+                if (prizeAmount > 0) {
+                    prizesToClaim += prizeAmount;
+                    fighterRanks.push({
+                        name: userScore.fighter_name,
+                        rank: rank,
+                        prize: prizeAmount,
+                        scoreId: userScore.id
+                    });
+                }
+            }
+            
+            if (prizesToClaim > 0) {
+                // Award diamonds
+                gameState.diamonds += prizesToClaim;
+                saveToSupabase();
+                updateDiamondDisplay();
+                
+                // Mark prizes as claimed
+                var claimPromises = fighterRanks.map(function(fighter) {
+                    return fetch('https://pmsbxvqavkoboxyhqjcc.supabase.co/rest/v1/weekly_scores?id=eq.' + fighter.scoreId, {
+                        method: 'PATCH',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBtc2J4dnFhdmtvYm94eWhxamNjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc2NjA2OTMsImV4cCI6MjA3MzIzNjY5M30.9-0-glSFo66fOktfR6ineO8J4Ra8RLVXwytCb9jca9U',
+                            'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBtc2J4dnFhdmtvYm94eWhxamNjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc2NjA2OTMsImV4cCI6MjA3MzIzNjY5M30.9-0-glSFo66fOktfR6ineO8J4Ra8RLVXwytCb9jca9U'
+                        },
+                        body: JSON.stringify({
+                            prize_claimed: fighter.prize,
+                            rank: fighter.rank
+                        })
+                    });
+                });
+                
+                Promise.all(claimPromises).then(function() {
+                    // Show prize notification
+                    var message = '🎉 Weekly Tournament Prizes Claimed! 🎉\n\n';
+                    for (var i = 0; i < fighterRanks.length; i++) {
+                        var f = fighterRanks[i];
+                        var medal = f.rank === 1 ? '🥇' : f.rank === 2 ? '🥈' : f.rank === 3 ? '🥉' : '🏅';
+                        message += medal + ' ' + f.name + ' (Rank #' + f.rank + '): +' + f.prize + ' 💎\n';
+                    }
+                    message += '\nTotal: +' + prizesToClaim + ' 💎';
+                    alert(message);
+                });
+            }
+        });
+    })
+    .catch(function(error) {
+        console.error('Error checking weekly prizes:', error);
+    });
+}
+
+// Updated weekly leaderboard function to use database
+function updateWeeklyLeaderboard() {
+    var content = document.getElementById('weeklyLeaderboardContent');
+    if (!content) return;
+    
+    content.innerHTML = '<div style="text-align: center; padding: 20px; color: #888;">Loading weekly leaderboard...</div>';
+    
+    var weekStart = getWeekStartDate();
+    var weekStartStr = weekStart.toISOString().split('T')[0];
+    
+    fetch('https://pmsbxvqavkoboxyhqjcc.supabase.co/rest/v1/weekly_scores?week_start=eq.' + weekStartStr + '&order=wins.desc', {
+        method: 'GET',
+        headers: {
+            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBtc2J4dnFhdmtvYm94eWhxamNjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc2NjA2OTMsImV4cCI6MjA3MzIzNjY5M30.9-0-glSFo66fOktfR6ineO8J4Ra8RLVXwytCb9jca9U',
+            'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBtc2J4dnFhdmtvYm94eWhxamNjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc2NjA2OTMsImV4cCI6MjA3MzIzNjY5M30.9-0-glSFo66fOktfR6ineO8J4Ra8RLVXwytCb9jca9U'
+        }
+    })
+    .then(function(response) {
+        if (!response.ok) {
+            throw new Error('Failed to fetch weekly leaderboard');
+        }
+        return response.json();
+    })
+    .then(function(weeklyScores) {
+        var html = '<div style="text-align: center; margin-bottom: 15px;">' +
+            '<div style="color: #ffd93d; font-size: 0.9em;">⏱️ Resets in: <strong>' + getTimeUntilReset() + '</strong></div>' +
+            '<div style="color: #888; font-size: 0.8em; margin-top: 5px;">Prizes awarded when timer expires</div>' +
+            '</div>';
+        
+        if (weeklyScores.length === 0) {
+            html += '<div style="text-align: center; padding: 20px; color: #888;">No battles yet this week!</div>';
+        } else {
+            var userId = getUserId();
+            var displayCount = Math.min(20, weeklyScores.length);
+            
+            for (var i = 0; i < displayCount; i++) {
+                var entry = weeklyScores[i];
+                var rank = i + 1;
+                
+                var prizeText = '';
+                if (rank === 1) prizeText = ' (100💎)';
+                else if (rank === 2) prizeText = ' (50💎)';
+                else if (rank === 3) prizeText = ' (25💎)';
+                else if (rank >= 4 && rank <= 10) prizeText = ' (10💎)';
+                
+                var medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : rank + '.';
+                
+                var isCurrentUser = entry.user_id === userId;
+                var highlightStyle = isCurrentUser ? ' style="background: rgba(78, 205, 196, 0.1); border-radius: 5px;"' : '';
+                var yourFighterTag = isCurrentUser ? ' <span style="color: #4ecdc4; font-size: 0.8em;">(You)</span>' : '';
+                
+                html += '<div class="leaderboard-entry"' + highlightStyle + '>' +
+                    '<span>' + medal + ' ' + entry.fighter_name + yourFighterTag + prizeText + '</span>' +
+                    '<span>' + entry.wins + ' wins</span>' +
+                    '</div>';
+            }
+        }
+        
+        content.innerHTML = html;
+    })
+    .catch(function(error) {
+        console.error('Weekly leaderboard error:', error);
+        content.innerHTML = '<div style="text-align: center; padding: 20px; color: #888;">Failed to load weekly leaderboard</div>';
+    });
+}
+
+        
         function createFighter() {
             var name = document.getElementById('fighterName').value.trim();
             if (!name) {
@@ -2418,6 +2844,10 @@ function fightWithoutRest() {
         var expGained = Math.floor(20 + opponent.level * 5);
         player.exp += expGained;
         player.wins++;
+        // Track weekly wins
+incrementWeeklyWins(player);
+        // Track weekly wins in database
+saveWeeklyWin(player.name);
         
         addToFightLog('<span class="exp-gain">Gained ' + expGained + ' EXP!</span>');
         
