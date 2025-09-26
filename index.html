@@ -196,48 +196,57 @@
     </div>
 </div>
 
-        <!-- Character Select Screen -->
-        <div id="titleScreen" class="game-screen" style="display: none;">
-            <button class="btn btn-secondary" style="position: absolute; top: 20px; right: 20px;" onclick="logoutUser()">Logout</button>
-            <div style="text-align: center; margin-bottom: 30px; margin-top: 60px;">
-                <h2 style="color: #4ecdc4; font-size: 2.5em; margin-bottom: 10px;">Character Select</h2>
-                <p style="color: #ccc; font-size: 1.1em;">Welcome back, <span id="usernameDisplay">Player</span>!</p>
-                <div style="background: rgba(34, 197, 94, 0.2); border: 1px solid #22c55e; border-radius: 5px; padding: 10px; margin: 15px auto; max-width: 600px;">
-                    <p style="color: #22c55e; font-size: 0.9em; margin: 0;">✅ <strong>Cloud Save Enabled:</strong> Your characters are automatically saved and will persist across devices and sessions!</p>
-                </div>
-            </div>
-
-            <div class="ui-buttons">
-    <span style="color: #ffd93d; font-size: 1.2em; margin-right: 20px;">Diamonds: <span id="titleDiamonds">0</span> 💎</span>
-    <div id="titlePaypalButton" class="paypal-button-container"></div>
-<button class="btn btn-secondary" onclick="showGlobalLeaderboard()">Leaderboard</button>
-                <button class="btn" style="background: #ffd93d; color: #333;" onclick="showWeeklyTournament()">🏆 Weekly</button>
-</div>
-
-            <div class="fighter-slots">
-                <div class="fighter-slot" id="slot-container-0" onclick="selectFighter(0)">
-                    <div class="slot-number">Slot 1</div>
-                    <div class="fighter-name">Empty Slot</div>
-                    <div>Click to create fighter</div>
-                </div>
-                <div class="fighter-slot locked" id="slot-container-1" onclick="purchaseSlot(1)">
-                    <div class="slot-number">Slot 2</div>
-                    <div>Purchase this slot for 100 💎</div>
-                </div>
-                <div class="fighter-slot locked" id="slot-container-2" onclick="purchaseSlot(2)">
-                    <div class="slot-number">Slot 3</div>
-                    <div>Purchase this slot for 100 💎</div>
-                </div>
-                <div class="fighter-slot locked" id="slot-container-3" onclick="purchaseSlot(3)">
-                    <div class="slot-number">Slot 4</div>
-                    <div>Purchase this slot for 100 💎</div>
-                </div>
-                <div class="fighter-slot locked" id="slot-container-4" onclick="purchaseSlot(4)">
-                    <div class="slot-number">Slot 5</div>
-                    <div>Purchase this slot for 100 💎</div>
-                </div>
-            </div>
+<!-- Character Select Screen -->
+<div id="titleScreen" class="game-screen" style="display: none;">
+    <button class="btn btn-secondary" style="position: absolute; top: 20px; right: 20px;" onclick="logoutUser()">Logout</button>
+    <div style="text-align: center; margin-bottom: 30px; margin-top: 60px;">
+        <h2 style="color: #4ecdc4; font-size: 2.5em; margin-bottom: 10px;">Character Select</h2>
+        <p style="color: #ccc; font-size: 1.1em;">Welcome back, <span id="usernameDisplay">Player</span>!</p>
+        <div style="background: rgba(34, 197, 94, 0.2); border: 1px solid #22c55e; border-radius: 5px; padding: 10px; margin: 15px auto; max-width: 600px;">
+            <p style="color: #22c55e; font-size: 0.9em; margin: 0;">✅ <strong>Cloud Save Enabled:</strong> Your characters are automatically saved and will persist across devices and sessions!</p>
         </div>
+    </div>
+
+    <div class="ui-buttons">
+        <span style="color: #ffd93d; font-size: 1.2em; margin-right: 20px;">Diamonds: <span id="titleDiamonds">0</span> 💎</span>
+        <div id="titlePaypalButton" class="paypal-button-container"></div>
+        <button class="btn btn-secondary" onclick="showGlobalLeaderboard()">Leaderboard</button>
+        <button class="btn" style="background: #ffd93d; color: #333;" onclick="showWeeklyTournament()">🏆 Weekly</button>
+    </div>
+
+    <div class="fighter-slots">
+        <div class="fighter-slot" id="slot-container-0" onclick="selectFighter(0)">
+            <div class="slot-number">Slot 1</div>
+            <div class="fighter-name">Empty Slot</div>
+            <div>Click to create fighter</div>
+        </div>
+        <div class="fighter-slot locked" id="slot-container-1" onclick="purchaseSlot(1)">
+            <div class="slot-number">Slot 2</div>
+            <div>Purchase this slot for 100 💎</div>
+        </div>
+        <div class="fighter-slot locked" id="slot-container-2" onclick="purchaseSlot(2)">
+            <div class="slot-number">Slot 3</div>
+            <div>Purchase this slot for 100 💎</div>
+        </div>
+        <div class="fighter-slot locked" id="slot-container-3" onclick="purchaseSlot(3)">
+            <div class="slot-number">Slot 4</div>
+            <div>Purchase this slot for 100 💎</div>
+        </div>
+        <div class="fighter-slot locked" id="slot-container-4" onclick="purchaseSlot(4)">
+            <div class="slot-number">Slot 5</div>
+            <div>Purchase this slot for 100 💎</div>
+        </div>
+    </div>
+    
+    <!-- Developer Credits -->
+    <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #333;">
+        <p style="color: #888; font-size: 0.9em; margin-bottom: 5px;">Made by JM Contreras, Ninja Roo Games</p>
+        <p style="color: #888; font-size: 0.85em;">
+            Contact Us: 
+            <a href="mailto:ninjaroogames@gmail.com" style="color: #4ecdc4; text-decoration: none;">ninjaroogames@gmail.com</a>
+        </p>
+    </div>
+</div>
 
         <!-- Fighter Creation Screen -->
         <div id="creationScreen" class="game-screen">
