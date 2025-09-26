@@ -246,7 +246,7 @@
             </div>
         </div>
 
-       <!-- Fighter Details Screen -->
+<!-- Fighter Details Screen -->
 <div id="fighterScreen" class="game-screen">
     <button class="btn btn-secondary back-btn" onclick="showTitleScreen()">← Back</button>
     <button class="btn" style="background: #e74c3c; color: #fff; position: absolute; top: 20px; right: 20px;" onclick="console.log('Delete button clicked'); deleteFighter();">Delete Fighter</button>
@@ -254,6 +254,7 @@
         <div style="display: flex; justify-content: center; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; align-items: center;">
             <button class="btn btn-fight" onclick="findFight()" id="fightBtn" style="padding: 10px 18px; font-size: 0.9em;">Find Fight</button>
             <button class="btn btn-primary" onclick="fightWithoutRest()" id="fightWithoutRestBtn" style="padding: 10px 18px; font-size: 0.9em;">Fight 💎</button>
+            <button class="btn" style="background: #ffd93d; color: #333; padding: 10px 18px; font-size: 0.9em;" onclick="showWeeklyTournamentFromFighter()">🏆 Weekly Tournament</button>
             <div id="fighterPaypalButton" class="paypal-button-container"></div>
         </div>
     </div>
@@ -262,12 +263,18 @@
         <div class="cooldown-timer" id="cooldownTimer"></div>
     </div>
     
-    <!-- Add Weekly Leaderboard Panel -->
-    <div style="background: rgba(255, 255, 255, 0.1); padding: 15px; border-radius: 10px; margin-bottom: 20px;">
-        <h3 style="color: #ffd93d; text-align: center; margin-bottom: 10px;">🏆 Weekly Tournament</h3>
-        <div id="weeklyLeaderboardContent" style="max-height: 300px; overflow-y: auto;"></div>
+    <div class="fighter-details">
+        <div class="stats-panel">
+            <h3 class="panel-title">Fighter Stats</h3>
+            <div id="fighterStats"></div>
+        </div>
+        <div class="inventory-panel">
+            <h3 class="panel-title">Equipment</h3>
+            <div id="fighterEquipment" class="equipment-grid"></div>
+        </div>
     </div>
-    
+</div>
+        
     <div class="fighter-details">
         <div class="stats-panel">
             <h3 class="panel-title">Fighter Stats</h3>
@@ -1403,7 +1410,7 @@
     document.getElementById('fighterScreen').style.display = 'block';
     updateFighterDisplay();
     updateFightStatus();
-    updateWeeklyLeaderboard();
+    // Removed updateWeeklyLeaderboard() from here
     
     // Initialize PayPal buttons when fighter screen is shown
     setTimeout(function() {
@@ -1467,7 +1474,9 @@
                 return true;
             });
         }
-
+function showWeeklyTournamentFromFighter() {
+    showWeeklyTournament();
+}
         // Weekly Leaderboard Functions
 function getWeekStartDate() {
     var now = new Date();
@@ -1505,14 +1514,14 @@ function updateWeeklyLeaderboard() {
     
     content.innerHTML = '<div style="text-align: center; padding: 20px; color: #888;">Loading weekly leaderboard...</div>';
     
-    // Get current week start date
-    var weekStart = getWeekStartDate().toISOString();
+    var weekStart = getWeekStartDate();
+    var weekStartStr = weekStart.toISOString().split('T')[0];
     
-    fetch(SUPABASE_URL + '/rest/v1/game_data?select=fighters,user_id', {
+    fetch('https://pmsbxvqavkoboxyhqjcc.supabase.co/rest/v1/weekly_scores?week_start=eq.' + weekStartStr + '&order=wins.desc', {
         method: 'GET',
         headers: {
-            'apikey': SUPABASE_ANON_KEY,
-            'Authorization': 'Bearer ' + SUPABASE_ANON_KEY
+            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBtc2J4dnFhdmtvYm94eWhxamNjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc2NjA2OTMsImV4cCI6MjA3MzIzNjY5M30.9-0-glSFo66fOktfR6ineO8J4Ra8RLVXwytCb9jca9U',
+            'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBtc2J4dnFhdmtvYm94eWhxamNjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc2NjA2OTMsImV4cCI6MjA3MzIzNjY5M30.9-0-glSFo66fOktfR6ineO8J4Ra8RLVXwytCb9jca9U'
         }
     })
     .then(function(response) {
@@ -1521,73 +1530,34 @@ function updateWeeklyLeaderboard() {
         }
         return response.json();
     })
-    .then(function(allPlayers) {
-        var weeklyLeaderboard = [];
-        
-        for (var i = 0; i < allPlayers.length; i++) {
-            var playerData = allPlayers[i];
-            if (playerData.fighters && Array.isArray(playerData.fighters)) {
-                for (var j = 0; j < playerData.fighters.length; j++) {
-                    var fighter = playerData.fighters[j];
-                    if (fighter && fighter.name) {
-                        // Get weekly wins (you'll need to track this separately)
-                        var weeklyWins = fighter.weeklyWins || 0;
-                        
-                        // Reset weekly wins if it's a new week
-                        if (fighter.weeklyResetDate !== weekStart) {
-                            weeklyWins = 0;
-                        }
-                        
-                        weeklyLeaderboard.push({
-                            name: fighter.name,
-                            weeklyWins: weeklyWins,
-                            level: fighter.level || 1,
-                            isCurrentUser: playerData.user_id === getUserId()
-                        });
-                    }
-                }
-            }
-        }
-        
-        // Sort by weekly wins
-        weeklyLeaderboard.sort(function(a, b) {
-            return b.weeklyWins - a.weeklyWins;
-        });
-        
-        // Generate HTML with prizes
+    .then(function(weeklyScores) {
         var html = '<div style="text-align: center; margin-bottom: 15px;">' +
             '<div style="color: #ffd93d; font-size: 0.9em;">⏱️ Resets in: <strong>' + getTimeUntilReset() + '</strong></div>' +
-            '</div>';
-            
-        html += '<div style="margin-bottom: 15px; padding: 10px; background: rgba(255, 215, 0, 0.1); border-radius: 5px;">' +
-            '<div style="color: #ffd93d; font-size: 0.85em; text-align: center;"><strong>Weekly Prizes:</strong></div>' +
-            '<div style="color: #888; font-size: 0.8em; text-align: center; margin-top: 5px;">' +
-            '🥇 1st: 100💎 | 🥈 2nd: 50💎 | 🥉 3rd: 25💎 | 4th-10th: 10💎' +
-            '</div>' +
+            '<div style="color: #888; font-size: 0.8em; margin-top: 5px;">Prizes will be awarded when timer expires</div>' +
             '</div>';
         
-        if (weeklyLeaderboard.length === 0) {
+        if (weeklyScores.length === 0) {
             html += '<div style="text-align: center; padding: 20px; color: #888;">No battles yet this week!</div>';
         } else {
-            var displayCount = Math.min(20, weeklyLeaderboard.length);
+            var userId = getUserId();
+            var displayCount = Math.min(20, weeklyScores.length);
             
             for (var i = 0; i < displayCount; i++) {
-                var entry = weeklyLeaderboard[i];
+                var entry = weeklyScores[i];
                 var rank = i + 1;
                 
-                // Determine prize
                 var prizeText = '';
-                if (rank === 1) prizeText = ' 🥇 (100💎)';
-                else if (rank === 2) prizeText = ' 🥈 (50💎)';
-                else if (rank === 3) prizeText = ' 🥉 (25💎)';
-                else if (rank >= 4 && rank <= 10) prizeText = ' (10💎)';
+                if (rank === 1) prizeText = ' 🥇';
+                else if (rank === 2) prizeText = ' 🥈';
+                else if (rank === 3) prizeText = ' 🥉';
                 
-                var highlightStyle = entry.isCurrentUser ? ' style="background: rgba(78, 205, 196, 0.1); border-radius: 5px;"' : '';
-                var yourFighterTag = entry.isCurrentUser ? ' <span style="color: #4ecdc4; font-size: 0.8em;">(You)</span>' : '';
+                var isCurrentUser = entry.user_id === userId;
+                var highlightStyle = isCurrentUser ? ' style="background: rgba(78, 205, 196, 0.1); border-radius: 5px;"' : '';
+                var yourFighterTag = isCurrentUser ? ' <span style="color: #4ecdc4; font-size: 0.8em;">(You)</span>' : '';
                 
                 html += '<div class="leaderboard-entry"' + highlightStyle + '>' +
-                    '<span>' + rank + '. ' + entry.name + yourFighterTag + prizeText + '</span>' +
-                    '<span>' + entry.weeklyWins + ' wins</span>' +
+                    '<span>' + rank + '. ' + entry.fighter_name + yourFighterTag + prizeText + '</span>' +
+                    '<span>' + entry.wins + ' wins</span>' +
                     '</div>';
             }
         }
@@ -1629,26 +1599,24 @@ function checkAndClaimWeeklyPrizes() {
         '<div id="weeklyTournamentModal" style="display: block; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; overflow-y: auto;">' +
             '<div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #1a1a2e; padding: 20px; border-radius: 10px; border: 2px solid #ffd93d; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto;">' +
                 '<h2 style="color: #ffd93d; text-align: center; margin-bottom: 20px;">🏆 Weekly Tournament</h2>' +
-                '<div id="modalWeeklyLeaderboard"></div>' +
+                '<div style="margin-bottom: 15px; padding: 10px; background: rgba(255, 215, 0, 0.1); border-radius: 5px;">' +
+                    '<div style="color: #ffd93d; font-size: 0.9em; text-align: center; margin-bottom: 5px;"><strong>Prize Pool:</strong></div>' +
+                    '<div style="color: #ccc; font-size: 0.85em; text-align: center;">' +
+                    '🥇 1st Place: 100 💎<br>' +
+                    '🥈 2nd Place: 50 💎<br>' +
+                    '🥉 3rd Place: 25 💎<br>' +
+                    '🏅 4th-10th Place: 10 💎' +
+                    '</div>' +
+                '</div>' +
+                '<div id="weeklyLeaderboardContent"></div>' +
                 '<button class="btn btn-secondary" onclick="closeWeeklyTournament()" style="width: 100%; margin-top: 20px;">Close</button>' +
             '</div>' +
         '</div>';
     
     document.body.insertAdjacentHTML('beforeend', modalHTML);
     
-    // Load weekly leaderboard into modal
-    var modalContent = document.getElementById('modalWeeklyLeaderboard');
-    modalContent.innerHTML = document.getElementById('weeklyLeaderboardContent') ? 
-        document.getElementById('weeklyLeaderboardContent').innerHTML : 
-        '<div style="text-align: center; color: #888;">Loading...</div>';
-    
     // Update the weekly leaderboard
-    var tempContent = document.getElementById('weeklyLeaderboardContent');
-    document.getElementById('weeklyLeaderboardContent').id = 'tempWeeklyContent';
-    modalContent.id = 'weeklyLeaderboardContent';
     updateWeeklyLeaderboard();
-    modalContent.id = 'modalWeeklyLeaderboard';
-    if (tempContent) tempContent.id = 'weeklyLeaderboardContent';
 }
 
 function closeWeeklyTournament() {
