@@ -2417,7 +2417,7 @@ function updateWeeklyLeaderboard() {
         fighter.unallocatedStats = 0;
     }
 
-    var specialDisplay;
+var specialDisplay;
 if (fighter.specialAttack && fighter.specialAttack.name) {
     // Calculate actual special damage using same formula
     var baseSpecialDamage = 20;
@@ -2430,10 +2430,12 @@ if (fighter.specialAttack && fighter.specialAttack.name) {
 } else if (fighter.level < 10) {
     specialDisplay = '<div class="stat-row"><span>Special Attack:</span> <span style="color: #888;">Unlocks at Level 10</span></div>';
 } else {
-    // Level 10+ but no special attack (shouldn't happen, but just in case)
+    // Level 10+ but no special attack - generate one
     fighter.specialAttack = {
-        name: specialAttacks[Math.floor(Math.random() * specialAttacks.length)]
+        name: generateSpecialAttackName()
     };
+    saveToSupabase(); // Save the newly generated special attack
+    
     var baseSpecialDamage = 20;
     var levelBonus = fighter.level * 5;
     var strengthBonusSpecial = (fighter.stats.strength - 1) * 4;
