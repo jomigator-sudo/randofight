@@ -3098,6 +3098,8 @@ specialAttack: opponentLevel >= 10 ? {
         }
             
             function performAttack(attacker, defender, attackerType) {
+    attacker.stats = attacker.stats || { strength: 1, agility: 1, luck: 1, toughness: 1 };
+    defender.stats = defender.stats || { strength: 1, agility: 1, luck: 1, toughness: 1 };
     var baseDamage = 10 + (attacker.stats.strength - 1) * 2;
     
     // Equipment bonus
