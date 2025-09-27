@@ -433,7 +433,22 @@
             isLoggedIn: false
         };
 
-        var specialAttacks = ['Fury Strike', 'Power Slam', 'Devastator', 'Thunder Punch', 'Dragon Fist', 'Shadow Strike', 'Meteor Crash', 'Annihilator'];
+        // Special attack word combinations for dynamic generation
+var specialAttackPrefixes = ['Dark', 'Light', 'Fire', 'Ice', 'Thunder', 'Shadow', 'Dragon', 'Phoenix', 'Storm', 'Chaos', 
+    'Divine', 'Mystic', 'Crimson', 'Azure', 'Golden', 'Silver', 'Void', 'Cosmic', 'Lunar', 'Solar', 
+    'Inferno', 'Frost', 'Lightning', 'Venom', 'Crystal', 'Iron', 'Titan', 'Demon', 'Angel', 'Spirit',
+    'Phantom', 'Blazing', 'Frozen', 'Electric', 'Savage', 'Ancient', 'Primal', 'Eternal', 'Astral', 'Meteor'];
+
+var specialAttackSuffixes = ['Strike', 'Slam', 'Punch', 'Fist', 'Crash', 'Wave', 'Beam', 'Blast', 'Rush', 'Fury',
+    'Claw', 'Kick', 'Crusher', 'Breaker', 'Buster', 'Storm', 'Rage', 'Impact', 'Nova', 'Burst',
+    'Blade', 'Edge', 'Flash', 'Smash', 'Force', 'Wrath', 'Destruction', 'Annihilation', 'Devastation', 'Rampage',
+    'Assault', 'Barrage', 'Cyclone', 'Vortex', 'Eruption', 'Avalanche', 'Tempest', 'Maelstrom', 'Cataclysm', 'Apocalypse'];
+
+function generateSpecialAttackName() {
+    var prefix = specialAttackPrefixes[Math.floor(Math.random() * specialAttackPrefixes.length)];
+    var suffix = specialAttackSuffixes[Math.floor(Math.random() * specialAttackSuffixes.length)];
+    return prefix + ' ' + suffix;
+}
         var equipmentSlots = ['Weapon', 'Off-Hand', 'Helmet', 'Shoulders', 'Gloves', 'Chest', 'Greaves', 'Boots'];
 
         // EmailJS Configuration
@@ -1850,6 +1865,34 @@ function closeWeeklyTournament() {
     if (modal) modal.remove();
 }
 
+        // Function to create special attack modal
+function showSpecialAttackModal(fighterName, attackName) {
+    var existingModal = document.getElementById('specialAttackModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    var modalHTML = 
+        '<div id="specialAttackModal" style="display: block; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 3000;">' +
+            '<div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #1a1a2e; padding: 30px; border-radius: 10px; border: 3px solid #ffd93d; max-width: 400px; text-align: center;">' +
+                '<h2 style="color: #ffd93d; margin-bottom: 20px; font-size: 1.8em;">🎉 LEVEL 10! 🎉</h2>' +
+                '<p style="color: #fff; font-size: 1.2em; margin-bottom: 15px;">' + fighterName + ' reached <span style="color: #ffd93d;">Level 10</span>!</p>' +
+                '<p style="color: #fff; font-size: 1.1em; margin-bottom: 25px;">Learned the special attack:</p>' +
+                '<p style="color: #ff6b6b; font-size: 1.5em; font-weight: bold; margin-bottom: 30px; text-shadow: 2px 2px 4px rgba(0,0,0,0.5);">✨ ' + attackName + ' ✨</p>' +
+                '<button class="btn" style="background: #4ecdc4; color: #fff; padding: 12px 40px; font-size: 1.1em;" onclick="closeSpecialAttackModal()">Awesome!</button>' +
+            '</div>' +
+        '</div>';
+    
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+}
+
+function closeSpecialAttackModal() {
+    var modal = document.getElementById('specialAttackModal');
+    if (modal) {
+        modal.remove();
+    }
+}
+
 // Track weekly wins in database
 function saveWeeklyWin(fighterName) {
     if (!gameState.currentUser || gameState.currentUser.isGuest) {
@@ -2847,8 +2890,8 @@ function fightWithoutRest() {
             }
         },
         specialAttack: opponentLevel >= 10 ? {
-            name: specialAttacks[Math.floor(Math.random() * specialAttacks.length)]
-        } : null, // Only level 10+ bots get special attacks
+    name: generateSpecialAttackName()
+} : null, // Only level 10+ bots get special attacks
         isRealPlayer: false,
         isBot: true
     };
@@ -3385,13 +3428,17 @@ if (Math.random() * 100 < diamondDropChance) {
                 addToFightLog(levelUpTexts[Math.floor(Math.random() * levelUpTexts.length)]);
                 addToFightLog('<span class="exp-gain">🎯 Gained 1 stat point to allocate! Visit your character screen to spend it.</span>');
                 
-                // Unlock special attack at level 10
-                if (fighter.level === 10) {
-                    fighter.specialAttack = {
-                        name: specialAttacks[Math.floor(Math.random() * specialAttacks.length)]
-                    };
-                    addToFightLog('<span class="special">✨ ' + fighter.name + ' has mastered the art of ' + fighter.specialAttack.name + '! ✨</span>');
-                }
+               // Unlock special attack at level 10
+if (fighter.level === 10) {
+    fighter.specialAttack = {
+        name: generateSpecialAttackName()
+    };
+    
+    // Show modal instead of fight log if we're in combat
+    setTimeout(function() {
+        showSpecialAttackModal(fighter.name, fighter.specialAttack.name);
+    }, 500);
+}
             }
             
             fightTurn();
