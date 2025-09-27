@@ -3059,6 +3059,8 @@ specialAttack: opponentLevel >= 10 ? {
             var painSounds = ['grunts in pain', 'winces', 'staggers', 'reels back', 'stumbles', 'cries out', 'gasps'];
             
             function fightTurn() {
+                player.currentHp = Math.max(0, Number(player.currentHp));
+                opponent.currentHp = Math.max(0, Number(opponent.currentHp));
                 if (turnCount > maxTurns || player.currentHp <= 0 || opponent.currentHp <= 0) {
                     endCombat();
                     return;
