@@ -129,6 +129,35 @@
         width: 100% !important;
         margin: 5px 0 !important;
     }
+    
+    /* Fix UI buttons alignment on Character Select screen */
+    .ui-buttons {
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .ui-buttons > * {
+        width: 90%;
+        max-width: 250px;
+        margin: 5px 0 !important;
+    }
+    
+    .ui-buttons span {
+        margin-right: 0 !important;
+    }
+    
+    /* Stack fighter action buttons vertically on mobile */
+    #fighterScreen div[style*="display: flex"] {
+        flex-direction: column !important;
+        align-items: center !important;
+    }
+    
+    #fighterScreen button {
+        width: 90% !important;
+        max-width: 250px;
+        margin: 5px 0 !important;
+    }
 }
         .game-screen {
     display: none;
@@ -251,18 +280,13 @@
 
 <!-- Character Select Screen -->
 <div id="titleScreen" class="game-screen" style="display: none;">
-    <div style="text-align: center; margin-bottom: 30px;">
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
-            <div style="width: 80px;"></div> <!-- Spacer -->
-            <h2 style="color: #4ecdc4; font-size: 2.5em; margin: 0;">Character Select</h2>
-            <button class="btn btn-secondary" onclick="logoutUser()" style="padding: 8px 16px;">Logout</button>
-        </div>
+    <div style="text-align: center; margin-bottom: 30px; margin-top: 20px;">
+        <h2 style="color: #4ecdc4; font-size: 2.5em; margin-bottom: 10px;">Character Select</h2>
         <p style="color: #ccc; font-size: 1.1em;">Welcome back, <span id="usernameDisplay">Player</span>!</p>
         <div style="background: rgba(34, 197, 94, 0.2); border: 1px solid #22c55e; border-radius: 5px; padding: 10px; margin: 15px auto; max-width: 600px;">
             <p style="color: #22c55e; font-size: 0.9em; margin: 0;">✅ <strong>Cloud Save Enabled:</strong> Your characters are automatically saved and will persist across devices and sessions!</p>
         </div>
     </div>
-    <!-- rest of the content remains the same -->
 
     <div class="ui-buttons">
         <span style="color: #ffd93d; font-size: 1.2em; margin-right: 20px;">Diamonds: <span id="titleDiamonds">0</span> 💎</span>
@@ -295,8 +319,13 @@
         </div>
     </div>
     
+    <!-- Logout button at bottom -->
+    <div style="text-align: center; margin: 30px 0 20px 0;">
+        <button class="btn btn-secondary" onclick="logoutUser()" style="padding: 10px 30px;">Logout</button>
+    </div>
+    
     <!-- Developer Credits -->
-    <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #333;">
+    <div style="text-align: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid #333;">
         <p style="color: #888; font-size: 0.9em; margin-bottom: 5px;">Made by JM Contreras, Ninja Roo Games</p>
         <p style="color: #888; font-size: 0.85em;">
             Contact Us: 
@@ -430,37 +459,38 @@
         }
 
         // Initialize PayPal Buttons
-        function initPayPalButtons() {
-            // Clear existing buttons and labels first to prevent duplicates
-            var titleContainer = document.getElementById('titlePaypalButton');
-            var fighterContainer = document.getElementById('fighterPaypalButton');
-            
-            if (titleContainer) {
-                titleContainer.innerHTML = '';
-                // Remove any existing labels
-                var existingLabel = titleContainer.previousElementSibling;
-                if (existingLabel && existingLabel.innerHTML && existingLabel.innerHTML.includes('Buy 20')) {
-                    existingLabel.remove();
-                }
-            }
-            if (fighterContainer) {
-                fighterContainer.innerHTML = '';
-                // Remove any existing labels
-                var existingLabel = fighterContainer.previousElementSibling;
-                if (existingLabel && existingLabel.innerHTML && existingLabel.innerHTML.includes('Buy 20')) {
-                    existingLabel.remove();
-                }
-            }
-            
-            // Replace PayPal buttons with Shop buttons
-            if (titleContainer) {
-                titleContainer.innerHTML = '<button class="btn btn-primary" onclick="showDiamondShop()">Shop</button>';
-            }
-            
-            if (fighterContainer) {
-                fighterContainer.innerHTML = '<button class="btn btn-primary" onclick="showDiamondShop()">Shop</button>';
-            }
+function initPayPalButtons() {
+    // Clear existing buttons and labels first to prevent duplicates
+    var titleContainer = document.getElementById('titlePaypalButton');
+    var fighterContainer = document.getElementById('fighterPaypalButton');
+    
+    if (titleContainer) {
+        titleContainer.innerHTML = '';
+        // Remove any existing labels
+        var existingLabel = titleContainer.previousElementSibling;
+        if (existingLabel && existingLabel.innerHTML && existingLabel.innerHTML.includes('Buy 20')) {
+            existingLabel.remove();
         }
+    }
+    if (fighterContainer) {
+        fighterContainer.innerHTML = '';
+        // Remove any existing labels
+        var existingLabel = fighterContainer.previousElementSibling;
+        if (existingLabel && existingLabel.innerHTML && existingLabel.innerHTML.includes('Buy 20')) {
+            existingLabel.remove();
+        }
+    }
+    
+    // Replace PayPal buttons with Shop buttons
+    if (titleContainer) {
+        titleContainer.innerHTML = '<button class="btn btn-primary" onclick="showDiamondShop()">Shop</button>';
+    }
+    
+    if (fighterContainer) {
+        fighterContainer.innerHTML = '<button class="btn btn-primary" onclick="showDiamondShop()">Shop</button>';
+    }
+}
+
 function handleBackButton() {
     // Determine which screen is currently active and go back appropriately
     if (document.getElementById('fighterScreen').style.display === 'block') {
@@ -491,10 +521,12 @@ function showTitleScreen() {
     updateFighterSlots();
     updateDiamondDisplay();
     
+    // Check for weekly prizes when entering title screen
     setTimeout(function() {
         checkWeeklyPrizes();
     }, 1000);
     
+    // Initialize PayPal buttons when title screen is shown
     setTimeout(function() {
         initPayPalButtons();
     }, 100);
