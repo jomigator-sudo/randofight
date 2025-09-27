@@ -78,10 +78,87 @@
         .mythic { color: #ff0000; }
         .paypal-button-container { margin: 10px 0; display: inline-block; }
         @media (max-width: 768px) {
-            .fighter-details { grid-template-columns: 1fr; }
-            .fighters-display { grid-template-columns: 1fr; }
-            .title { font-size: 2em; }
-        }
+    .fighter-details { grid-template-columns: 1fr; }
+    .fighters-display { grid-template-columns: 1fr; }
+    .title { font-size: 2em; }
+    
+    /* Fix absolute positioned buttons */
+    .back-btn {
+        position: static !important;
+        margin: 10px auto;
+        display: block;
+    }
+    
+    /* Fix overlapping fight buttons */
+    #fighterScreen > div[style*="margin-top: 60px"] {
+        margin-top: 10px !important;
+    }
+    
+    /* Stack buttons vertically on mobile */
+    #fighterScreen .btn-fight,
+    #fighterScreen .btn-primary,
+    #fighterScreen .btn[onclick*="showWeeklyTournament"] {
+        display: block !important;
+        width: 100% !important;
+        margin: 5px 0 !important;
+        padding: 12px 20px !important;
+    }
+    
+    /* Fix button container */
+    #fighterScreen > div > div[style*="display: flex"] {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        padding: 0 20px !important;
+    }
+    
+    /* Fix Delete Fighter button */
+    #fighterScreen .btn[onclick*="deleteFighter"] {
+        position: static !important;
+        display: block;
+        margin: 10px auto;
+        width: 90%;
+    }
+    
+    /* Adjust Equipment grid for mobile */
+    .equipment-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+    
+    /* Fix PayPal button container */
+    .paypal-button-container {
+        width: 100% !important;
+        margin: 5px 0 !important;
+    }
+    
+    /* Fix UI buttons alignment on Character Select screen */
+    .ui-buttons {
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .ui-buttons > * {
+        width: 90%;
+        max-width: 250px;
+        margin: 5px 0 !important;
+    }
+    
+    .ui-buttons span {
+        margin-right: 0 !important;
+    }
+    
+    /* Stack fighter action buttons vertically on mobile */
+    #fighterScreen div[style*="display: flex"] {
+        flex-direction: column !important;
+        align-items: center !important;
+    }
+    
+    #fighterScreen button {
+        width: 90% !important;
+        max-width: 250px;
+        margin: 5px 0 !important;
+    }
+}
         .game-screen {
     display: none;
     position: relative;
@@ -98,7 +175,12 @@
 </head>
 <body>
     <div class="container">
-        <h1 class="title">RandoFight</h1>
+    <!-- Navigation header with back button and title -->
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+        <button id="globalBackBtn" class="btn btn-secondary" onclick="handleBackButton()" style="display: none;">← Back</button>
+        <h1 class="title" style="margin: 0; flex-grow: 1; text-align: center;">RandoFight</h1>
+        <div style="width: 80px;"></div> <!-- Spacer for centering -->
+    </div>
 
         <!-- Login Screen -->
 <div id="loginScreen" class="game-screen" style="display: block;">
@@ -198,8 +280,7 @@
 
 <!-- Character Select Screen -->
 <div id="titleScreen" class="game-screen" style="display: none;">
-    <button class="btn btn-secondary" style="position: absolute; top: 20px; right: 20px;" onclick="logoutUser()">Logout</button>
-    <div style="text-align: center; margin-bottom: 30px; margin-top: 60px;">
+    <div style="text-align: center; margin-bottom: 30px; margin-top: 20px;">
         <h2 style="color: #4ecdc4; font-size: 2.5em; margin-bottom: 10px;">Character Select</h2>
         <p style="color: #ccc; font-size: 1.1em;">Welcome back, <span id="usernameDisplay">Player</span>!</p>
         <div style="background: rgba(34, 197, 94, 0.2); border: 1px solid #22c55e; border-radius: 5px; padding: 10px; margin: 15px auto; max-width: 600px;">
@@ -238,8 +319,13 @@
         </div>
     </div>
     
+    <!-- Logout button at bottom -->
+    <div style="text-align: center; margin: 30px 0 20px 0;">
+        <button class="btn btn-secondary" onclick="logoutUser()" style="padding: 10px 30px;">Logout</button>
+    </div>
+    
     <!-- Developer Credits -->
-    <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #333;">
+    <div style="text-align: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid #333;">
         <p style="color: #888; font-size: 0.9em; margin-bottom: 5px;">Made by JM Contreras, Ninja Roo Games</p>
         <p style="color: #888; font-size: 0.85em;">
             Contact Us: 
@@ -248,31 +334,37 @@
     </div>
 </div>
 
-        <!-- Fighter Creation Screen -->
-        <div id="creationScreen" class="game-screen">
-            <button class="btn btn-secondary back-btn" onclick="showTitleScreen()">← Back</button>
-            <div class="creation-form">
-                <h2 style="text-align: center; margin-bottom: 20px; color: #4ecdc4;">Create New Fighter</h2>
-                <div class="form-group">
-                    <label for="fighterName">Fighter Name:</label>
-                    <input type="text" id="fighterName" maxlength="20" placeholder="Enter fighter name">
-                </div>
-                <div style="text-align: center; margin-top: 30px;">
-                    <button class="btn btn-primary" onclick="createFighter()">Create Fighter</button>
-                    <button class="btn btn-secondary" onclick="showTitleScreen()">Cancel</button>
-                </div>
-                <div style="text-align: center; margin-top: 20px; color: #888; font-size: 0.9em;">
-                    <p>🔥 Your fighter will unlock a special attack at level 10! 🔥</p>
-                </div>
+<!-- Fighter Creation Screen -->
+<div id="creationScreen" class="game-screen">
+    <div class="creation-form">
+        <h2 style="text-align: center; margin-bottom: 20px; color: #4ecdc4;">Create New Fighter</h2>
+        <div class="form-group">
+            <label for="fighterName">Fighter Name:</label>
+            <input type="text" id="fighterName" maxlength="20" placeholder="Enter fighter name" oninput="validateFighterNameInput()">
+            <div style="margin-top: 10px; font-size: 0.85em; color: #888;">
+                <p>• 3-20 characters required</p>
+                <p>• Must contain at least one letter</p>
+                <p>• Inappropriate names will be blocked</p>
             </div>
         </div>
+        <div style="text-align: center; margin-top: 30px;">
+            <button class="btn btn-primary" onclick="createFighter()">Create Fighter</button>
+            <button class="btn btn-secondary" onclick="showTitleScreen()">Cancel</button>
+        </div>
+        <div style="text-align: center; margin-top: 20px; color: #888; font-size: 0.9em;">
+            <p>🔥 Your fighter will unlock a special attack at level 10! 🔥</p>
+        </div>
+    </div>
+</div>
 
 <!-- Fighter Details Screen -->
 <div id="fighterScreen" class="game-screen">
-    <button class="btn btn-secondary back-btn" onclick="showTitleScreen()">← Back</button>
-    <button class="btn" style="background: #e74c3c; color: #fff; position: absolute; top: 20px; right: 20px;" onclick="console.log('Delete button clicked'); deleteFighter();">Delete Fighter</button>
-    <div style="text-align: center; margin-bottom: 20px; margin-top: 60px;">
-        <div style="display: flex; justify-content: center; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; align-items: center;">
+    <div style="padding: 10px;">
+        <button class="btn btn-secondary" onclick="showTitleScreen()">← Back</button>
+    </div>
+    
+    <div style="text-align: center; margin-bottom: 20px;">
+        <div style="display: flex; justify-content: center; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; align-items: center; padding: 0 10px;">
             <button class="btn btn-fight" onclick="findFight()" id="fightBtn" style="padding: 10px 18px; font-size: 0.9em;">Find Fight</button>
             <button class="btn btn-primary" onclick="fightWithoutRest()" id="fightWithoutRestBtn" style="padding: 10px 18px; font-size: 0.9em;">Fight 💎</button>
             <button class="btn" style="background: #ffd93d; color: #333; padding: 10px 18px; font-size: 0.9em;" onclick="showWeeklyTournamentFromFighter()">🏆 Weekly Tournament</button>
@@ -293,6 +385,11 @@
             <h3 class="panel-title">Equipment</h3>
             <div id="fighterEquipment" class="equipment-grid"></div>
         </div>
+    </div>
+    
+    <!-- Delete Fighter button at bottom -->
+    <div style="text-align: center; margin: 30px 0 20px 0;">
+        <button class="btn" style="background: #e74c3c; color: #fff; padding: 12px 30px;" onclick="deleteFighter();">Delete Fighter</button>
     </div>
 </div>
         <!-- Fight Screen -->
@@ -371,38 +468,86 @@
         }
 
         // Initialize PayPal Buttons
-        function initPayPalButtons() {
-            // Clear existing buttons and labels first to prevent duplicates
-            var titleContainer = document.getElementById('titlePaypalButton');
-            var fighterContainer = document.getElementById('fighterPaypalButton');
-            
-            if (titleContainer) {
-                titleContainer.innerHTML = '';
-                // Remove any existing labels
-                var existingLabel = titleContainer.previousElementSibling;
-                if (existingLabel && existingLabel.innerHTML && existingLabel.innerHTML.includes('Buy 20')) {
-                    existingLabel.remove();
-                }
-            }
-            if (fighterContainer) {
-                fighterContainer.innerHTML = '';
-                // Remove any existing labels
-                var existingLabel = fighterContainer.previousElementSibling;
-                if (existingLabel && existingLabel.innerHTML && existingLabel.innerHTML.includes('Buy 20')) {
-                    existingLabel.remove();
-                }
-            }
-            
-            // Replace PayPal buttons with Shop buttons
-            if (titleContainer) {
-                titleContainer.innerHTML = '<button class="btn btn-primary" onclick="showDiamondShop()">Shop</button>';
-            }
-            
-            if (fighterContainer) {
-                fighterContainer.innerHTML = '<button class="btn btn-primary" onclick="showDiamondShop()">Shop</button>';
-            }
+function initPayPalButtons() {
+    // Clear existing buttons and labels first to prevent duplicates
+    var titleContainer = document.getElementById('titlePaypalButton');
+    var fighterContainer = document.getElementById('fighterPaypalButton');
+    
+    if (titleContainer) {
+        titleContainer.innerHTML = '';
+        // Remove any existing labels
+        var existingLabel = titleContainer.previousElementSibling;
+        if (existingLabel && existingLabel.innerHTML && existingLabel.innerHTML.includes('Buy 20')) {
+            existingLabel.remove();
         }
+    }
+    if (fighterContainer) {
+        fighterContainer.innerHTML = '';
+        // Remove any existing labels
+        var existingLabel = fighterContainer.previousElementSibling;
+        if (existingLabel && existingLabel.innerHTML && existingLabel.innerHTML.includes('Buy 20')) {
+            existingLabel.remove();
+        }
+    }
+    
+    // Replace PayPal buttons with Shop buttons
+    if (titleContainer) {
+        titleContainer.innerHTML = '<button class="btn btn-primary" onclick="showDiamondShop()">Shop</button>';
+    }
+    
+    if (fighterContainer) {
+        fighterContainer.innerHTML = '<button class="btn btn-primary" onclick="showDiamondShop()">Shop</button>';
+    }
+}
 
+function handleBackButton() {
+    // Determine which screen is currently active and go back appropriately
+    if (document.getElementById('fighterScreen').style.display === 'block') {
+        showTitleScreen();
+    } else if (document.getElementById('creationScreen').style.display === 'block') {
+        showTitleScreen();
+    }
+}
+
+// Update showFighterScreen to show the back button
+function showFighterScreen() {
+    hideAll();
+    document.getElementById('fighterScreen').style.display = 'block';
+    document.getElementById('globalBackBtn').style.display = 'block'; // Show back button
+    updateFighterDisplay();
+    updateFightStatus();
+    
+    setTimeout(function() {
+        initPayPalButtons();
+    }, 100);
+}
+
+// Update showTitleScreen to hide the back button
+function showTitleScreen() {
+    hideAll();
+    document.getElementById('globalBackBtn').style.display = 'none'; // Hide back button
+    document.getElementById('titleScreen').style.display = 'block';
+    updateFighterSlots();
+    updateDiamondDisplay();
+    
+    // Check for weekly prizes when entering title screen
+    setTimeout(function() {
+        checkWeeklyPrizes();
+    }, 1000);
+    
+    // Initialize PayPal buttons when title screen is shown
+    setTimeout(function() {
+        initPayPalButtons();
+    }, 100);
+}
+
+// Update showCreationScreen to show the back button
+function showCreationScreen() {
+    hideAll();
+    document.getElementById('globalBackBtn').style.display = 'block'; // Show back button
+    document.getElementById('creationScreen').style.display = 'block';
+    document.getElementById('fighterName').value = '';
+}
         // Show Diamond Shop Modal
         function showDiamondShop() {
             var existingModal = document.getElementById('diamondShopModal');
@@ -624,17 +769,19 @@
         }
 
         function showLoginScreen() {
-            console.log('Showing login screen...');
-            hideAll();
-            var loginScreen = document.getElementById('loginScreen');
-            if (loginScreen) {
-                loginScreen.style.display = 'block';
-                console.log('Login screen displayed');
-            } else {
-                console.error('Login screen element not found!');
-            }
-            showLoginForm();
-        }
+    console.log('Showing login screen...');
+    hideAll();
+    var loginScreen = document.getElementById('loginScreen');
+    if (loginScreen) {
+        loginScreen.style.display = 'block';
+        console.log('Login screen displayed');
+    } else {
+        console.error('Login screen element not found!');
+    }
+    showLoginForm();
+    // Add this line to setup the Enter key handlers
+    setupLoginKeyHandlers();
+}
 
         function loginUser() {
             var email = document.getElementById('loginEmail').value.trim();
@@ -1218,6 +1365,68 @@
             }
         }
 
+        // Add Enter key functionality for login form
+function setupLoginKeyHandlers() {
+    var loginEmail = document.getElementById('loginEmail');
+    var loginPassword = document.getElementById('loginPassword');
+    
+    if (loginEmail) {
+        loginEmail.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                loginUser();
+            }
+        });
+    }
+    
+    if (loginPassword) {
+        loginPassword.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                loginUser();
+            }
+        });
+    }
+    
+    // Also add for signup form
+    var signupEmail = document.getElementById('signupEmail');
+    var signupPassword = document.getElementById('signupPassword');
+    var signupUsername = document.getElementById('signupUsername');
+    
+    if (signupEmail) {
+        signupEmail.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                signupUser();
+            }
+        });
+    }
+    
+    if (signupPassword) {
+        signupPassword.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                signupUser();
+            }
+        });
+    }
+    
+    if (signupUsername) {
+        signupUsername.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                signupUser();
+            }
+        });
+    }
+    
+    // Add for password reset form
+    var resetEmail = document.getElementById('resetEmail');
+    
+    if (resetEmail) {
+        resetEmail.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendPasswordReset();
+            }
+        });
+    }
+}
+        
         function getResetTokenFromURL() {
             var urlParams = new URLSearchParams(window.location.search);
             var tokenFromURL = urlParams.get('reset');
@@ -1882,54 +2091,152 @@ function updateWeeklyLeaderboard() {
 
         
         function createFighter() {
-            var name = document.getElementById('fighterName').value.trim();
-            if (!name) {
-                alert('Please enter a fighter name!');
+    var name = document.getElementById('fighterName').value.trim();
+    if (!name) {
+        alert('Please enter a fighter name!');
+        return;
+    }
+    
+    // Check name length
+    if (name.length < 3) {
+        alert('Fighter name must be at least 3 characters long!');
+        return;
+    }
+    
+    if (name.length > 20) {
+        alert('Fighter name must be 20 characters or less!');
+        return;
+    }
+    
+    // List of inappropriate terms to block (comprehensive list)
+    var inappropriateTerms = [
+        // Sexual terms
+        'sex', 'porn', 'xxx', 'nude', 'naked', 'penis', 'vagina', 'dick', 'cock', 'pussy',
+        'boob', 'tit', 'ass', 'anal', 'oral', 'cum', 'jizz', 'fap', 'dildo', 'vibrator',
+        'orgasm', 'erect', 'nipple', 'horny', 'slut', 'whore', 'bitch', 'hoe', 'pimp',
+        
+        // Racist terms and slurs
+        'nigger', 'nigga', 'negro', 'coon', 'spic', 'wetback', 'beaner', 'chink', 
+        'gook', 'jap', 'kike', 'jew', 'faggot', 'fag', 'dyke', 'tranny', 'shemale',
+        'retard', 'midget', 'cripple', 'spastic', 'mongo',
+        
+        // Offensive terms
+        'fuck', 'shit', 'piss', 'bastard', 'damn', 'hell', 'cunt', 'twat', 'douche',
+        'rape', 'molest', 'pedo', 'nazi', 'hitler', 'isis', 'terrorist', 'suicide',
+        'kill', 'murder', 'genocide', 'holocaust',
+        
+        // Drug references
+        'cocaine', 'heroin', 'meth', 'crack', 'weed', 'marijuana', 'drug'
+    ];
+    
+    // Check for inappropriate content (case-insensitive)
+    var nameLower = name.toLowerCase();
+    var nameNoSpaces = nameLower.replace(/[^a-z0-9]/gi, ''); // Remove special chars and spaces
+    
+    for (var i = 0; i < inappropriateTerms.length; i++) {
+        if (nameLower.includes(inappropriateTerms[i]) || nameNoSpaces.includes(inappropriateTerms[i])) {
+            alert('That name contains inappropriate content. Please choose a different name.');
+            return;
+        }
+    }
+    
+    // Check for leetspeak variations
+    var leetSpeakName = nameLower
+        .replace(/0/g, 'o')
+        .replace(/1/g, 'i')
+        .replace(/3/g, 'e')
+        .replace(/4/g, 'a')
+        .replace(/5/g, 's')
+        .replace(/7/g, 't')
+        .replace(/@/g, 'a')
+        .replace(/\$/g, 's');
+    
+    for (var i = 0; i < inappropriateTerms.length; i++) {
+        if (leetSpeakName.includes(inappropriateTerms[i])) {
+            alert('That name contains inappropriate content. Please choose a different name.');
+            return;
+        }
+    }
+    
+    // Check for all numbers or all special characters
+    if (!/[a-zA-Z]/.test(name)) {
+        alert('Fighter name must contain at least one letter!');
+        return;
+    }
+    
+    // Check for excessive special characters
+    var specialCharCount = (name.match(/[^a-zA-Z0-9\s]/g) || []).length;
+    if (specialCharCount > 3) {
+        alert('Fighter name can only contain up to 3 special characters!');
+        return;
+    }
+    
+    // Check for spam patterns (repeating characters)
+    if (/(.)\1{4,}/.test(name)) {
+        alert('Fighter name cannot contain more than 4 repeated characters in a row!');
+        return;
+    }
+    
+    // Check name availability (existing functionality)
+    checkNameAvailability(name)
+        .then(function(isAvailable) {
+            if (!isAvailable) {
+                alert('Fighter name "' + name + '" is already taken. Please choose a different name.');
                 return;
             }
+            
+            var fighter = {
+                name: name,
+                birthplace: 'Unknown',
+                level: 1,
+                exp: 0,
+                expRequired: 100,
+                hp: 100,
+                maxHp: 100,
+                wins: 0,
+                stats: { strength: 1, toughness: 1, agility: 1, luck: 1, speed: 1 },
+                unallocatedStats: 0,
+                specialAttack: null,
+                equipment: {
+                    weapon: { name: 'Wooden Stick', type: 'weapon', slot: 'weapon', power: 5, level: 1, rarity: 'common', statType: 'Damage' },
+                    offHand: null, helmet: null, shoulders: null, gloves: null, chest: null, greaves: null, boots: null
+                }
+            };
 
-            checkNameAvailability(name)
-                .then(function(isAvailable) {
-                    if (!isAvailable) {
-                        alert('Fighter name "' + name + '" is already taken. Please choose a different name.');
-                        return;
-                    }
-                    
-                    var fighter = {
-                        name: name,
-                        birthplace: 'Unknown',
-                        level: 1,
-                        exp: 0,
-                        expRequired: 100,
-                        hp: 100,
-                        maxHp: 100,
-                        wins: 0,
-                        stats: { strength: 1, toughness: 1, agility: 1, luck: 1, speed: 1 },
-                        unallocatedStats: 0,
-                        specialAttack: null,
-                        equipment: {
-                            weapon: { name: 'Wooden Stick', type: 'weapon', slot: 'weapon', power: 5, level: 1, rarity: 'common', statType: 'Damage' },
-                            offHand: null, helmet: null, shoulders: null, gloves: null, chest: null, greaves: null, boots: null
-                        }
-                    };
-
-                    gameState.fighters[gameState.currentSlotIndex] = fighter;
-                    
-                    var isFirstFighter = gameState.fighters.filter(function(f) { return f !== null && f !== undefined; }).length === 1;
-                    if (isFirstFighter && gameState.diamonds === 0) {
-                        gameState.diamonds = 10;
-                        alert('Welcome to RandoFight! You have received 10 free diamonds to get you started!');
-                    }
-                    
-                    saveToSupabase();
-                    gameState.currentFighter = fighter;
-                    showFighterScreen();
-                })
-                .catch(function(error) {
-                    console.error('Error checking name availability:', error);
-                    alert('Unable to verify name availability. Please try again.');
-                });
-        }
+            gameState.fighters[gameState.currentSlotIndex] = fighter;
+            
+            var isFirstFighter = gameState.fighters.filter(function(f) { return f !== null && f !== undefined; }).length === 1;
+            if (isFirstFighter && gameState.diamonds === 0) {
+                gameState.diamonds = 10;
+                alert('Welcome to RandoFight! You have received 10 free diamonds to get you started!');
+            }
+            
+            saveToSupabase();
+            gameState.currentFighter = fighter;
+            showFighterScreen();
+        })
+        .catch(function(error) {
+            console.error('Error checking name availability:', error);
+            alert('Unable to verify name availability. Please try again.');
+        });
+}
+        function validateFighterNameInput() {
+    var input = document.getElementById('fighterName');
+    var value = input.value;
+    
+    // Remove any numbers at the beginning
+    value = value.replace(/^\d+/, '');
+    
+    // Limit to 20 characters
+    if (value.length > 20) {
+        value = value.substring(0, 20);
+    }
+    
+    // Remove excessive special characters as they type
+    value = value.replace(/[^a-zA-Z0-9\s\-_]/g, '');
+    
+    input.value = value;
+}
 
         function selectFighter(slotIndex) {
             if (!gameState.unlockedSlots[slotIndex]) return;
@@ -2095,6 +2402,29 @@ function updateWeeklyLeaderboard() {
     var speedBonus = (fighter.stats.speed - 1) * 5;
     var luckBonus = fighter.stats.luck >= 2 ? (fighter.stats.luck - 1) * 3 : 0;
 
+    // Calculate base damage and defense
+    var baseDamage = 10;
+    var weaponDamage = 0;
+    var totalDefense = 0;
+    
+    // Calculate weapon damage
+    if (fighter.equipment && fighter.equipment.weapon) {
+        weaponDamage = fighter.equipment.weapon.power || 0;
+    }
+    
+    // Calculate total defense from all equipment
+    var equipmentSlotNames = ['offhand', 'helmet', 'shoulders', 'gloves', 'chest', 'greaves', 'boots'];
+    for (var i = 0; i < equipmentSlotNames.length; i++) {
+        var slot = equipmentSlotNames[i];
+        var item = fighter.equipment[slot];
+        if (item && item.statType === 'Defense') {
+            totalDefense += item.power || 0;
+        }
+    }
+    
+    var totalDamage = baseDamage + strengthBonus + weaponDamage;
+    var damageBonus = strengthBonus + weaponDamage;
+
     // Calculate allocated points for reset cost
     var allocatedPoints = 0;
     allocatedPoints += (fighter.stats.strength - 1);
@@ -2134,6 +2464,10 @@ function updateWeeklyLeaderboard() {
         '<div class="stat-row"><span>EXP:</span> <span>' + fighter.exp + '/' + fighter.expRequired + '</span></div>' +
         '<div class="stat-row"><span>Wins:</span> <span class="fighter-wins">' + fighter.wins + '</span></div>' +
         '<div class="stat-row"><span>HP:</span> <span>' + fighter.hp + '/' + fighter.maxHp + '</span></div>' +
+        '<div class="stat-row"><span>Damage:</span> <span style="color: #ff6b6b;">' + baseDamage + 
+            (damageBonus > 0 ? ' <span style="color: #6bcf7f;">(+' + damageBonus + ')</span>' : '') + '</span></div>' +
+        '<div class="stat-row"><span>Defense:</span> <span style="color: #74b9ff;">' + 
+            (totalDefense > 0 ? totalDefense + ' <span style="color: #888;">(-' + Math.min(50, totalDefense) + '% damage)</span>' : '0') + '</span></div>' +
         '<hr style="margin: 10px 0; border-color: rgba(255,255,255,0.2);">' +
         unallocatedDisplay +
         '<div class="stat-row"><span>Strength <span style="color: #888; font-size: 0.8em;">(+' + strengthBonus + ' damage)</span>:</span> <span>' + fighter.stats.strength + '</span></div>' +
@@ -2307,7 +2641,7 @@ function updateWeeklyLeaderboard() {
     }
     
     // Set cooldown immediately when regular fight starts
-    gameState.fightCooldownEnd = Date.now() + (45 * 1000);
+    gameState.fightCooldownEnd = Date.now() + (60 * 1000);
     saveToSupabase();
     updateFightStatus();
     
@@ -2741,9 +3075,29 @@ function fightWithoutRest() {
     var critChance = Math.min(20, (attacker.stats.luck - 1) * 3); // Cap at 20%
     var isCrit = Math.random() * 100 < critChance;
     
-    // Damage reduction based on toughness
-    var damageReduction = Math.min(50, (defender.stats.toughness - 1) * 3); // Cap at 50%
-    damage = Math.floor(damage * (1 - damageReduction / 100));
+    // FIXED: Calculate total defense from equipment
+    var totalDefense = 0;
+    if (defender.equipment) {
+        var equipmentSlotNames = ['offhand', 'helmet', 'shoulders', 'gloves', 'chest', 'greaves', 'boots'];
+        for (var i = 0; i < equipmentSlotNames.length; i++) {
+            var slot = equipmentSlotNames[i];
+            var item = defender.equipment[slot];
+            if (item && item.statType === 'Defense') {
+                totalDefense += item.power || 0;
+            }
+        }
+    }
+    
+    // Calculate total damage reduction from toughness AND defense
+    var toughnessReduction = Math.min(30, (defender.stats.toughness - 1) * 3); // Cap at 30% from toughness
+    var defenseReduction = Math.min(40, totalDefense * 0.5); // Defense gives 0.5% reduction per point, cap at 40%
+    var totalReduction = Math.min(60, toughnessReduction + defenseReduction); // Total cap at 60%
+    
+    // Apply damage reduction
+    damage = Math.floor(damage * (1 - totalReduction / 100));
+    
+    // Minimum damage of 1 to prevent complete immunity
+    damage = Math.max(1, damage);
     
     // Generate varied attack text with colored weapon names
     var attackVerbs = ['strikes with', 'swings', 'attacks with', 'wields', 'slashes with', 'thrusts', 'batters with'];
@@ -2754,6 +3108,7 @@ function fightWithoutRest() {
     
     if (isCrit) {
         damage = Math.floor(damage * 1.75);
+        damage = Math.max(2, damage); // Minimum 2 damage for crits
         var critTexts = [
             '<span class="critical">' + attacker.name + ' finds a weak spot with their ' + weaponText + ' and deals ' + damage + ' critical damage!</span>',
             '<span class="critical">' + attacker.name + ' lands a devastating blow with their ' + weaponText + ' for ' + damage + ' critical damage!</span>',
