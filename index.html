@@ -3262,20 +3262,21 @@ function fightWithoutRest() {
         var expGained = Math.floor(20 + opponent.level * 5);
         player.exp += expGained;
         player.wins++;
+        
         // Track weekly wins
-incrementWeeklyWins(player);
+        incrementWeeklyWins(player);
         // Track weekly wins in database
-saveWeeklyWin(player.name);
+        saveWeeklyWin(player.name);
         
         addToFightLog('<span class="exp-gain">Gained ' + expGained + ' EXP!</span>');
         
         // Rare diamond drop (15% chance)
         var diamondDropChance = 15;
-if (Math.random() * 100 < diamondDropChance) {
-    var diamondsGained = Math.floor(1 + opponent.level * 0.3);
-    gameState.diamonds += diamondsGained;
-    addToFightLog('<span class="exp-gain">✨ Found ' + diamondsGained + ' 💎 in the aftermath! ✨</span>');
-}
+        if (Math.random() * 100 < diamondDropChance) {
+            var diamondsGained = Math.floor(1 + opponent.level * 0.3);
+            gameState.diamonds += diamondsGained;
+            addToFightLog('<span class="exp-gain">✨ Found ' + diamondsGained + ' 💎 in the aftermath! ✨</span>');
+        }
         
         // Equipment drop system (25% chance)
         var equipmentDropChance = 25;
@@ -3288,11 +3289,6 @@ if (Math.random() * 100 < diamondDropChance) {
                 player.equipment[droppedItem.slot] = droppedItem;
                 addToFightLog('<span class="exp-gain">🔧 ' + droppedItem.name + ' equipped automatically!</span>');
             }
-        }
-        
-        // Check for level up
-        while (player.exp >= player.expRequired) {
-            levelUp(player);
         }
         
     } else {
@@ -3308,6 +3304,11 @@ if (Math.random() * 100 < diamondDropChance) {
         var consolationExp = Math.floor(5 + opponent.level);
         player.exp += consolationExp;
         addToFightLog('<span class="exp-gain">Gained ' + consolationExp + ' consolation EXP for the effort!</span>');
+    }
+    
+    // Check for level up (moved outside win/lose blocks so it always runs)
+    while (player.exp >= player.expRequired) {
+        levelUp(player);
     }
     
     // DON'T set cooldown here - it was already set in findFight() if needed
