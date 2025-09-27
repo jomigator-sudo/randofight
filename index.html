@@ -2641,7 +2641,7 @@ function updateWeeklyLeaderboard() {
     }
     
     // Set cooldown immediately when regular fight starts
-    gameState.fightCooldownEnd = Date.now() + (45 * 1000);
+    gameState.fightCooldownEnd = Date.now() + (60 * 1000);
     saveToSupabase();
     updateFightStatus();
     
