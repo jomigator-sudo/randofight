@@ -2894,9 +2894,10 @@ function fightWithoutRest() {
                 statType: 'Damage'
             }
         },
-        specialAttack: opponentLevel >= 10 ? {
-            name: specialAttacks[Math.floor(Math.random() * specialAttacks.length)]
-        } : null, // Only level 10+ bots get special attacks
+        // In generateOpponent() function, update the special attack assignment:
+specialAttack: opponentLevel >= 10 ? {
+    name: generateSpecialAttackName()
+} : null, // Only level 10+ bots get special attacks
         isRealPlayer: false,
         isBot: true
     };
