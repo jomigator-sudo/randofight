@@ -433,7 +433,22 @@
             isLoggedIn: false
         };
 
-        var specialAttacks = ['Fury Strike', 'Power Slam', 'Devastator', 'Thunder Punch', 'Dragon Fist', 'Shadow Strike', 'Meteor Crash', 'Annihilator'];
+        // Special attack word combinations for dynamic generation
+var specialAttackPrefixes = ['Dark', 'Light', 'Fire', 'Ice', 'Thunder', 'Shadow', 'Dragon', 'Phoenix', 'Storm', 'Chaos', 
+    'Divine', 'Mystic', 'Crimson', 'Azure', 'Golden', 'Silver', 'Void', 'Cosmic', 'Lunar', 'Solar', 
+    'Inferno', 'Frost', 'Lightning', 'Venom', 'Crystal', 'Iron', 'Titan', 'Demon', 'Angel', 'Spirit',
+    'Phantom', 'Blazing', 'Frozen', 'Electric', 'Savage', 'Ancient', 'Primal', 'Eternal', 'Astral', 'Meteor'];
+
+var specialAttackSuffixes = ['Strike', 'Slam', 'Punch', 'Fist', 'Crash', 'Wave', 'Beam', 'Blast', 'Rush', 'Fury',
+    'Claw', 'Kick', 'Crusher', 'Breaker', 'Buster', 'Storm', 'Rage', 'Impact', 'Nova', 'Burst',
+    'Blade', 'Edge', 'Flash', 'Smash', 'Force', 'Wrath', 'Destruction', 'Annihilation', 'Devastation', 'Rampage',
+    'Assault', 'Barrage', 'Cyclone', 'Vortex', 'Eruption', 'Avalanche', 'Tempest', 'Maelstrom', 'Cataclysm', 'Apocalypse'];
+
+function generateSpecialAttackName() {
+    var prefix = specialAttackPrefixes[Math.floor(Math.random() * specialAttackPrefixes.length)];
+    var suffix = specialAttackSuffixes[Math.floor(Math.random() * specialAttackSuffixes.length)];
+    return prefix + ' ' + suffix;
+}
         var equipmentSlots = ['Weapon', 'Off-Hand', 'Helmet', 'Shoulders', 'Gloves', 'Chest', 'Greaves', 'Boots'];
 
         // EmailJS Configuration
@@ -1850,6 +1865,34 @@ function closeWeeklyTournament() {
     if (modal) modal.remove();
 }
 
+        // Function to create special attack modal
+function showSpecialAttackModal(fighterName, attackName) {
+    var existingModal = document.getElementById('specialAttackModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    var modalHTML = 
+        '<div id="specialAttackModal" style="display: block; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 3000;">' +
+            '<div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #1a1a2e; padding: 30px; border-radius: 10px; border: 3px solid #ffd93d; max-width: 400px; text-align: center;">' +
+                '<h2 style="color: #ffd93d; margin-bottom: 20px; font-size: 1.8em;">🎉 LEVEL 10! 🎉</h2>' +
+                '<p style="color: #fff; font-size: 1.2em; margin-bottom: 15px;">' + fighterName + ' reached <span style="color: #ffd93d;">Level 10</span>!</p>' +
+                '<p style="color: #fff; font-size: 1.1em; margin-bottom: 25px;">Learned the special attack:</p>' +
+                '<p style="color: #ff6b6b; font-size: 1.5em; font-weight: bold; margin-bottom: 30px; text-shadow: 2px 2px 4px rgba(0,0,0,0.5);">✨ ' + attackName + ' ✨</p>' +
+                '<button class="btn" style="background: #4ecdc4; color: #fff; padding: 12px 40px; font-size: 1.1em;" onclick="closeSpecialAttackModal()">Awesome!</button>' +
+            '</div>' +
+        '</div>';
+    
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+}
+
+function closeSpecialAttackModal() {
+    var modal = document.getElementById('specialAttackModal');
+    if (modal) {
+        modal.remove();
+    }
+}
+
 // Track weekly wins in database
 function saveWeeklyWin(fighterName) {
     if (!gameState.currentUser || gameState.currentUser.isGuest) {
@@ -2790,7 +2833,27 @@ function fightWithoutRest() {
 }
 
         function generateOpponent(level) {
-    var names = ['ShadowKnight92', 'DragonSlayer', 'IronFist2024', 'BlazeFighter', 'StormWarrior', 'NightHunter', 'FlameStrike', 'IceBlade77', 'ThunderFist', 'DarkRaven'];
+    var names = ['ShadowKnight92', 'DragonSlayer', 'IronFist2024', 'BlazeFighter', 'StormWarrior', 'NightHunter', 'FlameStrike', 'IceBlade77', 'ThunderFist', 'DarkRaven','ShadowByteX', 'CrimsonNova', 'FrostClaw77', 'PixelRogue', 'BlazeSniper',
+'IronWraith', 'VoidReaper', 'EchoFang', 'ToxicSpiral', 'NebulaHawk',
+'GlitchFury', 'NightVortex', 'CyberWarden', 'StealthPulse', 'RapidVenom',
+'DarkNovaX', 'PhantomCircuit', 'BlitzStriker', 'FrozenNemesis', 'QuantumDrift',
+'RogueHydra', 'InfernoRift', 'SilentCry', 'ChaosHawk', 'StormCrawler',
+'PulseReaper', 'ViralAssault', 'TitanGhost', 'HexVandal', 'SteelSpecter',
+'LunarSnare', 'VortexShade', 'PixelMarauder', 'NebulaSplice', 'VenomCraze',
+'SniperVeil', 'CrushDrifter', 'XenoQuake', 'AshRider', 'RageCircuit',
+'StormFlicker', 'WarpedSoul', 'IonViper', 'DarkenedScope', 'ZeroDagger',
+'ObsidianStrike', 'FuryPylon', 'EchoKnight', 'NitroPhantom', 'ShadowServo',
+'MystSniper', 'TundraEdge', 'StaticBrawler', 'NovaWitch', 'TwilightFury',
+'VoltageMancer', 'CryoSpark', 'SavageHound', 'StealthNova', 'WiredBane',
+'NullByte', 'StrikerRift', 'FeralTracer', 'FrostHex', 'TerminalWraith',
+'RiftRanger', 'ChaosByte', 'PulseHunter', 'IgnisShroud', 'CodedVenom',
+'WildQuasar', 'BloodRayneX', 'SilentPhreak', 'DreadReactor', 'NovaTracer',
+'FireHavoc', 'KarmaSnare', 'ToxicWarden', 'QuantumBlitz', 'FadedCore',
+'IronLancer', 'GlitchKnight', 'NightmareXeno', 'PixelShade', 'BlitzGhoul',
+'WraithForge', 'FrozenByte', 'ShockPulse', 'HoloDagger', 'CrimsonCrawler',
+'NeoViperX', 'WarpFury', 'StaticScythe', 'GrimDrift', 'FuryQuanta',
+'SnareWolf', 'SpectralCrush', 'NitroVenom', 'DarkTideX', 'OmegaCraze',
+'FlameSnare', 'OblivionCore', 'StealthBlitz', 'ZenithGhoul', 'ZeroSnare'];
     var places = ['New York', 'London', 'Tokyo', 'Paris', 'Sydney'];
     
     var opponentLevel = Math.max(1, level + Math.floor(Math.random() * 3) - 1);
@@ -2847,8 +2910,8 @@ function fightWithoutRest() {
             }
         },
         specialAttack: opponentLevel >= 10 ? {
-            name: specialAttacks[Math.floor(Math.random() * specialAttacks.length)]
-        } : null, // Only level 10+ bots get special attacks
+    name: generateSpecialAttackName()
+} : null, // Only level 10+ bots get special attacks
         isRealPlayer: false,
         isBot: true
     };
@@ -3154,34 +3217,59 @@ function fightWithoutRest() {
 }
             
             function performSpecialAttack(attacker, defender, attackerType) {
-                if (defender.currentHp <= 0) return; // Don't attack if already defeated
-                
-                var specialDamage = Math.floor(attacker.level * 8 + ((attacker.stats.strength - 1) * 4 + 15));
-                var damageReduction = Math.min(50, (defender.stats.toughness - 1) * 3);
-                specialDamage = Math.floor(specialDamage * (1 - damageReduction / 100));
-                
-                defender.currentHp = Math.max(0, defender.currentHp - specialDamage);
-                
-                var specialTexts = [
-                    attacker.name + ' channels their energy and unleashes <span class="special">' + attacker.specialAttack.name + '</span> for ' + specialDamage + ' devastating damage!',
-                    'With a battle cry, ' + attacker.name + ' executes their signature move <span class="special">' + attacker.specialAttack.name + '</span> dealing ' + specialDamage + ' damage!',
-                    attacker.name + ' focuses their power and strikes with <span class="special">' + attacker.specialAttack.name + '</span> - ' + defender.name + ' reels from the ' + specialDamage + ' damage!',
-                    'The air crackles with energy as ' + attacker.name + ' performs <span class="special">' + attacker.specialAttack.name + '</span> for ' + specialDamage + ' massive damage!'
-                ];
-                
-                addToFightLog(specialTexts[Math.floor(Math.random() * specialTexts.length)]);
-                
-                // Update HP bars
-                if (attackerType === 'player') {
-                    var opponentHpPercent = (opponent.currentHp / opponent.maxHp) * 100;
-                    document.getElementById('player2HP').style.width = opponentHpPercent + '%';
-                    document.getElementById('player2HPText').textContent = Math.floor(opponent.currentHp) + '/' + opponent.maxHp;
-                } else {
-                    var playerHpPercent = (player.currentHp / player.maxHp) * 100;
-                    document.getElementById('player1HP').style.width = playerHpPercent + '%';
-                    document.getElementById('player1HPText').textContent = Math.floor(player.currentHp) + '/' + player.maxHp;
-                }
+    if (defender.currentHp <= 0) return; // Don't attack if already defeated
+    
+    // Base special damage: scales with level and strength
+    // At level 10: ~95-115 base damage (before defenses)
+    // At level 20: ~175-215 base damage (before defenses)
+    var specialDamage = Math.floor(attacker.level * 8 + ((attacker.stats.strength - 1) * 4 + 15));
+    
+    // Calculate total defense from equipment (same as regular attacks)
+    var totalDefense = 0;
+    if (defender.equipment) {
+        var equipmentSlotNames = ['offhand', 'helmet', 'shoulders', 'gloves', 'chest', 'greaves', 'boots'];
+        for (var i = 0; i < equipmentSlotNames.length; i++) {
+            var slot = equipmentSlotNames[i];
+            var item = defender.equipment[slot];
+            if (item && item.statType === 'Defense') {
+                totalDefense += item.power || 0;
             }
+        }
+    }
+    
+    // Calculate total damage reduction from toughness AND defense
+    var toughnessReduction = Math.min(30, (defender.stats.toughness - 1) * 3); // Cap at 30% from toughness
+    var defenseReduction = Math.min(40, totalDefense * 0.5); // Defense gives 0.5% reduction per point, cap at 40%
+    var totalReduction = Math.min(60, toughnessReduction + defenseReduction); // Total cap at 60%
+    
+    // Apply damage reduction
+    specialDamage = Math.floor(specialDamage * (1 - totalReduction / 100));
+    
+    // Minimum damage of 5 for special attacks (higher than regular attacks since they're rarer)
+    specialDamage = Math.max(5, specialDamage);
+    
+    defender.currentHp = Math.max(0, defender.currentHp - specialDamage);
+    
+    var specialTexts = [
+        attacker.name + ' channels their energy and unleashes <span class="special">' + attacker.specialAttack.name + '</span> for <span class="damage">' + specialDamage + '</span> devastating damage!',
+        'With a battle cry, ' + attacker.name + ' executes their signature move <span class="special">' + attacker.specialAttack.name + '</span> dealing <span class="damage">' + specialDamage + '</span> damage!',
+        attacker.name + ' focuses their power and strikes with <span class="special">' + attacker.specialAttack.name + '</span> - ' + defender.name + ' reels from the <span class="damage">' + specialDamage + '</span> damage!',
+        'The air crackles with energy as ' + attacker.name + ' performs <span class="special">' + attacker.specialAttack.name + '</span> for <span class="damage">' + specialDamage + '</span> massive damage!'
+    ];
+    
+    addToFightLog(specialTexts[Math.floor(Math.random() * specialTexts.length)]);
+    
+    // Update HP bars
+    if (attackerType === 'player') {
+        var opponentHpPercent = (opponent.currentHp / opponent.maxHp) * 100;
+        document.getElementById('player2HP').style.width = opponentHpPercent + '%';
+        document.getElementById('player2HPText').textContent = Math.floor(opponent.currentHp) + '/' + opponent.maxHp;
+    } else {
+        var playerHpPercent = (player.currentHp / player.maxHp) * 100;
+        document.getElementById('player1HP').style.width = playerHpPercent + '%';
+        document.getElementById('player1HPText').textContent = Math.floor(player.currentHp) + '/' + player.maxHp;
+    }
+}
             
             function endCombat() {
     var playerWon = player.currentHp > 0;
@@ -3199,20 +3287,21 @@ function fightWithoutRest() {
         var expGained = Math.floor(20 + opponent.level * 5);
         player.exp += expGained;
         player.wins++;
+        
         // Track weekly wins
-incrementWeeklyWins(player);
+        incrementWeeklyWins(player);
         // Track weekly wins in database
-saveWeeklyWin(player.name);
+        saveWeeklyWin(player.name);
         
         addToFightLog('<span class="exp-gain">Gained ' + expGained + ' EXP!</span>');
         
         // Rare diamond drop (15% chance)
         var diamondDropChance = 15;
-if (Math.random() * 100 < diamondDropChance) {
-    var diamondsGained = Math.floor(1 + opponent.level * 0.3);
-    gameState.diamonds += diamondsGained;
-    addToFightLog('<span class="exp-gain">✨ Found ' + diamondsGained + ' 💎 in the aftermath! ✨</span>');
-}
+        if (Math.random() * 100 < diamondDropChance) {
+            var diamondsGained = Math.floor(1 + opponent.level * 0.3);
+            gameState.diamonds += diamondsGained;
+            addToFightLog('<span class="exp-gain">✨ Found ' + diamondsGained + ' 💎 in the aftermath! ✨</span>');
+        }
         
         // Equipment drop system (25% chance)
         var equipmentDropChance = 25;
@@ -3225,11 +3314,6 @@ if (Math.random() * 100 < diamondDropChance) {
                 player.equipment[droppedItem.slot] = droppedItem;
                 addToFightLog('<span class="exp-gain">🔧 ' + droppedItem.name + ' equipped automatically!</span>');
             }
-        }
-        
-        // Check for level up
-        while (player.exp >= player.expRequired) {
-            levelUp(player);
         }
         
     } else {
@@ -3245,6 +3329,11 @@ if (Math.random() * 100 < diamondDropChance) {
         var consolationExp = Math.floor(5 + opponent.level);
         player.exp += consolationExp;
         addToFightLog('<span class="exp-gain">Gained ' + consolationExp + ' consolation EXP for the effort!</span>');
+    }
+    
+    // Check for level up (moved outside win/lose blocks so it always runs)
+    while (player.exp >= player.expRequired) {
+        levelUp(player);
     }
     
     // DON'T set cooldown here - it was already set in findFight() if needed
@@ -3385,13 +3474,17 @@ if (Math.random() * 100 < diamondDropChance) {
                 addToFightLog(levelUpTexts[Math.floor(Math.random() * levelUpTexts.length)]);
                 addToFightLog('<span class="exp-gain">🎯 Gained 1 stat point to allocate! Visit your character screen to spend it.</span>');
                 
-                // Unlock special attack at level 10
-                if (fighter.level === 10) {
-                    fighter.specialAttack = {
-                        name: specialAttacks[Math.floor(Math.random() * specialAttacks.length)]
-                    };
-                    addToFightLog('<span class="special">✨ ' + fighter.name + ' has mastered the art of ' + fighter.specialAttack.name + '! ✨</span>');
-                }
+               // Unlock special attack at level 10
+if (fighter.level === 10) {
+    fighter.specialAttack = {
+        name: generateSpecialAttackName()
+    };
+    
+    // Show modal instead of fight log if we're in combat
+    setTimeout(function() {
+        showSpecialAttackModal(fighter.name, fighter.specialAttack.name);
+    }, 500);
+}
             }
             
             fightTurn();
