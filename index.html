@@ -336,24 +336,26 @@
 
 <!-- Fighter Creation Screen -->
 <div id="creationScreen" class="game-screen">
-    <div style="padding: 10px;">
-        <button class="btn btn-secondary" onclick="showTitleScreen()">← Back</button>
-    </div>
     <div class="creation-form">
-                <h2 style="text-align: center; margin-bottom: 20px; color: #4ecdc4;">Create New Fighter</h2>
-                <div class="form-group">
-                    <label for="fighterName">Fighter Name:</label>
-                    <input type="text" id="fighterName" maxlength="20" placeholder="Enter fighter name">
-                </div>
-                <div style="text-align: center; margin-top: 30px;">
-                    <button class="btn btn-primary" onclick="createFighter()">Create Fighter</button>
-                    <button class="btn btn-secondary" onclick="showTitleScreen()">Cancel</button>
-                </div>
-                <div style="text-align: center; margin-top: 20px; color: #888; font-size: 0.9em;">
-                    <p>🔥 Your fighter will unlock a special attack at level 10! 🔥</p>
-                </div>
+        <h2 style="text-align: center; margin-bottom: 20px; color: #4ecdc4;">Create New Fighter</h2>
+        <div class="form-group">
+            <label for="fighterName">Fighter Name:</label>
+            <input type="text" id="fighterName" maxlength="20" placeholder="Enter fighter name" oninput="validateFighterNameInput()">
+            <div style="margin-top: 10px; font-size: 0.85em; color: #888;">
+                <p>• 3-20 characters required</p>
+                <p>• Must contain at least one letter</p>
+                <p>• Inappropriate names will be blocked</p>
             </div>
         </div>
+        <div style="text-align: center; margin-top: 30px;">
+            <button class="btn btn-primary" onclick="createFighter()">Create Fighter</button>
+            <button class="btn btn-secondary" onclick="showTitleScreen()">Cancel</button>
+        </div>
+        <div style="text-align: center; margin-top: 20px; color: #888; font-size: 0.9em;">
+            <p>🔥 Your fighter will unlock a special attack at level 10! 🔥</p>
+        </div>
+    </div>
+</div>
 
 <!-- Fighter Details Screen -->
 <div id="fighterScreen" class="game-screen">
@@ -2089,54 +2091,152 @@ function updateWeeklyLeaderboard() {
 
         
         function createFighter() {
-            var name = document.getElementById('fighterName').value.trim();
-            if (!name) {
-                alert('Please enter a fighter name!');
+    var name = document.getElementById('fighterName').value.trim();
+    if (!name) {
+        alert('Please enter a fighter name!');
+        return;
+    }
+    
+    // Check name length
+    if (name.length < 3) {
+        alert('Fighter name must be at least 3 characters long!');
+        return;
+    }
+    
+    if (name.length > 20) {
+        alert('Fighter name must be 20 characters or less!');
+        return;
+    }
+    
+    // List of inappropriate terms to block (comprehensive list)
+    var inappropriateTerms = [
+        // Sexual terms
+        'sex', 'porn', 'xxx', 'nude', 'naked', 'penis', 'vagina', 'dick', 'cock', 'pussy',
+        'boob', 'tit', 'ass', 'anal', 'oral', 'cum', 'jizz', 'fap', 'dildo', 'vibrator',
+        'orgasm', 'erect', 'nipple', 'horny', 'slut', 'whore', 'bitch', 'hoe', 'pimp',
+        
+        // Racist terms and slurs
+        'nigger', 'nigga', 'negro', 'coon', 'spic', 'wetback', 'beaner', 'chink', 
+        'gook', 'jap', 'kike', 'jew', 'faggot', 'fag', 'dyke', 'tranny', 'shemale',
+        'retard', 'midget', 'cripple', 'spastic', 'mongo',
+        
+        // Offensive terms
+        'fuck', 'shit', 'piss', 'bastard', 'damn', 'hell', 'cunt', 'twat', 'douche',
+        'rape', 'molest', 'pedo', 'nazi', 'hitler', 'isis', 'terrorist', 'suicide',
+        'kill', 'murder', 'genocide', 'holocaust',
+        
+        // Drug references
+        'cocaine', 'heroin', 'meth', 'crack', 'weed', 'marijuana', 'drug'
+    ];
+    
+    // Check for inappropriate content (case-insensitive)
+    var nameLower = name.toLowerCase();
+    var nameNoSpaces = nameLower.replace(/[^a-z0-9]/gi, ''); // Remove special chars and spaces
+    
+    for (var i = 0; i < inappropriateTerms.length; i++) {
+        if (nameLower.includes(inappropriateTerms[i]) || nameNoSpaces.includes(inappropriateTerms[i])) {
+            alert('That name contains inappropriate content. Please choose a different name.');
+            return;
+        }
+    }
+    
+    // Check for leetspeak variations
+    var leetSpeakName = nameLower
+        .replace(/0/g, 'o')
+        .replace(/1/g, 'i')
+        .replace(/3/g, 'e')
+        .replace(/4/g, 'a')
+        .replace(/5/g, 's')
+        .replace(/7/g, 't')
+        .replace(/@/g, 'a')
+        .replace(/\$/g, 's');
+    
+    for (var i = 0; i < inappropriateTerms.length; i++) {
+        if (leetSpeakName.includes(inappropriateTerms[i])) {
+            alert('That name contains inappropriate content. Please choose a different name.');
+            return;
+        }
+    }
+    
+    // Check for all numbers or all special characters
+    if (!/[a-zA-Z]/.test(name)) {
+        alert('Fighter name must contain at least one letter!');
+        return;
+    }
+    
+    // Check for excessive special characters
+    var specialCharCount = (name.match(/[^a-zA-Z0-9\s]/g) || []).length;
+    if (specialCharCount > 3) {
+        alert('Fighter name can only contain up to 3 special characters!');
+        return;
+    }
+    
+    // Check for spam patterns (repeating characters)
+    if (/(.)\1{4,}/.test(name)) {
+        alert('Fighter name cannot contain more than 4 repeated characters in a row!');
+        return;
+    }
+    
+    // Check name availability (existing functionality)
+    checkNameAvailability(name)
+        .then(function(isAvailable) {
+            if (!isAvailable) {
+                alert('Fighter name "' + name + '" is already taken. Please choose a different name.');
                 return;
             }
+            
+            var fighter = {
+                name: name,
+                birthplace: 'Unknown',
+                level: 1,
+                exp: 0,
+                expRequired: 100,
+                hp: 100,
+                maxHp: 100,
+                wins: 0,
+                stats: { strength: 1, toughness: 1, agility: 1, luck: 1, speed: 1 },
+                unallocatedStats: 0,
+                specialAttack: null,
+                equipment: {
+                    weapon: { name: 'Wooden Stick', type: 'weapon', slot: 'weapon', power: 5, level: 1, rarity: 'common', statType: 'Damage' },
+                    offHand: null, helmet: null, shoulders: null, gloves: null, chest: null, greaves: null, boots: null
+                }
+            };
 
-            checkNameAvailability(name)
-                .then(function(isAvailable) {
-                    if (!isAvailable) {
-                        alert('Fighter name "' + name + '" is already taken. Please choose a different name.');
-                        return;
-                    }
-                    
-                    var fighter = {
-                        name: name,
-                        birthplace: 'Unknown',
-                        level: 1,
-                        exp: 0,
-                        expRequired: 100,
-                        hp: 100,
-                        maxHp: 100,
-                        wins: 0,
-                        stats: { strength: 1, toughness: 1, agility: 1, luck: 1, speed: 1 },
-                        unallocatedStats: 0,
-                        specialAttack: null,
-                        equipment: {
-                            weapon: { name: 'Wooden Stick', type: 'weapon', slot: 'weapon', power: 5, level: 1, rarity: 'common', statType: 'Damage' },
-                            offHand: null, helmet: null, shoulders: null, gloves: null, chest: null, greaves: null, boots: null
-                        }
-                    };
-
-                    gameState.fighters[gameState.currentSlotIndex] = fighter;
-                    
-                    var isFirstFighter = gameState.fighters.filter(function(f) { return f !== null && f !== undefined; }).length === 1;
-                    if (isFirstFighter && gameState.diamonds === 0) {
-                        gameState.diamonds = 10;
-                        alert('Welcome to RandoFight! You have received 10 free diamonds to get you started!');
-                    }
-                    
-                    saveToSupabase();
-                    gameState.currentFighter = fighter;
-                    showFighterScreen();
-                })
-                .catch(function(error) {
-                    console.error('Error checking name availability:', error);
-                    alert('Unable to verify name availability. Please try again.');
-                });
-        }
+            gameState.fighters[gameState.currentSlotIndex] = fighter;
+            
+            var isFirstFighter = gameState.fighters.filter(function(f) { return f !== null && f !== undefined; }).length === 1;
+            if (isFirstFighter && gameState.diamonds === 0) {
+                gameState.diamonds = 10;
+                alert('Welcome to RandoFight! You have received 10 free diamonds to get you started!');
+            }
+            
+            saveToSupabase();
+            gameState.currentFighter = fighter;
+            showFighterScreen();
+        })
+        .catch(function(error) {
+            console.error('Error checking name availability:', error);
+            alert('Unable to verify name availability. Please try again.');
+        });
+}
+        function validateFighterNameInput() {
+    var input = document.getElementById('fighterName');
+    var value = input.value;
+    
+    // Remove any numbers at the beginning
+    value = value.replace(/^\d+/, '');
+    
+    // Limit to 20 characters
+    if (value.length > 20) {
+        value = value.substring(0, 20);
+    }
+    
+    // Remove excessive special characters as they type
+    value = value.replace(/[^a-zA-Z0-9\s\-_]/g, '');
+    
+    input.value = value;
+}
 
         function selectFighter(slotIndex) {
             if (!gameState.unlockedSlots[slotIndex]) return;
