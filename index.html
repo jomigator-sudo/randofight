@@ -433,7 +433,35 @@
             isLoggedIn: false
         };
 
-        var specialAttacks = ['Fury Strike', 'Power Slam', 'Devastator', 'Thunder Punch', 'Dragon Fist', 'Shadow Strike', 'Meteor Crash', 'Annihilator'];
+        // Special attack word combinations for variety
+var specialAttackFirstWords = [
+    'Thunder', 'Shadow', 'Fire', 'Ice', 'Lightning', 'Dragon', 'Phoenix', 'Titan',
+    'Demon', 'Angel', 'Storm', 'Chaos', 'Divine', 'Inferno', 'Arctic', 'Solar',
+    'Lunar', 'Cosmic', 'Meteor', 'Void', 'Crystal', 'Iron', 'Golden', 'Silver',
+    'Crimson', 'Azure', 'Emerald', 'Dark', 'Light', 'Mystic', 'Savage', 'Brutal',
+    'Venom', 'Plasma', 'Atomic', 'Quantum', 'Omega', 'Alpha', 'Primal', 'Ancient',
+    'Eternal', 'Infinite', 'Ultimate', 'Supreme', 'Deadly', 'Fatal', 'Mortal', 'Astral',
+    'Spectral', 'Phantom', 'Ghost', 'Spirit', 'Soul', 'Mind', 'Psychic', 'Blazing',
+    'Frozen', 'Electric', 'Toxic', 'Radiant', 'Twilight', 'Dawn', 'Dusk', 'Midnight'
+];
+
+var specialAttackSecondWords = [
+    'Strike', 'Slash', 'Crusher', 'Breaker', 'Fist', 'Punch', 'Kick', 'Slam',
+    'Blast', 'Wave', 'Storm', 'Fury', 'Rage', 'Wrath', 'Impact', 'Assault',
+    'Barrage', 'Combo', 'Rush', 'Burst', 'Explosion', 'Devastation', 'Annihilation', 'Obliteration',
+    'Destruction', 'Claw', 'Bite', 'Roar', 'Howl', 'Scream', 'Cry', 'Smash',
+    'Crash', 'Blow', 'Attack', 'Technique', 'Style', 'Form', 'Dance', 'Waltz',
+    'Symphony', 'Requiem', 'Finale', 'Overture', 'Cascade', 'Torrent', 'Deluge', 'Tsunami',
+    'Earthquake', 'Avalanche', 'Cyclone', 'Hurricane', 'Tempest', 'Maelstrom', 'Vortex', 'Nova',
+    'Supernova', 'Comet', 'Meteor', 'Star', 'Judgment', 'Execution', 'Retribution', 'Vengeance'
+];
+
+// Function to generate a unique special attack name
+function generateSpecialAttackName() {
+    var firstName = specialAttackFirstWords[Math.floor(Math.random() * specialAttackFirstWords.length)];
+    var secondName = specialAttackSecondWords[Math.floor(Math.random() * specialAttackSecondWords.length)];
+    return firstName + ' ' + secondName;
+}
         var equipmentSlots = ['Weapon', 'Off-Hand', 'Helmet', 'Shoulders', 'Gloves', 'Chest', 'Greaves', 'Boots'];
 
         // EmailJS Configuration
