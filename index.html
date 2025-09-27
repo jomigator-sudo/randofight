@@ -767,17 +767,19 @@ function showCreationScreen() {
         }
 
         function showLoginScreen() {
-            console.log('Showing login screen...');
-            hideAll();
-            var loginScreen = document.getElementById('loginScreen');
-            if (loginScreen) {
-                loginScreen.style.display = 'block';
-                console.log('Login screen displayed');
-            } else {
-                console.error('Login screen element not found!');
-            }
-            showLoginForm();
-        }
+    console.log('Showing login screen...');
+    hideAll();
+    var loginScreen = document.getElementById('loginScreen');
+    if (loginScreen) {
+        loginScreen.style.display = 'block';
+        console.log('Login screen displayed');
+    } else {
+        console.error('Login screen element not found!');
+    }
+    showLoginForm();
+    // Add this line to setup the Enter key handlers
+    setupLoginKeyHandlers();
+}
 
         function loginUser() {
             var email = document.getElementById('loginEmail').value.trim();
@@ -1361,6 +1363,68 @@ function showCreationScreen() {
             }
         }
 
+        // Add Enter key functionality for login form
+function setupLoginKeyHandlers() {
+    var loginEmail = document.getElementById('loginEmail');
+    var loginPassword = document.getElementById('loginPassword');
+    
+    if (loginEmail) {
+        loginEmail.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                loginUser();
+            }
+        });
+    }
+    
+    if (loginPassword) {
+        loginPassword.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                loginUser();
+            }
+        });
+    }
+    
+    // Also add for signup form
+    var signupEmail = document.getElementById('signupEmail');
+    var signupPassword = document.getElementById('signupPassword');
+    var signupUsername = document.getElementById('signupUsername');
+    
+    if (signupEmail) {
+        signupEmail.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                signupUser();
+            }
+        });
+    }
+    
+    if (signupPassword) {
+        signupPassword.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                signupUser();
+            }
+        });
+    }
+    
+    if (signupUsername) {
+        signupUsername.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                signupUser();
+            }
+        });
+    }
+    
+    // Add for password reset form
+    var resetEmail = document.getElementById('resetEmail');
+    
+    if (resetEmail) {
+        resetEmail.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendPasswordReset();
+            }
+        });
+    }
+}
+        
         function getResetTokenFromURL() {
             var urlParams = new URLSearchParams(window.location.search);
             var tokenFromURL = urlParams.get('reset');
