@@ -2237,6 +2237,7 @@ function updateWeeklyLeaderboard() {
                 hp: 100,
                 maxHp: 100,
                 wins: 0,
+                lossStreak: 0,
                 stats: { strength: 1, toughness: 1, agility: 1, luck: 1, speed: 1 },
                 unallocatedStats: 0,
                 specialAttack: null,
@@ -2699,11 +2700,28 @@ function updateFighterDisplay() {
     saveToSupabase();
     updateFightStatus();
     
+    // Initialize loss streak if it doesn't exist
+    if (gameState.currentFighter.lossStreak === undefined) {
+        gameState.currentFighter.lossStreak = 0;
+    }
+    
+    // Check for lose streak protection (4+ losses in a row)
+    if (gameState.currentFighter.lossStreak >= 4) {
+        console.log('Player has lost', gameState.currentFighter.lossStreak, 'times in a row - providing easier opponent');
+        // Generate a weaker bot opponent (2-3 levels lower)
+        var easierLevel = Math.max(1, gameState.currentFighter.level - 3);
+        var botOpponent = generateOpponent(easierLevel);
+        botOpponent.stats.strength = Math.max(1, botOpponent.stats.strength - 1); // Also weaken their stats a bit
+        botOpponent.stats.toughness = Math.max(1, botOpponent.stats.toughness - 1);
+        startFight(gameState.currentFighter, botOpponent, false);
+        return;
+    }
+    
     // Levels 1-5 always fight bots
     if (gameState.currentFighter.level <= 5) {
         console.log('Level', gameState.currentFighter.level, 'fighter - matching with bot opponent');
         var botOpponent = generateOpponent(gameState.currentFighter.level);
-        startFight(gameState.currentFighter, botOpponent, false); // false = not a diamond fight
+        startFight(gameState.currentFighter, botOpponent, false);
     } else {
         // Level 6+ can fight real players
         console.log('Looking for real opponents for level', gameState.currentFighter.level, 'fighter...');
@@ -2711,17 +2729,17 @@ function updateFighterDisplay() {
             .then(function(opponent) {
                 if (opponent) {
                     console.log('Found real player opponent:', opponent.name, 'Level', opponent.level);
-                    startFight(gameState.currentFighter, opponent, false); // false = not a diamond fight
+                    startFight(gameState.currentFighter, opponent, false);
                 } else {
                     console.log('No real players found, generating AI opponent');
                     var botOpponent = generateOpponent(gameState.currentFighter.level);
-                    startFight(gameState.currentFighter, botOpponent, false); // false = not a diamond fight
+                    startFight(gameState.currentFighter, botOpponent, false);
                 }
             })
             .catch(function(error) {
                 console.error('Matchmaking error, using AI opponent:', error);
                 var botOpponent = generateOpponent(gameState.currentFighter.level);
-                startFight(gameState.currentFighter, botOpponent, false); // false = not a diamond fight
+                startFight(gameState.currentFighter, botOpponent, false);
             });
     }
 }
@@ -2735,30 +2753,44 @@ function fightWithoutRest() {
     saveToSupabase();
     updateDiamondDisplay();
     
-    // DON'T set cooldown for diamond fights
+    // Initialize loss streak if it doesn't exist
+    if (gameState.currentFighter.lossStreak === undefined) {
+        gameState.currentFighter.lossStreak = 0;
+    }
+    
+    // Check for lose streak protection (4+ losses in a row) - even for diamond fights
+    if (gameState.currentFighter.lossStreak >= 4) {
+        console.log('Player has lost', gameState.currentFighter.lossStreak, 'times in a row - providing easier opponent');
+        var easierLevel = Math.max(1, gameState.currentFighter.level - 3);
+        var botOpponent = generateOpponent(easierLevel);
+        botOpponent.stats.strength = Math.max(1, botOpponent.stats.strength - 1);
+        botOpponent.stats.toughness = Math.max(1, botOpponent.stats.toughness - 1);
+        startFight(gameState.currentFighter, botOpponent, true);
+        return;
+    }
     
     // Same logic for diamond fights - levels 1-5 fight bots only
     if (gameState.currentFighter.level <= 5) {
         console.log('Level', gameState.currentFighter.level, 'diamond fight - matching with bot opponent');
         var botOpponent = generateOpponent(gameState.currentFighter.level);
-        startFight(gameState.currentFighter, botOpponent, true); // true = diamond fight
+        startFight(gameState.currentFighter, botOpponent, true);
     } else {
         console.log('Looking for opponents for diamond fight...');
         findOpponentFromSupabase(gameState.currentFighter.level)
             .then(function(opponent) {
                 if (opponent) {
                     console.log('Found real player opponent for diamond fight:', opponent.name);
-                    startFight(gameState.currentFighter, opponent, true); // true = diamond fight
+                    startFight(gameState.currentFighter, opponent, true);
                 } else {
                     console.log('No real players found for diamond fight, generating AI opponent');
                     var botOpponent = generateOpponent(gameState.currentFighter.level);
-                    startFight(gameState.currentFighter, botOpponent, true); // true = diamond fight
+                    startFight(gameState.currentFighter, botOpponent, true);
                 }
             })
             .catch(function(error) {
                 console.error('Diamond fight matchmaking error, using AI opponent:', error);
                 var botOpponent = generateOpponent(gameState.currentFighter.level);
-                startFight(gameState.currentFighter, botOpponent, true); // true = diamond fight
+                startFight(gameState.currentFighter, botOpponent, true);
             });
     }
 }
@@ -3286,6 +3318,9 @@ function fightWithoutRest() {
     var playerWon = player.currentHp > 0;
     
     if (playerWon) {
+        // Reset loss streak on win
+        player.lossStreak = 0;
+        
         var victoryTexts = [
             '<span class="victory">🎉 ' + player.name + ' emerges victorious from the battle! 🎉</span>',
             '<span class="victory">🎉 Victory belongs to ' + player.name + '! 🎉</span>',
@@ -3328,6 +3363,12 @@ function fightWithoutRest() {
         }
         
     } else {
+        // Increment loss streak on loss
+        if (player.lossStreak === undefined) {
+            player.lossStreak = 0;
+        }
+        player.lossStreak++;
+        
         var defeatTexts = [
             '<span class="defeat">💀 ' + player.name + ' has been defeated in battle! 💀</span>',
             '<span class="defeat">💀 ' + player.name + ' falls to their opponent! 💀</span>',
@@ -3346,9 +3387,6 @@ function fightWithoutRest() {
     while (player.exp >= player.expRequired) {
         levelUp(player);
     }
-    
-    // DON'T set cooldown here - it was already set in findFight() if needed
-    // Diamond fights don't set cooldown at all
     
     // Restore player HP
     player.hp = player.maxHp;
