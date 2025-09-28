@@ -2237,6 +2237,7 @@ function updateWeeklyLeaderboard() {
                 hp: 100,
                 maxHp: 100,
                 wins: 0,
+                lossStreak: 0,
                 stats: { strength: 1, toughness: 1, agility: 1, luck: 1, speed: 1 },
                 unallocatedStats: 0,
                 specialAttack: null,
@@ -2423,7 +2424,7 @@ function updateWeeklyLeaderboard() {
             }
         }
 
-        function updateFighterDisplay() {
+function updateFighterDisplay() {
     var fighter = gameState.currentFighter;
     if (!fighter) return;
 
@@ -2433,10 +2434,20 @@ function updateWeeklyLeaderboard() {
     }
 
     var specialDisplay;
-    if (fighter.specialAttack && fighter.specialAttack.name) {
-        var specialDamage = Math.floor(fighter.level * 10 + ((fighter.stats.strength - 1) * 3 + 10));
-        specialDisplay = '<div class="stat-row"><span>Special Attack:</span> <span class="special">' + fighter.specialAttack.name + ' (' + specialDamage + ' damage)</span></div>';
+if (fighter.specialAttack && fighter.specialAttack.name) {
+    // Updated formula to match the balanced version
+    var specialBaseDamage = fighter.level * 4 + 20; // Changed from * 8 + 15
+    var specialStrengthBonus = (fighter.stats.strength - 1) * 2; // Changed from * 4
+    
+    // Display format: Attack Name (base + bonus damage)
+    if (specialStrengthBonus > 0) {
+        specialDisplay = '<div class="stat-row"><span>Special Attack:</span> <span class="special">' + 
+            fighter.specialAttack.name + ' (' + specialBaseDamage + ' + ' + specialStrengthBonus + ' damage)</span></div>';
     } else {
+        specialDisplay = '<div class="stat-row"><span>Special Attack:</span> <span class="special">' + 
+            fighter.specialAttack.name + ' (' + specialBaseDamage + ' damage)</span></div>';
+    }
+} else {
         specialDisplay = '<div class="stat-row"><span>Special Attack:</span> <span style="color: #888;">Unlocks at Level 10</span></div>';
     }
 
@@ -2688,11 +2699,28 @@ function updateWeeklyLeaderboard() {
     saveToSupabase();
     updateFightStatus();
     
+    // Initialize loss streak if it doesn't exist
+    if (gameState.currentFighter.lossStreak === undefined) {
+        gameState.currentFighter.lossStreak = 0;
+    }
+    
+    // Check for lose streak protection (4+ losses in a row)
+    if (gameState.currentFighter.lossStreak >= 4) {
+        console.log('Player has lost', gameState.currentFighter.lossStreak, 'times in a row - providing easier opponent');
+        // Generate a weaker bot opponent (2-3 levels lower)
+        var easierLevel = Math.max(1, gameState.currentFighter.level - 3);
+        var botOpponent = generateOpponent(easierLevel);
+        botOpponent.stats.strength = Math.max(1, botOpponent.stats.strength - 1); // Also weaken their stats a bit
+        botOpponent.stats.toughness = Math.max(1, botOpponent.stats.toughness - 1);
+        startFight(gameState.currentFighter, botOpponent, false);
+        return;
+    }
+    
     // Levels 1-5 always fight bots
     if (gameState.currentFighter.level <= 5) {
         console.log('Level', gameState.currentFighter.level, 'fighter - matching with bot opponent');
         var botOpponent = generateOpponent(gameState.currentFighter.level);
-        startFight(gameState.currentFighter, botOpponent, false); // false = not a diamond fight
+        startFight(gameState.currentFighter, botOpponent, false);
     } else {
         // Level 6+ can fight real players
         console.log('Looking for real opponents for level', gameState.currentFighter.level, 'fighter...');
@@ -2700,17 +2728,17 @@ function updateWeeklyLeaderboard() {
             .then(function(opponent) {
                 if (opponent) {
                     console.log('Found real player opponent:', opponent.name, 'Level', opponent.level);
-                    startFight(gameState.currentFighter, opponent, false); // false = not a diamond fight
+                    startFight(gameState.currentFighter, opponent, false);
                 } else {
                     console.log('No real players found, generating AI opponent');
                     var botOpponent = generateOpponent(gameState.currentFighter.level);
-                    startFight(gameState.currentFighter, botOpponent, false); // false = not a diamond fight
+                    startFight(gameState.currentFighter, botOpponent, false);
                 }
             })
             .catch(function(error) {
                 console.error('Matchmaking error, using AI opponent:', error);
                 var botOpponent = generateOpponent(gameState.currentFighter.level);
-                startFight(gameState.currentFighter, botOpponent, false); // false = not a diamond fight
+                startFight(gameState.currentFighter, botOpponent, false);
             });
     }
 }
@@ -2724,30 +2752,44 @@ function fightWithoutRest() {
     saveToSupabase();
     updateDiamondDisplay();
     
-    // DON'T set cooldown for diamond fights
+    // Initialize loss streak if it doesn't exist
+    if (gameState.currentFighter.lossStreak === undefined) {
+        gameState.currentFighter.lossStreak = 0;
+    }
+    
+    // Check for lose streak protection (4+ losses in a row) - even for diamond fights
+    if (gameState.currentFighter.lossStreak >= 4) {
+        console.log('Player has lost', gameState.currentFighter.lossStreak, 'times in a row - providing easier opponent');
+        var easierLevel = Math.max(1, gameState.currentFighter.level - 3);
+        var botOpponent = generateOpponent(easierLevel);
+        botOpponent.stats.strength = Math.max(1, botOpponent.stats.strength - 1);
+        botOpponent.stats.toughness = Math.max(1, botOpponent.stats.toughness - 1);
+        startFight(gameState.currentFighter, botOpponent, true);
+        return;
+    }
     
     // Same logic for diamond fights - levels 1-5 fight bots only
     if (gameState.currentFighter.level <= 5) {
         console.log('Level', gameState.currentFighter.level, 'diamond fight - matching with bot opponent');
         var botOpponent = generateOpponent(gameState.currentFighter.level);
-        startFight(gameState.currentFighter, botOpponent, true); // true = diamond fight
+        startFight(gameState.currentFighter, botOpponent, true);
     } else {
         console.log('Looking for opponents for diamond fight...');
         findOpponentFromSupabase(gameState.currentFighter.level)
             .then(function(opponent) {
                 if (opponent) {
                     console.log('Found real player opponent for diamond fight:', opponent.name);
-                    startFight(gameState.currentFighter, opponent, true); // true = diamond fight
+                    startFight(gameState.currentFighter, opponent, true);
                 } else {
                     console.log('No real players found for diamond fight, generating AI opponent');
                     var botOpponent = generateOpponent(gameState.currentFighter.level);
-                    startFight(gameState.currentFighter, botOpponent, true); // true = diamond fight
+                    startFight(gameState.currentFighter, botOpponent, true);
                 }
             })
             .catch(function(error) {
                 console.error('Diamond fight matchmaking error, using AI opponent:', error);
                 var botOpponent = generateOpponent(gameState.currentFighter.level);
-                startFight(gameState.currentFighter, botOpponent, true); // true = diamond fight
+                startFight(gameState.currentFighter, botOpponent, true);
             });
     }
 }
@@ -3219,10 +3261,21 @@ function fightWithoutRest() {
             function performSpecialAttack(attacker, defender, attackerType) {
     if (defender.currentHp <= 0) return; // Don't attack if already defeated
     
-    // Base special damage: scales with level and strength
-    // At level 10: ~95-115 base damage (before defenses)
-    // At level 20: ~175-215 base damage (before defenses)
-    var specialDamage = Math.floor(attacker.level * 8 + ((attacker.stats.strength - 1) * 4 + 15));
+    // More balanced special damage formula:
+    // Base: level * 4 + 20 (instead of level * 8 + 15)
+    // Strength bonus: (strength - 1) * 2 (instead of * 4)
+    // This gives roughly 50-60% more damage than a regular attack instead of 200-300%
+    var specialBaseDamage = attacker.level * 4 + 20;
+    var specialStrengthBonus = (attacker.stats.strength - 1) * 2;
+    var specialDamage = specialBaseDamage + specialStrengthBonus;
+    
+    // Add weapon damage (same as regular attacks)
+    if (attacker.equipment && attacker.equipment.weapon) {
+        specialDamage += attacker.equipment.weapon.power || 0;
+    }
+    
+    // Random variation (±15% instead of fixed)
+    specialDamage = Math.floor(specialDamage * (0.85 + Math.random() * 0.3));
     
     // Calculate total defense from equipment (same as regular attacks)
     var totalDefense = 0;
@@ -3245,8 +3298,8 @@ function fightWithoutRest() {
     // Apply damage reduction
     specialDamage = Math.floor(specialDamage * (1 - totalReduction / 100));
     
-    // Minimum damage of 5 for special attacks (higher than regular attacks since they're rarer)
-    specialDamage = Math.max(5, specialDamage);
+    // Minimum damage of 3 for special attacks
+    specialDamage = Math.max(3, specialDamage);
     
     defender.currentHp = Math.max(0, defender.currentHp - specialDamage);
     
@@ -3275,6 +3328,9 @@ function fightWithoutRest() {
     var playerWon = player.currentHp > 0;
     
     if (playerWon) {
+        // Reset loss streak on win
+        player.lossStreak = 0;
+        
         var victoryTexts = [
             '<span class="victory">🎉 ' + player.name + ' emerges victorious from the battle! 🎉</span>',
             '<span class="victory">🎉 Victory belongs to ' + player.name + '! 🎉</span>',
@@ -3317,6 +3373,12 @@ function fightWithoutRest() {
         }
         
     } else {
+        // Increment loss streak on loss
+        if (player.lossStreak === undefined) {
+            player.lossStreak = 0;
+        }
+        player.lossStreak++;
+        
         var defeatTexts = [
             '<span class="defeat">💀 ' + player.name + ' has been defeated in battle! 💀</span>',
             '<span class="defeat">💀 ' + player.name + ' falls to their opponent! 💀</span>',
@@ -3335,9 +3397,6 @@ function fightWithoutRest() {
     while (player.exp >= player.expRequired) {
         levelUp(player);
     }
-    
-    // DON'T set cooldown here - it was already set in findFight() if needed
-    // Diamond fights don't set cooldown at all
     
     // Restore player HP
     player.hp = player.maxHp;
