@@ -194,9 +194,20 @@
 #fighterScreen:not([style*="display: block"]) .fighter-details {
     display: none !important;
 }
+        .company-logo {
+  position: fixed;
+  bottom: 10px;
+  right: 10px;
+  width: 80px;   /* adjust size */
+  opacity: 0.8;  /* slightly transparent */
+  z-index: 1000; /* stays on top */
+}
     </style>
 </head>
 <body>
+        <img src="https://randofight.com/images/ninja-roo-logo.png" 
+     alt="Ninja Roo Games" 
+     class="company-logo">
     <div class="container">
     <!-- Navigation header with back button and title -->
     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
