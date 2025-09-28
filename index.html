@@ -2434,21 +2434,20 @@ function updateFighterDisplay() {
     }
 
     var specialDisplay;
-    if (fighter.specialAttack && fighter.specialAttack.name) {
-        // Calculate special attack damage components
-        var specialBaseDamage = fighter.level * 8 + 15; // Base damage without strength
-        var specialStrengthBonus = (fighter.stats.strength - 1) * 4; // Strength bonus
-        var specialTotalDamage = specialBaseDamage + specialStrengthBonus;
-        
-        // Display format: Attack Name (base + bonus damage)
-        if (specialStrengthBonus > 0) {
-            specialDisplay = '<div class="stat-row"><span>Special Attack:</span> <span class="special">' + 
-                fighter.specialAttack.name + ' (' + specialBaseDamage + ' + ' + specialStrengthBonus + ' damage)</span></div>';
-        } else {
-            specialDisplay = '<div class="stat-row"><span>Special Attack:</span> <span class="special">' + 
-                fighter.specialAttack.name + ' (' + specialBaseDamage + ' damage)</span></div>';
-        }
+if (fighter.specialAttack && fighter.specialAttack.name) {
+    // Updated formula to match the balanced version
+    var specialBaseDamage = fighter.level * 4 + 20; // Changed from * 8 + 15
+    var specialStrengthBonus = (fighter.stats.strength - 1) * 2; // Changed from * 4
+    
+    // Display format: Attack Name (base + bonus damage)
+    if (specialStrengthBonus > 0) {
+        specialDisplay = '<div class="stat-row"><span>Special Attack:</span> <span class="special">' + 
+            fighter.specialAttack.name + ' (' + specialBaseDamage + ' + ' + specialStrengthBonus + ' damage)</span></div>';
     } else {
+        specialDisplay = '<div class="stat-row"><span>Special Attack:</span> <span class="special">' + 
+            fighter.specialAttack.name + ' (' + specialBaseDamage + ' damage)</span></div>';
+    }
+} else {
         specialDisplay = '<div class="stat-row"><span>Special Attack:</span> <span style="color: #888;">Unlocks at Level 10</span></div>';
     }
 
@@ -3262,10 +3261,21 @@ function fightWithoutRest() {
             function performSpecialAttack(attacker, defender, attackerType) {
     if (defender.currentHp <= 0) return; // Don't attack if already defeated
     
-    // Base special damage: scales with level and strength
-    // At level 10: ~95-115 base damage (before defenses)
-    // At level 20: ~175-215 base damage (before defenses)
-    var specialDamage = Math.floor(attacker.level * 8 + ((attacker.stats.strength - 1) * 4 + 15));
+    // More balanced special damage formula:
+    // Base: level * 4 + 20 (instead of level * 8 + 15)
+    // Strength bonus: (strength - 1) * 2 (instead of * 4)
+    // This gives roughly 50-60% more damage than a regular attack instead of 200-300%
+    var specialBaseDamage = attacker.level * 4 + 20;
+    var specialStrengthBonus = (attacker.stats.strength - 1) * 2;
+    var specialDamage = specialBaseDamage + specialStrengthBonus;
+    
+    // Add weapon damage (same as regular attacks)
+    if (attacker.equipment && attacker.equipment.weapon) {
+        specialDamage += attacker.equipment.weapon.power || 0;
+    }
+    
+    // Random variation (±15% instead of fixed)
+    specialDamage = Math.floor(specialDamage * (0.85 + Math.random() * 0.3));
     
     // Calculate total defense from equipment (same as regular attacks)
     var totalDefense = 0;
@@ -3288,8 +3298,8 @@ function fightWithoutRest() {
     // Apply damage reduction
     specialDamage = Math.floor(specialDamage * (1 - totalReduction / 100));
     
-    // Minimum damage of 5 for special attacks (higher than regular attacks since they're rarer)
-    specialDamage = Math.max(5, specialDamage);
+    // Minimum damage of 3 for special attacks
+    specialDamage = Math.max(3, specialDamage);
     
     defender.currentHp = Math.max(0, defender.currentHp - specialDamage);
     
