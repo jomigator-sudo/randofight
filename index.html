@@ -2311,7 +2311,7 @@ function checkWeeklyPrizes() {
         return fetch('https://pmsbxvqavkoboxyhqjcc.supabase.co/rest/v1/weekly_scores?week_start=eq.' + lastWeekStartStr + '&order=wins.desc', {
             method: 'GET',
             headers: {
-                'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBtc2J4dnFhdmtvYm94eWhxamNjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc2NjA2OTMsImV4cCI6MjA3MzIzNjY5M08.9-0-glSFo66fOktfR6ineO8J4Ra8RLVXwytCb9jca9U',
+                'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBtc2J4dnFhdmtvYm94eWhxamNjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc2NjA2OTMsImV4cCI6MjA3MzIzNjY5M30.9-0-glSFo66fOktfR6ineO8J4Ra8RLVXwytCb9jca9U',
                 'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBtc2J4dnFhdmtvYm94eWhxamNjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc2NjA2OTMsImV4cCI6MjA3MzIzNjY5M30.9-0-glSFo66fOktfR6ineO8J4Ra8RLVXwytCb9jca9U'
             }
         })
@@ -2319,8 +2319,9 @@ function checkWeeklyPrizes() {
             return response.json();
         })
         .then(function(allScores) {
-            var prizesToClaim = 0;
+            var totalPrizesToClaim = 0;
             var fighterRanks = [];
+            var bestRankForAccount = 999; // Track the best rank across all fighters
             
             // Calculate rank for each user's fighter
             for (var i = 0; i < userScores.length; i++) {
@@ -2334,30 +2335,33 @@ function checkWeeklyPrizes() {
                     }
                 }
                 
-                var prizeAmount = 0;
-                if (rank === 1) prizeAmount = 100;
-                else if (rank === 2) prizeAmount = 50;
-                else if (rank === 3) prizeAmount = 25;
-                else if (rank >= 4 && rank <= 10) prizeAmount = 10;
-                
-                if (prizeAmount > 0) {
-                    prizesToClaim += prizeAmount;
-                    fighterRanks.push({
-                        name: userScore.fighter_name,
-                        rank: rank,
-                        prize: prizeAmount,
-                        scoreId: userScore.id
-                    });
+                // Track the best rank
+                if (rank < bestRankForAccount) {
+                    bestRankForAccount = rank;
                 }
+                
+                fighterRanks.push({
+                    name: userScore.fighter_name,
+                    rank: rank,
+                    scoreId: userScore.id,
+                    wins: userScore.wins
+                });
             }
             
-            if (prizesToClaim > 0) {
-                // Award diamonds
-                gameState.diamonds += prizesToClaim;
+            // Award prize based on BEST rank only (not for each fighter)
+            var prizeAmount = 0;
+            if (bestRankForAccount === 1) prizeAmount = 100;
+            else if (bestRankForAccount === 2) prizeAmount = 50;
+            else if (bestRankForAccount === 3) prizeAmount = 25;
+            else if (bestRankForAccount >= 4 && bestRankForAccount <= 10) prizeAmount = 10;
+            
+            if (prizeAmount > 0) {
+                // Award diamonds only once
+                gameState.diamonds += prizeAmount;
                 saveToSupabase();
                 updateDiamondDisplay();
                 
-                // Mark prizes as claimed
+                // Mark all user's entries as claimed with their respective ranks
                 var claimPromises = fighterRanks.map(function(fighter) {
                     return fetch('https://pmsbxvqavkoboxyhqjcc.supabase.co/rest/v1/weekly_scores?id=eq.' + fighter.scoreId, {
                         method: 'PATCH',
@@ -2367,7 +2371,7 @@ function checkWeeklyPrizes() {
                             'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBtc2J4dnFhdmtvYm94eWhxamNjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc2NjA2OTMsImV4cCI6MjA3MzIzNjY5M30.9-0-glSFo66fOktfR6ineO8J4Ra8RLVXwytCb9jca9U'
                         },
                         body: JSON.stringify({
-                            prize_claimed: fighter.prize,
+                            prize_claimed: fighter.rank === bestRankForAccount ? prizeAmount : 0, // Only mark the actual prize on best rank
                             rank: fighter.rank
                         })
                     });
@@ -2376,12 +2380,28 @@ function checkWeeklyPrizes() {
                 Promise.all(claimPromises).then(function() {
                     // Show prize notification
                     var message = '🎉 Weekly Tournament Prizes Claimed! 🎉\n\n';
-                    for (var i = 0; i < fighterRanks.length; i++) {
-                        var f = fighterRanks[i];
-                        var medal = f.rank === 1 ? '🥇' : f.rank === 2 ? '🥈' : f.rank === 3 ? '🥉' : '🏅';
-                        message += medal + ' ' + f.name + ' (Rank #' + f.rank + '): +' + f.prize + ' 💎\n';
+                    
+                    // Sort fighters by rank
+                    fighterRanks.sort(function(a, b) { return a.rank - b.rank; });
+                    
+                    // Find the winning fighter
+                    var winningFighter = fighterRanks.find(function(f) { return f.rank === bestRankForAccount; });
+                    var medal = bestRankForAccount === 1 ? '🥇' : bestRankForAccount === 2 ? '🥈' : bestRankForAccount === 3 ? '🥉' : '🏅';
+                    
+                    message += medal + ' Best rank: #' + bestRankForAccount + ' (' + winningFighter.name + ')\n';
+                    message += 'Prize: +' + prizeAmount + ' 💎\n\n';
+                    
+                    // List other fighters if any
+                    if (fighterRanks.length > 1) {
+                        message += 'Other fighters:\n';
+                        for (var i = 0; i < fighterRanks.length; i++) {
+                            var f = fighterRanks[i];
+                            if (f.rank !== bestRankForAccount) {
+                                message += '• ' + f.name + ' (Rank #' + f.rank + ', ' + f.wins + ' wins)\n';
+                            }
+                        }
                     }
-                    message += '\nTotal: +' + prizesToClaim + ' 💎';
+                    
                     alert(message);
                 });
             }
