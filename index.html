@@ -235,6 +235,12 @@
     text-shadow: 0 0 15px rgba(255, 217, 61, 0.6);
     display: inline-block;
 }
+        .speed-burst {
+    color: #b19cd9;
+    font-weight: bold;
+    font-size: 1.05em;
+    text-shadow: 0 0 8px rgba(177, 156, 217, 0.5);
+}
     </style>
 </head>
 <body>
@@ -2831,9 +2837,10 @@ if (fighter.specialAttack && fighter.specialAttack.name) {
     }
 
     var strengthBonus = (fighter.stats.strength - 1) * 2;
-    var toughnessBonus = fighter.stats.toughness >= 2 ? (fighter.stats.toughness - 1) * 3 : 0;
-    var speedBonus = (fighter.stats.speed - 1) * 5;
-    var luckBonus = fighter.stats.luck >= 2 ? (fighter.stats.luck - 1) * 3 : 0;
+var toughnessBonus = fighter.stats.toughness >= 2 ? Math.min(50, (fighter.stats.toughness - 1) * 0.6) : 0; // 0.6% per point, max 50%
+var dodgeChance = Math.min(35, (fighter.stats.agility - 1) * 0.35); // 0.35% per point, max 35%
+var speedBonus = Math.min(100, (fighter.stats.speed - 1) * 1); // 1% per point, max 100% (double speed)
+var critChance = Math.min(30, (fighter.stats.luck - 1) * 0.3); // 0.3% per point, max 30%
 
     // Calculate base damage and defense
     var baseDamage = 10;
@@ -2904,10 +2911,10 @@ if (fighter.specialAttack && fighter.specialAttack.name) {
         '<hr style="margin: 10px 0; border-color: rgba(255,255,255,0.2);">' +
         unallocatedDisplay +
         '<div class="stat-row"><span>Strength <span style="color: #888; font-size: 0.8em;">(+' + strengthBonus + ' damage)</span>:</span> <span>' + fighter.stats.strength + '</span></div>' +
-        '<div class="stat-row"><span>Toughness <span style="color: #888; font-size: 0.8em;">(-' + toughnessBonus + '% damage taken)</span>:</span> <span>' + fighter.stats.toughness + '</span></div>' +
-        '<div class="stat-row"><span>Agility <span style="color: #888; font-size: 0.8em;">(dodge chance)</span>:</span> <span>' + fighter.stats.agility + '</span></div>' +
-        '<div class="stat-row"><span>Luck <span style="color: #888; font-size: 0.8em;">(+' + luckBonus + '% crit chance)</span>:</span> <span>' + fighter.stats.luck + '</span></div>' +
-        '<div class="stat-row"><span>Speed <span style="color: #888; font-size: 0.8em;">(+' + speedBonus + '% attack speed)</span>:</span> <span>' + fighter.stats.speed + '</span></div>' +
+        '<div class="stat-row"><span>Toughness <span style="color: #888; font-size: 0.8em;">(-' + toughnessBonus.toFixed(1) + '% damage taken)</span>:</span> <span>' + fighter.stats.toughness + '</span></div>' +
+        '<div class="stat-row"><span>Agility <span style="color: #888; font-size: 0.8em;">(' + dodgeChance.toFixed(1) + '% dodge chance)</span>:</span> <span>' + fighter.stats.agility + '</span></div>' +
+        '<div class="stat-row"><span>Luck <span style="color: #888; font-size: 0.8em;">(' + critChance.toFixed(1) + '% crit chance)</span>:</span> <span>' + fighter.stats.luck + '</span></div>' +
+        '<div class="stat-row"><span>Speed <span style="color: #888; font-size: 0.8em;">(' + speedBonus + '% faster attacks)</span>:</span> <span>' + fighter.stats.speed + '</span></div>' +
         resetStatsDisplay +
         '<hr style="margin: 10px 0; border-color: rgba(255,255,255,0.2);">' +
         specialDisplay;
@@ -2997,8 +3004,44 @@ if (fighter.specialAttack && fighter.specialAttack.name) {
         return;
     }
     
-    // Confirm the reset
-    if (!confirm('Reset all stats for ' + diamondCost + ' 💎?\n\nThis will refund ' + allocatedPoints + ' stat points.')) {
+    // Show confirmation modal instead of browser confirm
+    showResetStatsModal(diamondCost, allocatedPoints);
+}
+
+function showResetStatsModal(diamondCost, allocatedPoints) {
+    var existingModal = document.getElementById('resetStatsModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    var modalHTML = 
+        '<div id="resetStatsModal" style="display: block; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000;">' +
+            '<div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #1a1a2e; padding: 30px; border-radius: 10px; border: 2px solid #e74c3c; max-width: 400px; width: 90%; text-align: center;">' +
+                '<h3 style="color: #e74c3c; margin-bottom: 20px;">🔄 Reset All Stats</h3>' +
+                '<p style="color: #ffd93d; font-size: 1.1em; margin-bottom: 15px;">Cost: ' + diamondCost + ' 💎</p>' +
+                '<p style="color: #ccc; margin-bottom: 20px;">This will reset all your stats to base level and refund <strong style="color: #4ecdc4;">' + allocatedPoints + ' stat points</strong> that you can reallocate.</p>' +
+                '<p style="color: #888; font-size: 0.9em; margin-bottom: 25px;">Are you sure you want to proceed?</p>' +
+                '<div style="display: flex; gap: 15px; justify-content: center;">' +
+                    '<button class="btn" style="background: #e74c3c; color: #fff; padding: 12px 24px;" onclick="confirmResetStats(' + diamondCost + ', ' + allocatedPoints + ')">Reset Stats</button>' +
+                    '<button class="btn btn-secondary" onclick="closeResetStatsModal()">Cancel</button>' +
+                '</div>' +
+            '</div>' +
+        '</div>';
+    
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+}
+
+function closeResetStatsModal() {
+    var modal = document.getElementById('resetStatsModal');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+function confirmResetStats(diamondCost, allocatedPoints) {
+    var fighter = gameState.currentFighter;
+    if (!fighter) {
+        closeResetStatsModal();
         return;
     }
     
@@ -3025,9 +3068,12 @@ if (fighter.specialAttack && fighter.specialAttack.name) {
     updateFighterDisplay();
     updateDiamondDisplay();
     
+    // Close modal
+    closeResetStatsModal();
+    
+    // Show success message
     alert('Stats reset successfully! You have ' + fighter.unallocatedStats + ' points to reallocate.');
 }
-
         function updateFightStatus() {
             var now = Date.now();
             var fightBtn = document.getElementById('fightBtn');
@@ -3626,7 +3672,16 @@ function fightWithoutRest() {
         function startFight(player, opponent, isDiamondFight) {
     hideAll();
     document.getElementById('fightScreen').style.display = 'block';
-    
+    // Hide the header and logo during fights
+    var headerContainer = document.querySelector('h1.title');
+    if (headerContainer) {
+        headerContainer.style.display = 'none';
+    }
+    var companyLogo = document.querySelector('.company-logo');
+    if (companyLogo) {
+        companyLogo.style.display = 'none';
+    }
+            
     player.currentHp = player.maxHp;
     opponent.currentHp = opponent.maxHp;
     
@@ -3676,51 +3731,79 @@ function fightWithoutRest() {
         }
 
         function simulateFight(player, opponent) {
-            var turnCount = 1;
-            var maxTurns = 100;
+    var turnCount = 1;
+    var maxTurns = 100;
+    
+    // Arrays for varied combat text
+    var attackVerbs = ['strikes', 'slashes', 'punches', 'kicks', 'smashes', 'hammers', 'pounds', 'batters', 'thrashes', 'wallops'];
+    var dodgeTexts = ['sidesteps the attack', 'ducks under the blow', 'weaves away', 'rolls to safety', 'leaps back', 'twists away', 'slips aside', 'dances away from danger', 'evades with grace', 'narrowly avoids the strike'];
+    var critTexts = ['finds a weak spot', 'lands a devastating blow', 'strikes with perfect form', 'connects with brutal force', 'delivers a crushing hit', 'finds an opening', 'strikes with deadly precision', 'unleashes their full power'];
+    var weaponHits = ['blade cuts deep', 'weapon finds its mark', 'steel bites flesh', 'iron meets bone', 'weapon strikes true', 'blade slices through defenses'];
+    var bodyParts = ['chest', 'shoulder', 'arm', 'leg', 'ribs', 'side', 'back'];
+    var painSounds = ['grunts in pain', 'winces', 'staggers', 'reels back', 'stumbles', 'cries out', 'gasps'];
+    
+    function fightTurn() {
+        if (turnCount > maxTurns || player.currentHp <= 0 || opponent.currentHp <= 0) {
+            endCombat(player, opponent);
+            return;
+        }
+        
+        // Calculate speed-based extra attacks
+        var playerSpeedChance = Math.min(100, (player.stats.speed - 1) * 1);
+        var playerExtraAttack = Math.random() * 100 < playerSpeedChance;
+        
+        var opponentSpeedChance = Math.min(100, (opponent.stats.speed - 1) * 1);
+        var opponentExtraAttack = Math.random() * 100 < opponentSpeedChance;
+        
+        // Player attacks first
+        if (player.currentHp > 0) {
+            performAttack(player, opponent, 'player');
             
-            // Arrays for varied combat text
-            var attackVerbs = ['strikes', 'slashes', 'punches', 'kicks', 'smashes', 'hammers', 'pounds', 'batters', 'thrashes', 'wallops'];
-            var dodgeTexts = ['sidesteps the attack', 'ducks under the blow', 'weaves away', 'rolls to safety', 'leaps back', 'twists away', 'slips aside', 'dances away from danger', 'evades with grace', 'narrowly avoids the strike'];
-            var critTexts = ['finds a weak spot', 'lands a devastating blow', 'strikes with perfect form', 'connects with brutal force', 'delivers a crushing hit', 'finds an opening', 'strikes with deadly precision', 'unleashes their full power'];
-            var weaponHits = ['blade cuts deep', 'weapon finds its mark', 'steel bites flesh', 'iron meets bone', 'weapon strikes true', 'blade slices through defenses'];
-            var bodyParts = ['chest', 'shoulder', 'arm', 'leg', 'ribs', 'side', 'back'];
-            var painSounds = ['grunts in pain', 'winces', 'staggers', 'reels back', 'stumbles', 'cries out', 'gasps'];
-            
-            function fightTurn() {
-                if (turnCount > maxTurns || player.currentHp <= 0 || opponent.currentHp <= 0) {
-                    endCombat();
-                    return;
-                }
-                
-                // Player attacks first
-                if (player.currentHp > 0) {
-                    performAttack(player, opponent, 'player');
-                }
-                
-                // Check if opponent is defeated
-                if (opponent.currentHp <= 0) {
-                    setTimeout(endCombat, 1000);
-                    return;
-                }
-                
-                // Small delay between attacks
+            // Speed-based extra attack with visible notification
+            if (playerExtraAttack && opponent.currentHp > 0) {
                 setTimeout(function() {
-                    // Opponent attacks
-                    if (opponent.currentHp > 0) {
-                        performAttack(opponent, player, 'opponent');
-                    }
-                    
-                    // Check if player is defeated
-                    if (player.currentHp <= 0) {
-                        setTimeout(endCombat, 1000);
-                        return;
-                    }
-                    
-                    turnCount++;
-                    setTimeout(fightTurn, 1500);
-                }, 800);
+                    addToFightLog('<span style="color: #b19cd9; font-weight: bold;">⚡ SPEED BURST! ' + 
+                        '<span class="player-name">' + player.name + '</span> attacks again! ⚡</span>');
+                    performAttack(player, opponent, 'player');
+                }, 400);
             }
+        }
+        
+        // Check if opponent is defeated
+        if (opponent.currentHp <= 0) {
+            setTimeout(function() { endCombat(player, opponent); }, 1000);
+            return;
+        }
+        
+        // Small delay between attacks
+        setTimeout(function() {
+            // Opponent attacks
+            if (opponent.currentHp > 0) {
+                performAttack(opponent, player, 'opponent');
+                
+                // Opponent speed-based extra attack
+                if (opponentExtraAttack && player.currentHp > 0) {
+                    setTimeout(function() {
+                        addToFightLog('<span style="color: #b19cd9; font-weight: bold;">⚡ SPEED BURST! ' + 
+                            '<span class="opponent-name">' + opponent.name + '</span> attacks again! ⚡</span>');
+                        performAttack(opponent, player, 'opponent');
+                    }, 400);
+                }
+            }
+            
+            // Check if player is defeated
+            if (player.currentHp <= 0) {
+                setTimeout(function() { endCombat(player, opponent); }, 1000);
+                return;
+            }
+            
+            turnCount++;
+            setTimeout(fightTurn, 1500);
+        }, 800);
+    }
+    
+    fightTurn();
+}
             
             function performAttack(attacker, defender, attackerType) {
     var baseDamage = 10 + (attacker.stats.strength - 1) * 2;
@@ -3746,7 +3829,7 @@ function fightWithoutRest() {
     var damage = Math.floor(baseDamage * (0.75 + Math.random() * 0.5));
     
     // Dodge chance
-    var dodgeChance = Math.min(25, (defender.stats.agility - 1) * 4);
+    var dodgeChance = Math.min(35, (defender.stats.agility - 1) * 0.35);
     if (Math.random() * 100 < dodgeChance) {
         var dodgeTexts = ['sidesteps the attack', 'ducks under the blow', 'weaves away', 'rolls to safety', 'leaps back'];
         var dodgeText = dodgeTexts[Math.floor(Math.random() * dodgeTexts.length)];
@@ -3755,7 +3838,7 @@ function fightWithoutRest() {
     }
     
     // Critical hit chance
-    var critChance = Math.min(20, (attacker.stats.luck - 1) * 3);
+    var critChance = Math.min(30, (attacker.stats.luck - 1) * 0.3);
     var isCrit = Math.random() * 100 < critChance;
     
     // Calculate defense
@@ -3771,7 +3854,7 @@ function fightWithoutRest() {
         }
     }
     
-    var toughnessReduction = Math.min(30, (defender.stats.toughness - 1) * 3);
+    var toughnessReduction = Math.min(50, (defender.stats.toughness - 1) * 0.6);
     var defenseReduction = Math.min(40, totalDefense * 0.5);
     var totalReduction = Math.min(60, toughnessReduction + defenseReduction);
     
@@ -3815,15 +3898,15 @@ function fightWithoutRest() {
     }
     
     // Update HP bars
-    if (attackerType === 'player') {
-        var opponentHpPercent = (opponent.currentHp / opponent.maxHp) * 100;
-        document.getElementById('player2HP').style.width = opponentHpPercent + '%';
-        document.getElementById('player2HPText').textContent = Math.floor(opponent.currentHp) + '/' + opponent.maxHp;
-    } else {
-        var playerHpPercent = (player.currentHp / player.maxHp) * 100;
-        document.getElementById('player1HP').style.width = playerHpPercent + '%';
-        document.getElementById('player1HPText').textContent = Math.floor(player.currentHp) + '/' + player.maxHp;
-    }
+if (attackerType === 'player') {
+    var opponentHpPercent = (defender.currentHp / defender.maxHp) * 100;
+    document.getElementById('player2HP').style.width = opponentHpPercent + '%';
+    document.getElementById('player2HPText').textContent = Math.floor(defender.currentHp) + '/' + defender.maxHp;
+} else {
+    var playerHpPercent = (defender.currentHp / defender.maxHp) * 100;
+    document.getElementById('player1HP').style.width = playerHpPercent + '%';
+    document.getElementById('player1HPText').textContent = Math.floor(defender.currentHp) + '/' + defender.maxHp;
+}
 }
             
             function performSpecialAttack(attacker, defender, attackerType) {
@@ -3882,18 +3965,18 @@ function fightWithoutRest() {
     addToFightLog(specialTexts[Math.floor(Math.random() * specialTexts.length)]);
     
     // Update HP bars
-    if (attackerType === 'player') {
-        var opponentHpPercent = (opponent.currentHp / opponent.maxHp) * 100;
-        document.getElementById('player2HP').style.width = opponentHpPercent + '%';
-        document.getElementById('player2HPText').textContent = Math.floor(opponent.currentHp) + '/' + opponent.maxHp;
-    } else {
-        var playerHpPercent = (player.currentHp / player.maxHp) * 100;
-        document.getElementById('player1HP').style.width = playerHpPercent + '%';
-        document.getElementById('player1HPText').textContent = Math.floor(player.currentHp) + '/' + player.maxHp;
-    }
+if (attackerType === 'player') {
+    var opponentHpPercent = (defender.currentHp / defender.maxHp) * 100;
+    document.getElementById('player2HP').style.width = opponentHpPercent + '%';
+    document.getElementById('player2HPText').textContent = Math.floor(defender.currentHp) + '/' + defender.maxHp;
+} else {
+    var playerHpPercent = (defender.currentHp / defender.maxHp) * 100;
+    document.getElementById('player1HP').style.width = playerHpPercent + '%';
+    document.getElementById('player1HPText').textContent = Math.floor(defender.currentHp) + '/' + defender.maxHp;
+}
 }
             
-            function endCombat() {
+            function endCombat(player, opponent) {
     var playerWon = player.currentHp > 0;
     
     // Increment total fights counter
@@ -3990,14 +4073,84 @@ if (Math.random() * 100 < equipmentDropChance) {
             // Generate upgrade items that are always better than current gear
             function generateUpgradeItem(player, opponentLevel) {
     var itemTypes = [
-        { slot: 'weapon', statType: 'Damage', names: ['Sword', 'Axe', 'Mace', 'Spear', 'Dagger', 'Hammer', 'Staff', 'Blade'] },
-        { slot: 'helmet', statType: 'Defense', names: ['Helmet', 'Crown', 'Cap', 'Hood', 'Circlet', 'Mask', 'Headband'] },
-        { slot: 'chest', statType: 'Defense', names: ['Armor', 'Vest', 'Robe', 'Tunic', 'Mail', 'Plate', 'Garb'] },
-        { slot: 'gloves', statType: 'Defense', names: ['Gloves', 'Gauntlets', 'Mitts', 'Wraps', 'Grips'] },
-        { slot: 'boots', statType: 'Defense', names: ['Boots', 'Shoes', 'Sandals', 'Greaves', 'Treads'] },
-        { slot: 'offhand', statType: 'Defense', names: ['Shield', 'Buckler', 'Guard', 'Protector', 'Ward'] },
-        { slot: 'shoulders', statType: 'Defense', names: ['Pauldrons', 'Guards', 'Plates', 'Pads'] },
-        { slot: 'greaves', statType: 'Defense', names: ['Greaves', 'Guards', 'Plates', 'Protectors'] }
+        { 
+            slot: 'weapon', 
+            statType: 'Damage', 
+            names: [
+                'Sword', 'Axe', 'Mace', 'Spear', 'Dagger', 'Hammer', 'Staff', 'Blade',
+                'Cleaver', 'Scimitar', 'Katana', 'Rapier', 'Saber', 'Falchion', 'Claymore',
+                'Halberd', 'Glaive', 'Pike', 'Trident', 'Lance', 'Javelin',
+                'Warhammer', 'Maul', 'Flail', 'Morning Star', 'Club', 'Cudgel',
+                'Scythe', 'Sickle', 'Whip', 'Chain', 'Knuckles', 'Gauntlet',
+                'Bow', 'Crossbow', 'Longbow', 'Shortbow',
+                'Wand', 'Rod', 'Scepter', 'Orb', 'Tome', 'Grimoire'
+            ]
+        },
+        { 
+            slot: 'helmet', 
+            statType: 'Defense', 
+            names: [
+                'Helmet', 'Crown', 'Cap', 'Hood', 'Circlet', 'Mask', 'Headband',
+                'Helm', 'Casque', 'Coif', 'Cowl', 'Visor', 'Diadem', 'Tiara',
+                'Skullcap', 'Bascinet', 'Sallet', 'Barbute', 'Armet', 'Great Helm',
+                'Bandana', 'Turban', 'Headdress', 'Coronet'
+            ]
+        },
+        { 
+            slot: 'chest', 
+            statType: 'Defense', 
+            names: [
+                'Armor', 'Vest', 'Robe', 'Tunic', 'Mail', 'Plate', 'Garb',
+                'Breastplate', 'Cuirass', 'Hauberk', 'Brigandine', 'Doublet',
+                'Chainmail', 'Chestplate', 'Jerkin', 'Surcoat', 'Tabard',
+                'Cloak', 'Mantle', 'Vestment', 'Harness', 'Coat'
+            ]
+        },
+        { 
+            slot: 'gloves', 
+            statType: 'Defense', 
+            names: [
+                'Gloves', 'Gauntlets', 'Mitts', 'Wraps', 'Grips',
+                'Handguards', 'Vambraces', 'Bracers', 'Cuffs', 'Handwraps',
+                'Mittens', 'Fists', 'Cestus', 'Knuckle Guards'
+            ]
+        },
+        { 
+            slot: 'boots', 
+            statType: 'Defense', 
+            names: [
+                'Boots', 'Shoes', 'Sandals', 'Greaves', 'Treads',
+                'Sabatons', 'Sollerets', 'Footguards', 'Slippers', 'Moccasins',
+                'Stompers', 'Walkers', 'Striders', 'Runners', 'Leggings'
+            ]
+        },
+        { 
+            slot: 'offhand', 
+            statType: 'Defense', 
+            names: [
+                'Shield', 'Buckler', 'Guard', 'Protector', 'Ward',
+                'Targe', 'Pavise', 'Scutum', 'Heater', 'Kite Shield',
+                'Tower Shield', 'Round Shield', 'Aspis', 'Parma', 'Deflector'
+            ]
+        },
+        { 
+            slot: 'shoulders', 
+            statType: 'Defense', 
+            names: [
+                'Pauldrons', 'Guards', 'Plates', 'Pads',
+                'Spaulders', 'Shoulderguards', 'Mantle', 'Epaulettes',
+                'Reinforcements', 'Protectors', 'Shields'
+            ]
+        },
+        { 
+            slot: 'greaves', 
+            statType: 'Defense', 
+            names: [
+                'Greaves', 'Guards', 'Plates', 'Protectors',
+                'Shin Guards', 'Leg Armor', 'Leggings', 'Cuisses',
+                'Poleyns', 'Leg Plates', 'Shinguards'
+            ]
+        }
     ];
     
     // Find slots that need upgrades
@@ -4100,18 +4253,69 @@ if (Math.random() * 100 < equipmentDropChance) {
     var baseName = itemType.names[Math.floor(Math.random() * itemType.names.length)];
     var fullName = selectedRarity.prefix + baseName;
     
+    // Expanded materials and suffixes for more variety
+    var materials = [
+        'Steel', 'Iron', 'Bronze', 'Copper', 'Silver', 'Gold', 'Platinum',
+        'Mithril', 'Adamant', 'Adamantine', 'Orichalcum', 'Titanium',
+        'Obsidian', 'Onyx', 'Ruby', 'Sapphire', 'Emerald', 'Diamond',
+        'Crystal', 'Jade', 'Ivory', 'Bone', 'Dragonbone', 'Ebony',
+        'Darksteel', 'Brightsteel', 'Starmetal', 'Moonstone', 'Sunstone',
+        'Volcanic', 'Glacial', 'Abyssal', 'Celestial', 'Infernal',
+        'Ancient', 'Elven', 'Dwarven', 'Orcish', 'Demonic', 'Angelic'
+    ];
+    
+    var epicSuffixes = [
+        'of Power', 'of Might', 'of Fury', 'of Valor', 'of Glory',
+        'of Strength', 'of Protection', 'of the Titan', 'of the Berserker',
+        'of the Guardian', 'of the Champion', 'of Conquest', 'of Victory',
+        'of Destruction', 'of Domination', 'of Excellence', 'of Perfection',
+        'of the Warrior', 'of the Hero', 'of the Legend', 'of Supremacy',
+        'of the Storm', 'of Thunder', 'of Lightning', 'of Fire', 'of Ice',
+        'of Darkness', 'of Light', 'of Shadow', 'of Radiance'
+    ];
+    
+    var legendaryNames = [
+        'Dragonslayer', 'Stormbringer', 'Soulrender', 'Flamestrike', 'Frostbite',
+        'Shadowbane', 'Lightbringer', 'Doomblade', 'Excalibur', 'Mjolnir',
+        'Gungnir', 'Durandal', 'Gram', 'Tyrfing', 'Caladbolg',
+        'Kusanagi', 'Muramasa', 'Masamune', 'Vorpal', 'Reaver',
+        'Skullcrusher', 'Heartseeker', 'Souleater', 'Worldender', 'Kingslayer',
+        'Demonbane', 'Godsend', 'Eternity', 'Infinity', 'Nemesis',
+        'Ragnarok', 'Armageddon', 'Cataclysm', 'Apocalypse', 'Requiem'
+    ];
+    
+    var mythicNames = [
+        'Godslayer', 'Worldbreaker', 'Eternity\'s Edge', 'Chaos Reaper', 'Divine Wrath',
+        'Oblivion', 'Extinction', 'Annihilation', 'Genesis', 'Omega',
+        'Alpha and Omega', 'The Destroyer', 'The Creator', 'Universe Render',
+        'Reality Splitter', 'Dimension Breaker', 'Void Caller', 'Existence Ender',
+        'The Absolution', 'The Reckoning', 'The Judgment', 'The Harbinger',
+        'Primordial Fury', 'Cosmic Terror', 'Celestial Judgment', 'Astral Devastation'
+    ];
+    
     // Add special suffixes for higher rarities
     if (selectedRarity.name === 'rare' && itemLevel >= 15) {
-        var materials = ['Steel', 'Mithril', 'Adamant', 'Obsidian'];
-        fullName = selectedRarity.prefix + materials[Math.floor(Math.random() * materials.length)] + ' ' + baseName;
+        var material = materials[Math.floor(Math.random() * materials.length)];
+        fullName = selectedRarity.prefix + material + ' ' + baseName;
     } else if (selectedRarity.name === 'epic') {
-        var epicSuffixes = ['of Power', 'of Might', 'of Fury', 'of Valor', 'of Glory'];
-        fullName = selectedRarity.prefix + baseName + ' ' + epicSuffixes[Math.floor(Math.random() * epicSuffixes.length)];
+        var suffix = epicSuffixes[Math.floor(Math.random() * epicSuffixes.length)];
+        // 50% chance for material + base name, 50% for prefix + base name + suffix
+        if (Math.random() < 0.5) {
+            var material = materials[Math.floor(Math.random() * materials.length)];
+            fullName = material + ' ' + baseName + ' ' + suffix;
+        } else {
+            fullName = selectedRarity.prefix + baseName + ' ' + suffix;
+        }
     } else if (selectedRarity.name === 'legendary') {
-        var legendaryNames = ['Dragonslayer', 'Stormbringer', 'Soulrender', 'Flamestrike', 'Frostbite'];
-        fullName = legendaryNames[Math.floor(Math.random() * legendaryNames.length)];
+        // 70% use legendary name pool, 30% use epic-style naming
+        if (Math.random() < 0.7) {
+            fullName = legendaryNames[Math.floor(Math.random() * legendaryNames.length)];
+        } else {
+            var material = materials[Math.floor(Math.random() * materials.length)];
+            var suffix = epicSuffixes[Math.floor(Math.random() * epicSuffixes.length)];
+            fullName = selectedRarity.prefix + material + ' ' + baseName + ' ' + suffix;
+        }
     } else if (selectedRarity.name === 'mythic') {
-        var mythicNames = ['Godslayer', 'Worldbreaker', 'Eternity\'s Edge', 'Chaos Reaper', 'Divine Wrath'];
         fullName = mythicNames[Math.floor(Math.random() * mythicNames.length)];
     }
     
@@ -4121,7 +4325,7 @@ if (Math.random() * 100 < equipmentDropChance) {
         slot: itemType.slot,
         power: finalPower,
         level: opponentLevel,
-        itemLevel: itemLevel,  // Add item level
+        itemLevel: itemLevel,
         rarity: selectedRarity.name,
         statType: itemType.statType
     };
@@ -4161,12 +4365,18 @@ if (fighter.level === 10) {
     }, 500);
 }
             }
-            
-            fightTurn();
-        }
 
         function endFight() {
             document.getElementById('endFightBtn').style.display = 'none';
+            // Restore the header and logo when leaving fight screen
+            var headerContainer = document.querySelector('h1.title');
+            if (headerContainer) {
+        headerContainer.style.display = 'block';
+        }
+            var companyLogo = document.querySelector('.company-logo');
+            if (companyLogo) {
+            companyLogo.style.display = 'block';
+        }
             showFighterScreen();
         }
 
