@@ -3633,7 +3633,16 @@ function fightWithoutRest() {
         function startFight(player, opponent, isDiamondFight) {
     hideAll();
     document.getElementById('fightScreen').style.display = 'block';
-    
+    // Hide the header and logo during fights
+    var headerContainer = document.querySelector('h1.title');
+    if (headerContainer) {
+        headerContainer.style.display = 'none';
+    }
+    var companyLogo = document.querySelector('.company-logo');
+    if (companyLogo) {
+        companyLogo.style.display = 'none';
+    }
+            
     player.currentHp = player.maxHp;
     opponent.currentHp = opponent.maxHp;
     
@@ -4201,6 +4210,15 @@ if (fighter.level === 10) {
 
         function endFight() {
             document.getElementById('endFightBtn').style.display = 'none';
+            // Restore the header and logo when leaving fight screen
+            var headerContainer = document.querySelector('h1.title');
+            if (headerContainer) {
+        headerContainer.style.display = 'block';
+        }
+            var companyLogo = document.querySelector('.company-logo');
+            if (companyLogo) {
+            companyLogo.style.display = 'block';
+        }
             showFighterScreen();
         }
 
