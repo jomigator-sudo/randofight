@@ -211,7 +211,7 @@
 }
         /* Add these CSS classes to your style section */
 .player-name { 
-    color: #4ecdc4; 
+    color: #3b82f6; 
     font-weight: bold; 
 }
 .opponent-name { 
@@ -421,6 +421,7 @@
         <div class="form-group">
             <label for="fighterName">Fighter Name:</label>
             <input type="text" id="fighterName" maxlength="20" placeholder="Enter fighter name" oninput="validateFighterNameInput()">
+            <div id="nameError" style="color: #e74c3c; font-size: 0.9em; margin-top: 8px; min-height: 20px; display: none;"></div>
             <div style="margin-top: 10px; font-size: 0.85em; color: #888;">
                 <p>• 3-20 characters required</p>
                 <p>• Must contain at least one letter</p>
@@ -1538,117 +1539,239 @@ function setupLoginKeyHandlers() {
         }
 
         // Game functions
-        function saveToSupabase() {
-            // If user is a guest, save locally instead
-            if (gameState.currentUser && gameState.currentUser.isGuest) {
-                saveGameData();
-                return;
-            }
-            
-            var userId = getUserId();
-            var gameData = {
-                user_id: userId,
-                fighters: gameState.fighters,
-                diamonds: gameState.diamonds,
-                fight_cooldown_end: gameState.fightCooldownEnd,
-                unlocked_slots: gameState.unlockedSlots,
-                updated_at: new Date().toISOString()
-            };
+        function saveToSupabase(retryCount) {
+    // If user is a guest, save locally instead
+    if (gameState.currentUser && gameState.currentUser.isGuest) {
+        saveGameData();
+        return;
+    }
+    
+    if (retryCount === undefined) {
+        retryCount = 0;
+    }
+    
+    var userId = getUserId();
+    var gameData = {
+        user_id: userId,
+        fighters: gameState.fighters,
+        diamonds: gameState.diamonds,
+        fight_cooldown_end: gameState.fightCooldownEnd,
+        unlocked_slots: gameState.unlockedSlots,
+        updated_at: new Date().toISOString()
+    };
 
-            console.log('Saving to Supabase via REST API:', gameData);
+    console.log('Saving to Supabase via REST API (attempt ' + (retryCount + 1) + '):', gameData);
 
-            fetch(SUPABASE_URL + '/rest/v1/game_data', {
+    // First, check if record exists
+    fetch(SUPABASE_URL + '/rest/v1/game_data?user_id=eq.' + encodeURIComponent(userId), {
+        method: 'GET',
+        headers: {
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': 'Bearer ' + SUPABASE_ANON_KEY
+        }
+    })
+    .then(function(response) {
+        if (!response.ok) {
+            throw new Error('Failed to check existing data: ' + response.status);
+        }
+        return response.json();
+    })
+    .then(function(existingData) {
+        if (existingData && existingData.length > 0) {
+            // Update existing record
+            return fetch(SUPABASE_URL + '/rest/v1/game_data?user_id=eq.' + encodeURIComponent(userId), {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'apikey': SUPABASE_ANON_KEY,
+                    'Authorization': 'Bearer ' + SUPABASE_ANON_KEY
+                },
+                body: JSON.stringify(gameData)
+            });
+        } else {
+            // Insert new record
+            return fetch(SUPABASE_URL + '/rest/v1/game_data', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'apikey': SUPABASE_ANON_KEY,
-                    'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
-                    'Prefer': 'resolution=merge-duplicates'
+                    'Authorization': 'Bearer ' + SUPABASE_ANON_KEY
                 },
                 body: JSON.stringify(gameData)
-            })
-            .then(function(response) {
-                if (response.ok) {
-                    console.log('Saved to Supabase successfully!');
-                } else {
-                    console.error('Supabase save error:', response.status, response.statusText);
-                    return response.text().then(function(text) {
-                        console.error('Error details:', text);
-                        throw new Error('Save failed: ' + response.status);
-                    });
-                }
-            })
-            .catch(function(e) {
-                console.error('Save failed, using localStorage fallback:', e);
-                saveGameData();
             });
         }
+    })
+    .then(function(response) {
+        if (response.ok) {
+            console.log('Saved to Supabase successfully!');
+            hideCloudSaveError(); // Hide error popup if it was showing
+            
+            // Also save to localStorage as backup
+            saveGameData();
+        } else {
+            console.error('Supabase save error:', response.status, response.statusText);
+            return response.text().then(function(text) {
+                console.error('Error details:', text);
+                throw new Error('Save failed: ' + response.status);
+            });
+        }
+    })
+    .catch(function(e) {
+        console.error('Save failed:', e);
+        
+        // Save to localStorage as fallback
+        saveGameData();
+        
+        // Show error popup with retry option
+        showCloudSaveError(retryCount);
+    });
+}
 
+function showCloudSaveError(retryCount) {
+    var existingPopup = document.getElementById('cloudSaveErrorPopup');
+    if (existingPopup) {
+        return; // Don't show multiple popups
+    }
+    
+    var popupHTML = 
+        '<div id="cloudSaveErrorPopup" style="position: fixed; top: 20px; right: 20px; background: #e74c3c; color: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 3000; max-width: 350px; animation: slideIn 0.3s ease;">' +
+            '<div style="display: flex; align-items: start; gap: 15px;">' +
+                '<div style="font-size: 2em;">⚠️</div>' +
+                '<div style="flex: 1;">' +
+                    '<h4 style="margin: 0 0 10px 0; font-size: 1.1em;">Cloud Save Failed</h4>' +
+                    '<p style="margin: 0 0 15px 0; font-size: 0.9em;">Unable to sync your progress to the cloud. Your data is saved locally, but may not be available on other devices.</p>' +
+                    '<div style="display: flex; gap: 10px;">' +
+                        '<button class="btn btn-primary" onclick="retryCloudSave(' + retryCount + ')" style="padding: 8px 16px; font-size: 0.9em;">Retry</button>' +
+                        '<button class="btn" style="background: rgba(255,255,255,0.2); color: #fff; padding: 8px 16px; font-size: 0.9em;" onclick="hideCloudSaveError()">Dismiss</button>' +
+                    '</div>' +
+                '</div>' +
+            '</div>' +
+        '</div>' +
+        '<style>' +
+            '@keyframes slideIn {' +
+                'from { transform: translateX(400px); opacity: 0; }' +
+                'to { transform: translateX(0); opacity: 1; }' +
+            '}' +
+        '</style>';
+    
+    document.body.insertAdjacentHTML('beforeend', popupHTML);
+    
+    // Auto-dismiss after 10 seconds if user doesn't interact
+    setTimeout(function() {
+        hideCloudSaveError();
+    }, 10000);
+}
+
+function hideCloudSaveError() {
+    var popup = document.getElementById('cloudSaveErrorPopup');
+    if (popup) {
+        popup.style.animation = 'slideOut 0.3s ease';
+        setTimeout(function() {
+            popup.remove();
+        }, 300);
+    }
+}
+
+function retryCloudSave(previousRetryCount) {
+    hideCloudSaveError();
+    
+    var newRetryCount = previousRetryCount + 1;
+    
+    if (newRetryCount > 3) {
+        alert('Unable to sync to cloud after multiple attempts. Your progress is saved locally. Please check your internet connection and try again later.');
+        return;
+    }
+    
+    saveToSupabase(newRetryCount);
+}
         function loadFromSupabase() {
-            // If user is a guest, load locally instead
-            if (gameState.currentUser && gameState.currentUser.isGuest) {
-                loadGameData();
-                updateFighterSlots();
-                updateDiamondDisplay();
-                return;
-            }
-            
-            var userId = getUserId();
-            console.log('Loading from Supabase via REST API for user:', userId);
-            
-            fetch(SUPABASE_URL + '/rest/v1/game_data?user_id=eq.' + encodeURIComponent(userId), {
-                method: 'GET',
-                headers: {
-                    'apikey': SUPABASE_ANON_KEY,
-                    'Authorization': 'Bearer ' + SUPABASE_ANON_KEY
-                }
-            })
-            .then(function(response) {
-                if (!response.ok) {
-                    throw new Error('Load failed: ' + response.status);
-                }
-                return response.json();
-            })
-            .then(function(data) {
-                console.log('Raw Supabase response:', data);
-                
-                if (data && data.length > 0) {
-                    var gameData = data[0];
-                    console.log('Loading data from Supabase:', gameData);
-                    gameState.fighters = gameData.fighters || [];
-                    gameState.diamonds = gameData.diamonds || 0;
-                    gameState.fightCooldownEnd = gameData.fight_cooldown_end || 0;
-                    gameState.unlockedSlots = gameData.unlocked_slots || [true, false, false, false, false];
-                    console.log('Game loaded from cloud successfully!');
-                } else {
-                    console.log('No saved data found in Supabase - starting fresh');
-                }
-                
-                updateFighterSlots();
-                updateDiamondDisplay();
-            })
-            .catch(function(e) {
-                console.error('Load failed, using localStorage fallback:', e);
-                loadGameData();
-                updateFighterSlots();
-                updateDiamondDisplay();
-            });
+    if (gameState.currentUser && gameState.currentUser.isGuest) {
+        loadGameData();
+        updateFighterSlots();
+        updateDiamondDisplay();
+        return;
+    }
+    
+    var userId = getUserId();
+    console.log('Loading from Supabase via REST API for user:', userId);
+    
+    // First check localStorage for comparison
+    var localData = localStorage.getItem('randofight_gamedata');
+    var localTimestamp = null;
+    if (localData) {
+        try {
+            var parsed = JSON.parse(localData);
+            localTimestamp = parsed.lastSaved || 0;
+        } catch(e) {}
+    }
+    
+    fetch(SUPABASE_URL + '/rest/v1/game_data?user_id=eq.' + encodeURIComponent(userId), {
+        method: 'GET',
+        headers: {
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': 'Bearer ' + SUPABASE_ANON_KEY
         }
+    })
+    .then(function(response) {
+        if (!response.ok) {
+            throw new Error('Load failed: ' + response.status);
+        }
+        return response.json();
+    })
+    .then(function(data) {
+        console.log('Raw Supabase response:', data);
+        
+        if (data && data.length > 0) {
+            var gameData = data[0];
+            var cloudTimestamp = new Date(gameData.updated_at).getTime();
+            
+            // Compare timestamps - use newer data
+            if (localTimestamp && localTimestamp > cloudTimestamp) {
+                console.log('Local data is newer, using local data and syncing to cloud');
+                loadGameData();
+                saveToSupabase(); // Sync the newer local data to cloud
+            } else {
+                console.log('Loading data from Supabase:', gameData);
+                gameState.fighters = gameData.fighters || [];
+                gameState.diamonds = gameData.diamonds || 0;
+                gameState.fightCooldownEnd = gameData.fight_cooldown_end || 0;
+                gameState.unlockedSlots = gameData.unlocked_slots || [true, false, false, false, false];
+                
+                // Also save to localStorage
+                saveGameData();
+                console.log('Game loaded from cloud successfully!');
+            }
+        } else {
+            console.log('No saved data found in Supabase - checking localStorage');
+            loadGameData();
+        }
+        
+        updateFighterSlots();
+        updateDiamondDisplay();
+    })
+    .catch(function(e) {
+        console.error('Load failed, using localStorage fallback:', e);
+        loadGameData();
+        updateFighterSlots();
+        updateDiamondDisplay();
+    });
+}
 
         function saveGameData() {
-            try {
-                var gameData = JSON.stringify({
-                    fighters: gameState.fighters,
-                    diamonds: gameState.diamonds,
-                    fightCooldownEnd: gameState.fightCooldownEnd,
-                    unlockedSlots: gameState.unlockedSlots
-                });
-                localStorage.setItem('randofight_gamedata', gameData);
-                console.log('Game saved to localStorage');
-            } catch (e) {
-                console.log('Save failed:', e);
-            }
-        }
+    try {
+        var gameData = JSON.stringify({
+            fighters: gameState.fighters,
+            diamonds: gameState.diamonds,
+            fightCooldownEnd: gameState.fightCooldownEnd,
+            unlockedSlots: gameState.unlockedSlots,
+            lastSaved: Date.now()
+        });
+        localStorage.setItem('randofight_gamedata', gameData);
+        console.log('Game saved to localStorage');
+    } catch (e) {
+        console.log('Save failed:', e);
+    }
+}
 
         function loadGameData() {
             try {
@@ -1868,6 +1991,7 @@ function showRenameModal() {
                     '<input type="text" id="newFighterName" placeholder="Enter new name" maxlength="20" ' +
                     'style="width: 100%; padding: 10px; border: 1px solid #4ecdc4; border-radius: 4px; background: rgba(0,0,0,0.3); color: #fff; font-family: inherit;" ' +
                     'oninput="validateRenameInput()">' +
+                    '<div id="renameError" style="color: #e74c3c; font-size: 0.9em; margin-top: 8px; min-height: 20px; display: none;"></div>' +
                     '<div style="margin-top: 10px; font-size: 0.85em; color: #888; text-align: left;">' +
                         '<p>• 3-20 characters required</p>' +
                         '<p>• Must contain at least one letter</p>' +
@@ -1920,6 +2044,21 @@ function validateRenameInput() {
 function confirmRename() {
     var newName = document.getElementById('newFighterName').value.trim();
     var fighter = gameState.currentFighter;
+    var errorDiv = document.getElementById('renameError');
+    
+    // Helper function to show error
+    function showError(message) {
+        errorDiv.textContent = message;
+        errorDiv.style.display = 'block';
+        renameButton.disabled = false;
+        renameButton.textContent = 'Rename (25 💎)';
+    }
+    
+    // Helper function to hide error
+    function hideError() {
+        errorDiv.style.display = 'none';
+        errorDiv.textContent = '';
+    }
     
     // Get the rename button and disable it immediately
     var renameButton = document.querySelector('#renameModal .btn-primary');
@@ -1929,49 +2068,33 @@ function confirmRename() {
     renameButton.disabled = true;
     renameButton.textContent = 'Processing...';
     
+    hideError(); // Clear any previous errors
+    
     if (!fighter) {
-        alert('No fighter selected!');
-        renameButton.disabled = false;
-        renameButton.textContent = 'Rename (25 💎)';
-        return;
+        return showError('No fighter selected!');
     }
     
     // Check if player has enough diamonds
     if (gameState.diamonds < 25) {
-        alert('You need 25 diamonds to rename your fighter! You currently have ' + gameState.diamonds + ' diamonds.');
-        renameButton.disabled = false;
-        renameButton.textContent = 'Rename (25 💎)';
-        return;
+        return showError('You need 25 diamonds to rename your fighter! You currently have ' + gameState.diamonds + ' diamonds.');
     }
     
     // Validate new name (same validation as createFighter)
     if (!newName) {
-        alert('Please enter a new name!');
-        renameButton.disabled = false;
-        renameButton.textContent = 'Rename (25 💎)';
-        return;
+        return showError('Please enter a new name!');
     }
     
     if (newName.length < 3) {
-        alert('Fighter name must be at least 3 characters long!');
-        renameButton.disabled = false;
-        renameButton.textContent = 'Rename (25 💎)';
-        return;
+        return showError('Fighter name must be at least 3 characters long!');
     }
     
     if (newName.length > 20) {
-        alert('Fighter name must be 20 characters or less!');
-        renameButton.disabled = false;
-        renameButton.textContent = 'Rename (25 💎)';
-        return;
+        return showError('Fighter name must be 20 characters or less!');
     }
     
     // Check if it's the same name
     if (newName.toLowerCase() === fighter.name.toLowerCase()) {
-        alert('That\'s already your fighter\'s name!');
-        renameButton.disabled = false;
-        renameButton.textContent = 'Rename (25 💎)';
-        return;
+        return showError('That\'s already your fighter\'s name!');
     }
     
     // List of inappropriate terms to block (same as createFighter)
@@ -2001,10 +2124,7 @@ function confirmRename() {
     
     for (var i = 0; i < inappropriateTerms.length; i++) {
         if (nameLower.includes(inappropriateTerms[i]) || nameNoSpaces.includes(inappropriateTerms[i])) {
-            alert('That name contains inappropriate content. Please choose a different name.');
-            renameButton.disabled = false;
-            renameButton.textContent = 'Rename (25 💎)';
-            return;
+            return showError('That name contains inappropriate content. Please choose a different name.');
         }
     }
     
@@ -2021,70 +2141,53 @@ function confirmRename() {
     
     for (var i = 0; i < inappropriateTerms.length; i++) {
         if (leetSpeakName.includes(inappropriateTerms[i])) {
-            alert('That name contains inappropriate content. Please choose a different name.');
-            renameButton.disabled = false;
-            renameButton.textContent = 'Rename (25 💎)';
-            return;
+            return showError('That name contains inappropriate content. Please choose a different name.');
         }
     }
     
     // Check for all numbers or all special characters
     if (!/[a-zA-Z]/.test(newName)) {
-        alert('Fighter name must contain at least one letter!');
-        renameButton.disabled = false;
-        renameButton.textContent = 'Rename (25 💎)';
-        return;
+        return showError('Fighter name must contain at least one letter!');
     }
     
     // Check for excessive special characters
     var specialCharCount = (newName.match(/[^a-zA-Z0-9\s]/g) || []).length;
     if (specialCharCount > 3) {
-        alert('Fighter name can only contain up to 3 special characters!');
-        renameButton.disabled = false;
-        renameButton.textContent = 'Rename (25 💎)';
-        return;
+        return showError('Fighter name can only contain up to 3 special characters!');
     }
     
     // Check for spam patterns
     if (/(.)\1{4,}/.test(newName)) {
-        alert('Fighter name cannot contain more than 4 repeated characters in a row!');
-        renameButton.disabled = false;
-        renameButton.textContent = 'Rename (25 💎)';
-        return;
+        return showError('Fighter name cannot contain more than 4 repeated characters in a row!');
     }
     
     // Check name availability
     checkNameAvailability(newName)
         .then(function(isAvailable) {
             if (!isAvailable) {
-                alert('Fighter name "' + newName + '" is already taken. Please choose a different name.');
-                renameButton.disabled = false;
-                renameButton.textContent = 'Rename (25 💎)';
-                return;
+                return showError('Fighter name "' + newName + '" is already taken. Please choose a different name.');
             }
             
             // All validations passed - perform the rename
-var oldName = fighter.name;
-fighter.name = newName;
-gameState.diamonds -= 25;
+            var oldName = fighter.name;
+            fighter.name = newName;
+            gameState.diamonds -= 25;
 
-// Update weekly leaderboard entry
-updateWeeklyLeaderboardName(oldName, newName);
+            // Update weekly leaderboard entry
+            updateWeeklyLeaderboardName(oldName, newName);
 
-// Save changes
-saveToSupabase();
-updateDiamondDisplay();
-updateFighterDisplay();
+            // Save changes
+            saveToSupabase();
+            updateDiamondDisplay();
+            updateFighterDisplay();
 
-// Close modal and show success
-closeRenameModal();
-alert('Fighter renamed from "' + oldName + '" to "' + newName + '"!');
+            // Close modal and show success
+            closeRenameModal();
+            alert('Fighter renamed from "' + oldName + '" to "' + newName + '"!');
         })
         .catch(function(error) {
             console.error('Error checking name availability:', error);
-            alert('Unable to verify name availability. Please try again.');
-            renameButton.disabled = false;
-            renameButton.textContent = 'Rename (25 💎)';
+            showError('Unable to verify name availability. Please try again.');
         });
 }
 function showWeeklyTournamentFromFighter() {
@@ -2259,15 +2362,15 @@ function closeSpecialAttackModal() {
 // Track weekly wins in database
 function saveWeeklyWin(fighterName) {
     if (!gameState.currentUser || gameState.currentUser.isGuest) {
-        return; // Don't track for guests
+        return;
     }
     
     var weekStart = getWeekStartDate();
-    var weekStartStr = weekStart.toISOString().split('T')[0]; // YYYY-MM-DD format
+    var weekStartStr = weekStart.toISOString().split('T')[0];
     var userId = getUserId();
     
-    // First, try to update existing record
-    fetch('https://pmsbxvqavkoboxyhqjcc.supabase.co/rest/v1/weekly_scores?user_id=eq.' + userId + '&fighter_name=eq.' + encodeURIComponent(fighterName) + '&week_start=eq.' + weekStartStr, {
+    // Check if this user already has fighters in THIS week's tournament
+    fetch('https://pmsbxvqavkoboxyhqjcc.supabase.co/rest/v1/weekly_scores?user_id=eq.' + userId + '&week_start=eq.' + weekStartStr, {
         method: 'GET',
         headers: {
             'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBtc2J4dnFhdmtvYm94eWhxamNjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc2NjA2OTMsImV4cCI6MjA3MzIzNjY5M30.9-0-glSFo66fOktfR6ineO8J4Ra8RLVXwytCb9jca9U',
@@ -2277,11 +2380,23 @@ function saveWeeklyWin(fighterName) {
     .then(function(response) {
         return response.json();
     })
-    .then(function(data) {
-        if (data.length > 0) {
-            // Update existing record
-            var currentWins = data[0].wins || 0;
-            return fetch('https://pmsbxvqavkoboxyhqjcc.supabase.co/rest/v1/weekly_scores?id=eq.' + data[0].id, {
+    .then(function(allUserFighters) {
+        // Find if current fighter exists for THIS week
+        var currentFighterEntry = null;
+        for (var i = 0; i < allUserFighters.length; i++) {
+            if (allUserFighters[i].fighter_name === fighterName && 
+                allUserFighters[i].week_start === weekStartStr) {
+                currentFighterEntry = allUserFighters[i];
+                break;
+            }
+        }
+        
+        if (currentFighterEntry) {
+            // Update existing record for this week
+            var currentWins = currentFighterEntry.wins || 0;
+            var newWins = currentWins + 1;
+            
+            return fetch('https://pmsbxvqavkoboxyhqjcc.supabase.co/rest/v1/weekly_scores?id=eq.' + currentFighterEntry.id, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
@@ -2289,12 +2404,15 @@ function saveWeeklyWin(fighterName) {
                     'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBtc2J4dnFhdmtvYm94eWhxamNjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc2NjA2OTMsImV4cCI6MjA3MzIzNjY5M30.9-0-glSFo66fOktfR6ineO8J4Ra8RLVXwytCb9jca9U'
                 },
                 body: JSON.stringify({
-                    wins: currentWins + 1,
+                    wins: newWins,
                     updated_at: new Date().toISOString()
                 })
+            }).then(function() {
+                // Check if this fighter should be the only one representing the user
+                removeOtherWeeklyFighters(userId, weekStartStr, fighterName);
             });
         } else {
-            // Create new record
+            // Create new record for this week - starts at 1 win
             return fetch('https://pmsbxvqavkoboxyhqjcc.supabase.co/rest/v1/weekly_scores', {
                 method: 'POST',
                 headers: {
@@ -2306,8 +2424,10 @@ function saveWeeklyWin(fighterName) {
                     user_id: userId,
                     fighter_name: fighterName,
                     week_start: weekStartStr,
-                    wins: 1
+                    wins: 1  // Start fresh at 1 for new week
                 })
+            }).then(function() {
+                removeOtherWeeklyFighters(userId, weekStartStr, fighterName);
             });
         }
     })
@@ -2316,6 +2436,56 @@ function saveWeeklyWin(fighterName) {
     })
     .catch(function(error) {
         console.error('Error tracking weekly win:', error);
+    });
+}
+
+function removeOtherWeeklyFighters(userId, weekStartStr, keepFighterName) {
+    // Get all fighters for this user this week
+    fetch('https://pmsbxvqavkoboxyhqjcc.supabase.co/rest/v1/weekly_scores?user_id=eq.' + userId + '&week_start=eq.' + weekStartStr, {
+        method: 'GET',
+        headers: {
+            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBtc2J4dnFhdmtvYm94eWhxamNjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc2NjA2OTMsImV4cCI6MjA3MzIzNjY5M30.9-0-glSFo66fOktfR6ineO8J4Ra8RLVXwytCb9jca9U',
+            'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBtc2J4dnFhdmtvYm94eWhxamNjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc2NjA2OTMsImV4cCI6MjA3MzIzNjY5M30.9-0-glSFo66fOktfR6ineO8J4Ra8RLVXwytCb9jca9U'
+        }
+    })
+    .then(function(response) {
+        return response.json();
+    })
+    .then(function(allFighters) {
+        // Find the best fighter
+        var bestFighter = null;
+        var bestWins = 0;
+        
+        for (var i = 0; i < allFighters.length; i++) {
+            if (allFighters[i].wins > bestWins) {
+                bestWins = allFighters[i].wins;
+                bestFighter = allFighters[i];
+            }
+        }
+        
+        // Delete all fighters except the best one
+        var deletePromises = [];
+        for (var i = 0; i < allFighters.length; i++) {
+            if (allFighters[i].fighter_name !== bestFighter.fighter_name) {
+                deletePromises.push(
+                    fetch('https://pmsbxvqavkoboxyhqjcc.supabase.co/rest/v1/weekly_scores?id=eq.' + allFighters[i].id, {
+                        method: 'DELETE',
+                        headers: {
+                            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBtc2J4dnFhdmtvYm94eWhxamNjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc2NjA2OTMsImV4cCI6MjA3MzIzNjY5M30.9-0-glSFo66fOktfR6ineO8J4Ra8RLVXwytCb9jca9U',
+                            'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBtc2J4dnFhdmtvYm94eWhxamNjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc2NjA2OTMsImV4cCI6MjA3MzIzNjY5M30.9-0-glSFo66fOktfR6ineO8J4Ra8RLVXwytCb9jca9U'
+                        }
+                    })
+                );
+            }
+        }
+        
+        return Promise.all(deletePromises);
+    })
+    .then(function() {
+        console.log('Removed lower-ranked fighters from weekly tournament');
+    })
+    .catch(function(error) {
+        console.error('Error removing other fighters:', error);
     });
 }
 
@@ -2518,20 +2688,34 @@ function updateWeeklyLeaderboard() {
         
         function createFighter() {
     var name = document.getElementById('fighterName').value.trim();
-    if (!name) {
-        alert('Please enter a fighter name!');
+    var errorDiv = document.getElementById('nameError');
+    
+    // Helper function to show error
+    function showError(message) {
+        errorDiv.textContent = message;
+        errorDiv.style.display = 'block';
         return;
+    }
+    
+    // Helper function to hide error
+    function hideError() {
+        errorDiv.style.display = 'none';
+        errorDiv.textContent = '';
+    }
+    
+    hideError(); // Clear any previous errors
+    
+    if (!name) {
+        return showError('Please enter a fighter name!');
     }
     
     // Check name length
     if (name.length < 3) {
-        alert('Fighter name must be at least 3 characters long!');
-        return;
+        return showError('Fighter name must be at least 3 characters long!');
     }
     
     if (name.length > 20) {
-        alert('Fighter name must be 20 characters or less!');
-        return;
+        return showError('Fighter name must be 20 characters or less!');
     }
     
     // List of inappropriate terms to block (comprehensive list)
@@ -2561,8 +2745,7 @@ function updateWeeklyLeaderboard() {
     
     for (var i = 0; i < inappropriateTerms.length; i++) {
         if (nameLower.includes(inappropriateTerms[i]) || nameNoSpaces.includes(inappropriateTerms[i])) {
-            alert('That name contains inappropriate content. Please choose a different name.');
-            return;
+            return showError('That name contains inappropriate content. Please choose a different name.');
         }
     }
     
@@ -2579,38 +2762,34 @@ function updateWeeklyLeaderboard() {
     
     for (var i = 0; i < inappropriateTerms.length; i++) {
         if (leetSpeakName.includes(inappropriateTerms[i])) {
-            alert('That name contains inappropriate content. Please choose a different name.');
-            return;
+            return showError('That name contains inappropriate content. Please choose a different name.');
         }
     }
     
     // Check for all numbers or all special characters
     if (!/[a-zA-Z]/.test(name)) {
-        alert('Fighter name must contain at least one letter!');
-        return;
+        return showError('Fighter name must contain at least one letter!');
     }
     
     // Check for excessive special characters
     var specialCharCount = (name.match(/[^a-zA-Z0-9\s]/g) || []).length;
     if (specialCharCount > 3) {
-        alert('Fighter name can only contain up to 3 special characters!');
-        return;
+        return showError('Fighter name can only contain up to 3 special characters!');
     }
     
     // Check for spam patterns (repeating characters)
     if (/(.)\1{4,}/.test(name)) {
-        alert('Fighter name cannot contain more than 4 repeated characters in a row!');
-        return;
+        return showError('Fighter name cannot contain more than 4 repeated characters in a row!');
     }
     
     // Check name availability (existing functionality)
     checkNameAvailability(name)
         .then(function(isAvailable) {
             if (!isAvailable) {
-                alert('Fighter name "' + name + '" is already taken. Please choose a different name.');
-                return;
+                return showError('Fighter name "' + name + '" is already taken. Please choose a different name.');
             }
             
+            // All validations passed - create the fighter
             var fighter = {
                 name: name,
                 birthplace: 'Unknown',
@@ -2646,7 +2825,7 @@ function updateWeeklyLeaderboard() {
         })
         .catch(function(error) {
             console.error('Error checking name availability:', error);
-            alert('Unable to verify name availability. Please try again.');
+            showError('Unable to verify name availability. Please try again.');
         });
 }
         function validateFighterNameInput() {
@@ -2839,9 +3018,8 @@ if (fighter.specialAttack && fighter.specialAttack.name) {
     var strengthBonus = (fighter.stats.strength - 1) * 2;
 var toughnessBonus = fighter.stats.toughness >= 2 ? Math.min(50, (fighter.stats.toughness - 1) * 0.6) : 0; // 0.6% per point, max 50%
 var dodgeChance = Math.min(35, (fighter.stats.agility - 1) * 0.35); // 0.35% per point, max 35%
-var speedBonus = Math.min(100, (fighter.stats.speed - 1) * 1); // 1% per point, max 100% (double speed)
-var critChance = Math.min(30, (fighter.stats.luck - 1) * 0.3); // 0.3% per point, max 30%
-
+var speedBonus = Math.min(50, (fighter.stats.speed - 1) * 0.5); // Changed from 1%, max 50%
+var critChance = Math.min(40, (fighter.stats.luck - 1) * 0.4); // 0.4% per point, max 40%
     // Calculate base damage and defense
     var baseDamage = 10;
     var weaponDamage = 0;
@@ -2914,7 +3092,7 @@ var critChance = Math.min(30, (fighter.stats.luck - 1) * 0.3); // 0.3% per point
         '<div class="stat-row"><span>Toughness <span style="color: #888; font-size: 0.8em;">(-' + toughnessBonus.toFixed(1) + '% damage taken)</span>:</span> <span>' + fighter.stats.toughness + '</span></div>' +
         '<div class="stat-row"><span>Agility <span style="color: #888; font-size: 0.8em;">(' + dodgeChance.toFixed(1) + '% dodge chance)</span>:</span> <span>' + fighter.stats.agility + '</span></div>' +
         '<div class="stat-row"><span>Luck <span style="color: #888; font-size: 0.8em;">(' + critChance.toFixed(1) + '% crit chance)</span>:</span> <span>' + fighter.stats.luck + '</span></div>' +
-        '<div class="stat-row"><span>Speed <span style="color: #888; font-size: 0.8em;">(' + speedBonus + '% faster attacks)</span>:</span> <span>' + fighter.stats.speed + '</span></div>' +
+        '<div class="stat-row"><span>Speed <span style="color: #888; font-size: 0.8em;">(' + speedBonus.toFixed(1) + '% extra attack chance)</span>:</span> <span>' + fighter.stats.speed + '</span></div>' +        
         resetStatsDisplay +
         '<hr style="margin: 10px 0; border-color: rgba(255,255,255,0.2);">' +
         specialDisplay;
@@ -3513,22 +3691,23 @@ function fightWithoutRest() {
     
     // For guaranteed losses, don't allocate all stat points
     var extraPoints = guaranteedLoss 
-        ? Math.floor((opponentLevel - 1) * 0.5) // Only half the normal stats
+        ? Math.floor((opponentLevel - 1) * 0.5)
         : opponentLevel - 1;
     
-    // For high-level bots, ensure minimum stats but not too high
+    // For high-level bots, ensure minimum stats but more balanced
     if (opponentLevel >= 15 && !guaranteedLoss) {
-        stats.strength = Math.min(4, Math.floor(opponentLevel / 5)); // Reduced from /4
-        stats.toughness = Math.min(4, Math.floor(opponentLevel / 5)); // Reduced from /4
-        extraPoints -= (stats.strength - 1) + (stats.toughness - 1);
+        stats.strength = Math.min(4, Math.floor(opponentLevel / 5));
+        stats.toughness = Math.min(4, Math.floor(opponentLevel / 5));
+        stats.speed = Math.min(3, Math.floor(opponentLevel / 8)); // Give bots some speed
+        extraPoints -= (stats.strength - 1) + (stats.toughness - 1) + (stats.speed - 1);
     }
     
-    // Distribute remaining points
+    // Distribute remaining points with more balanced weights
     var statNames = ['strength', 'toughness', 'agility', 'luck', 'speed'];
     for (var i = 0; i < extraPoints; i++) {
         var weights = opponentLevel >= 15 
-            ? [25, 35, 15, 15, 10] // More toughness at high levels
-            : [30, 30, 15, 15, 10]; // Original distribution
+            ? [25, 30, 15, 15, 15] // Better speed allocation for high level bots
+            : [30, 25, 15, 15, 15]; // More balanced for all levels
             
         var totalWeight = weights.reduce(function(sum, w) { return sum + w; }, 0);
         var random = Math.random() * totalWeight;
@@ -3743,17 +3922,17 @@ function fightWithoutRest() {
     var painSounds = ['grunts in pain', 'winces', 'staggers', 'reels back', 'stumbles', 'cries out', 'gasps'];
     
     function fightTurn() {
-        if (turnCount > maxTurns || player.currentHp <= 0 || opponent.currentHp <= 0) {
-            endCombat(player, opponent);
-            return;
-        }
-        
-        // Calculate speed-based extra attacks
-        var playerSpeedChance = Math.min(100, (player.stats.speed - 1) * 1);
-        var playerExtraAttack = Math.random() * 100 < playerSpeedChance;
-        
-        var opponentSpeedChance = Math.min(100, (opponent.stats.speed - 1) * 1);
-        var opponentExtraAttack = Math.random() * 100 < opponentSpeedChance;
+    if (turnCount > maxTurns || player.currentHp <= 0 || opponent.currentHp <= 0) {
+        endCombat(player, opponent);
+        return;
+    }
+    
+    // NERFED: Calculate speed-based extra attacks (0.5% per point instead of 1%)
+    var playerSpeedChance = Math.min(50, (player.stats.speed - 1) * 0.5); // Changed from 1
+    var playerExtraAttack = Math.random() * 100 < playerSpeedChance;
+    
+    var opponentSpeedChance = Math.min(50, (opponent.stats.speed - 1) * 0.5); // Changed from 1
+    var opponentExtraAttack = Math.random() * 100 < opponentSpeedChance;
         
         // Player attacks first
         if (player.currentHp > 0) {
@@ -3838,7 +4017,7 @@ function fightWithoutRest() {
     }
     
     // Critical hit chance
-    var critChance = Math.min(30, (attacker.stats.luck - 1) * 0.3);
+    var critChance = Math.min(40, (attacker.stats.luck - 1) * 0.4); // 0.4% per point
     var isCrit = Math.random() * 100 < critChance;
     
     // Calculate defense
@@ -3864,16 +4043,16 @@ function fightWithoutRest() {
     var attackText = '';
     
     if (isCrit) {
-        damage = Math.floor(damage * 1.75);
-        damage = Math.max(2, damage);
-        // Enhanced critical hit display
-        var critTexts = [
-            '<span class="critical-hit-text">⚡ CRITICAL HIT! ⚡</span> ' + attackerNameText + ' finds a weak spot with their ' + weaponText + ' and deals <span class="damage">' + damage + '</span> massive damage!',
-            '<span class="critical-hit-text">💥 CRITICAL STRIKE! 💥</span> ' + attackerNameText + ' lands a devastating blow with their ' + weaponText + ' for <span class="damage">' + damage + '</span> damage!',
-            '<span class="critical-hit-text">🔥 CRITICAL! 🔥</span> ' + attackerNameText + '\'s ' + weaponText + ' strikes true for <span class="damage">' + damage + '</span> crushing damage!'
-        ];
-        attackText = critTexts[Math.floor(Math.random() * critTexts.length)];
-    } else {
+    damage = Math.floor(damage * 2.5); // Increased from 1.75x to 2.5x
+    damage = Math.max(2, damage);
+    // Enhanced critical hit display
+    var critTexts = [
+        '<span class="critical-hit-text">⚡ CRITICAL HIT! ⚡</span> ' + attackerNameText + ' finds a weak spot with their ' + weaponText + ' and deals <span class="damage">' + damage + '</span> massive damage!',
+        '<span class="critical-hit-text">💥 CRITICAL STRIKE! 💥</span> ' + attackerNameText + ' lands a devastating blow with their ' + weaponText + ' for <span class="damage">' + damage + '</span> damage!',
+        '<span class="critical-hit-text">🔥 CRITICAL! 🔥</span> ' + attackerNameText + '\'s ' + weaponText + ' strikes true for <span class="damage">' + damage + '</span> crushing damage!'
+    ];
+    attackText = critTexts[Math.floor(Math.random() * critTexts.length)];
+} else {
         // Regular attacks with highlighted names
         var bodyParts = ['chest', 'shoulder', 'arm', 'leg', 'ribs', 'side', 'back'];
         var painSounds = ['grunts in pain', 'winces', 'staggers', 'reels back', 'stumbles'];
@@ -4002,13 +4181,16 @@ if (attackerType === 'player') {
         player.exp += expGained;
         player.wins++;
         
-        // Track weekly wins
+        // IMPORTANT: Save immediately after incrementing wins to prevent loss
+        saveToSupabase();
+        
+        // Track weekly wins AFTER saving global wins
         incrementWeeklyWins(player);
-        // Track weekly wins in database
         saveWeeklyWin(player.name);
         
         addToFightLog('<span class="exp-gain">Gained ' + expGained + ' EXP!</span>');
         
+        // Rest of the victory code...
         // Rare diamond drop (15% chance)
         var diamondDropChance = 15;
         if (Math.random() * 100 < diamondDropChance) {
@@ -4018,26 +4200,24 @@ if (attackerType === 'player') {
         }
         
         // Equipment drop system (25% chance)
-var equipmentDropChance = 25;
-if (Math.random() * 100 < equipmentDropChance) {
-    var droppedItem = generateUpgradeItem(player, opponent.level);
-    if (droppedItem) {
-        // Show item level in drop message
-        var itemLevelText = droppedItem.itemLevel ? 'Lv.' + droppedItem.itemLevel + ' ' : '';
-        var rarityText = droppedItem.rarity ? ' (' + droppedItem.rarity.charAt(0).toUpperCase() + droppedItem.rarity.slice(1) + ')' : '';
-        
-        addToFightLog('<span class="' + droppedItem.rarity + '">🎁 ' + opponent.name + ' dropped: ' + 
-            itemLevelText + droppedItem.name + rarityText + 
-            ' (+' + droppedItem.power + ' ' + droppedItem.statType + ')!</span>');
-        
-        // Always equip since it's guaranteed to be better
-        player.equipment[droppedItem.slot] = droppedItem;
-        addToFightLog('<span class="exp-gain">🔧 ' + itemLevelText + droppedItem.name + rarityText + ' equipped automatically!</span>');
-    }
-}
+        var equipmentDropChance = 25;
+        if (Math.random() * 100 < equipmentDropChance) {
+            var droppedItem = generateUpgradeItem(player, opponent.level);
+            if (droppedItem) {
+                var itemLevelText = droppedItem.itemLevel ? 'Lv.' + droppedItem.itemLevel + ' ' : '';
+                var rarityText = droppedItem.rarity ? ' (' + droppedItem.rarity.charAt(0).toUpperCase() + droppedItem.rarity.slice(1) + ')' : '';
+                
+                addToFightLog('<span class="' + droppedItem.rarity + '">🎁 ' + opponent.name + ' dropped: ' + 
+                    itemLevelText + droppedItem.name + rarityText + 
+                    ' (+' + droppedItem.power + ' ' + droppedItem.statType + ')!</span>');
+                
+                player.equipment[droppedItem.slot] = droppedItem;
+                addToFightLog('<span class="exp-gain">🔧 ' + itemLevelText + droppedItem.name + rarityText + ' equipped automatically!</span>');
+            }
+        }
         
     } else {
-        // Increment loss streak on loss
+        // Loss handling...
         if (player.lossStreak === undefined) {
             player.lossStreak = 0;
         }
@@ -4051,13 +4231,12 @@ if (Math.random() * 100 < equipmentDropChance) {
         ];
         addToFightLog(defeatTexts[Math.floor(Math.random() * defeatTexts.length)]);
         
-        // Small consolation reward
         var consolationExp = Math.floor(5 + opponent.level);
         player.exp += consolationExp;
         addToFightLog('<span class="exp-gain">Gained ' + consolationExp + ' consolation EXP for the effort!</span>');
     }
     
-    // Check for level up (moved outside win/lose blocks so it always runs)
+    // Check for level up
     while (player.exp >= player.expRequired) {
         levelUp(player);
     }
@@ -4066,6 +4245,7 @@ if (Math.random() * 100 < equipmentDropChance) {
     player.hp = player.maxHp;
     player.currentHp = player.maxHp;
     
+    // Final save after all changes
     saveToSupabase();
     document.getElementById('endFightBtn').style.display = 'block';
 }
