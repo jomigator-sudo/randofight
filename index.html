@@ -184,7 +184,17 @@
 }
         .game-screen {
     display: none;
-    position: relative;
+}
+
+#fightScreen {
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow-y: auto;
+    background: linear-gradient(135deg, #1a1a2e, #16213e);
+    z-index: 100;
 }
 
 .game-screen * {
@@ -369,11 +379,12 @@
     </div>
 
     <div class="ui-buttons">
-        <span style="color: #ffd93d; font-size: 1.2em; margin-right: 20px;">Diamonds: <span id="titleDiamonds">0</span> 💎</span>
-        <div id="titlePaypalButton" class="paypal-button-container"></div>
-        <button class="btn btn-secondary" onclick="showGlobalLeaderboard()">Leaderboard</button>
-        <button class="btn" style="background: #ffd93d; color: #333;" onclick="showWeeklyTournament()">🏆 Weekly</button>
-    </div>
+    <span style="color: #ffd93d; font-size: 1.2em; margin-right: 20px;">Diamonds: <span id="titleDiamonds">0</span> 💎</span>
+    <div id="titlePaypalButton" class="paypal-button-container"></div>
+    <button class="btn btn-secondary" onclick="showGlobalLeaderboard()">Leaderboard</button>
+    <button class="btn" style="background: #ffd93d; color: #333;" onclick="showWeeklyTournament()">🏆 Weekly</button>
+    <button class="btn" style="background: #4ecdc4; color: #fff;" onclick="showDailyTasks()">📅 Daily</button>
+</div>
 
     <div class="fighter-slots">
         <div class="fighter-slot" id="slot-container-0" onclick="selectFighter(0)">
@@ -440,17 +451,15 @@
 
 <!-- Fighter Details Screen -->
 <div id="fighterScreen" class="game-screen">
-    <div style="padding: 10px;">
-        <button class="btn btn-secondary" onclick="showTitleScreen()">← Back</button>
-    </div>
+    <div style="display: flex; justify-content: center; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; align-items: center; padding: 0 10px;">
     
-    <div style="text-align: center; margin-bottom: 20px;">
-        <div style="display: flex; justify-content: center; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; align-items: center; padding: 0 10px;">
-            <button class="btn btn-fight" onclick="findFight()" id="fightBtn" style="padding: 10px 18px; font-size: 0.9em;">Find Fight</button>
-            <button class="btn btn-primary" onclick="fightWithoutRest()" id="fightWithoutRestBtn" style="padding: 10px 18px; font-size: 0.9em;">Fight 💎</button>
-            <button class="btn" style="background: #ffd93d; color: #333; padding: 10px 18px; font-size: 0.9em;" onclick="showWeeklyTournamentFromFighter()">🏆 Weekly Tournament</button>
-            <div id="fighterPaypalButton" class="paypal-button-container"></div>
-        </div>
+    <div style="display: flex; justify-content: center; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; align-items: center; padding: 0 10px;">
+    <button class="btn btn-fight" onclick="findFight()" id="fightBtn" style="padding: 10px 18px; font-size: 0.9em;">Find Fight</button>
+    <button class="btn btn-primary" onclick="fightWithoutRest()" id="fightWithoutRestBtn" style="padding: 10px 18px; font-size: 0.9em;">Fight 💎</button>
+    <button class="btn" style="background: #ffd93d; color: #333; padding: 10px 18px; font-size: 0.9em;" onclick="showWeeklyTournamentFromFighter()">🏆 Weekly Tournament</button>
+    <button class="btn" style="background: #4ecdc4; color: #fff; padding: 10px 18px; font-size: 0.9em;" onclick="showDailyTasks()">📅 Daily</button>
+    <div id="fighterPaypalButton" class="paypal-button-container"></div>
+</div>
     </div>
     <div class="fight-status">
         <div class="diamonds-display">Diamonds: <span id="diamonds">0</span> 💎</div>
@@ -468,14 +477,15 @@
         </div>
     </div>
     
-    <!-- Delete Fighter button at bottom -->
+       <!-- Delete Fighter button at bottom -->
     <div style="text-align: center; margin: 30px 0 20px 0;">
         <button class="btn" style="background: #e74c3c; color: #fff; padding: 12px 30px;" onclick="deleteFighter();">Delete Fighter</button>
     </div>
-</div>
-        <!-- Fight Screen -->
-        <div id="fightScreen" class="game-screen">
-            <div class="fighters-display">
+</div>  <!-- This closes fighterScreen -->
+
+<!-- Fight Screen -->
+<div id="fightScreen" class="game-screen">
+    <div class="fighters-display" style="margin-top: 40px;">
                 <div class="fighter-card">
                     <h3 id="player1Name">Your Fighter</h3>
                     <div class="hp-bar">
@@ -492,9 +502,9 @@
                 </div>
             </div>
             <div id="fightLog" class="fight-log"></div>
-            <div style="text-align: center;">
-                <button class="btn btn-secondary" onclick="endFight()" id="endFightBtn" style="display: none;">Continue</button>
-            </div>
+<div style="text-align: center; margin-top: 20px;">
+    <button class="btn btn-secondary" onclick="endFight()" id="endFightBtn" style="display: none; margin: 0 auto;">Continue</button>
+</div>
         </div>
         </div>
 
@@ -504,15 +514,26 @@
         var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBtc2J4dnFhdmtvYm94eWhxamNjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc2NjA2OTMsImV4cCI6MjA3MzIzNjY5M30.9-0-glSFo66fOktfR6ineO8J4Ra8RLVXwytCb9jca9U';
         
         var gameState = {
-            fighters: [],
-            currentFighter: null,
-            diamonds: 0,
-            fightCooldownEnd: 0,
-            unlockedSlots: [true, false, false, false, false],
-            currentSlotIndex: 0,
-            currentUser: null,
-            isLoggedIn: false
-        };
+    fighters: [],
+    currentFighter: null,
+    diamonds: 0,
+    fightCooldownEnd: 0,
+    unlockedSlots: [true, false, false, false, false],
+    currentSlotIndex: 0,
+    currentUser: null,
+    isLoggedIn: false,
+    dailyTasks: {
+        lastReset: new Date().toDateString(),
+        winsToday: 0,
+        claimed: {
+                win3: false,
+                win5: false,
+                win10: false,
+                win20: false,
+                win30: false
+        }
+    }
+};
 
         // Special attack word combinations for dynamic generation
 var specialAttackPrefixes = ['Dark', 'Light', 'Fire', 'Ice', 'Thunder', 'Shadow', 'Dragon', 'Phoenix', 'Storm', 'Chaos', 
@@ -599,42 +620,72 @@ function initPayPalButtons() {
 function handleBackButton() {
     // Determine which screen is currently active and go back appropriately
     if (document.getElementById('fighterScreen').style.display === 'block') {
+        document.getElementById('globalBackBtn').style.display = 'none'; // Hide back button
         showTitleScreen();
     } else if (document.getElementById('creationScreen').style.display === 'block') {
+        document.getElementById('globalBackBtn').style.display = 'none'; // Hide back button
         showTitleScreen();
     }
 }
 
 // Update showFighterScreen to show the back button
 function showFighterScreen() {
-    hideAll();
-    document.getElementById('fighterScreen').style.display = 'block';
-    document.getElementById('globalBackBtn').style.display = 'block'; // Show back button
-    updateFighterDisplay();
-    updateFightStatus();
-    
-    setTimeout(function() {
-        initPayPalButtons();
-    }, 100);
+    try {
+        console.log('showFighterScreen called');
+        console.log('Current fighter:', gameState.currentFighter);
+        
+        hideAll();
+        
+        // Explicitly show the back button for fighter screen
+        document.getElementById('globalBackBtn').style.display = 'block';
+        
+        var fighterScreen = document.getElementById('fighterScreen');
+        
+        updateFighterDisplay();
+        console.log('Fighter display updated');
+        
+        updateFightStatus();
+        console.log('Fight status updated');
+        
+        setTimeout(function() {
+            initPayPalButtons();
+        }, 100);
+    } catch (error) {
+        console.error('Error in showFighterScreen:', error);
+        alert('Error displaying character screen: ' + error.message + '\nCheck console for details');
+    }
 }
 
 // Update showTitleScreen to hide the back button
 function showTitleScreen() {
-    hideAll();
-    document.getElementById('globalBackBtn').style.display = 'none'; // Hide back button
-    document.getElementById('titleScreen').style.display = 'block';
-    updateFighterSlots();
-    updateDiamondDisplay();
-    
-    // Check for weekly prizes when entering title screen
-    setTimeout(function() {
-        checkWeeklyPrizes();
-    }, 1000);
-    
-    // Initialize PayPal buttons when title screen is shown
-    setTimeout(function() {
-        initPayPalButtons();
-    }, 100);
+    try {
+        hideAll();
+        document.getElementById('globalBackBtn').style.display = 'none'; // Hide back button
+        document.getElementById('titleScreen').style.display = 'block';
+        updateFighterSlots();
+        updateDiamondDisplay();
+        
+        // Check for weekly prizes when entering title screen
+        setTimeout(function() {
+            try {
+                checkWeeklyPrizes();
+            } catch (e) {
+                console.error('Error checking weekly prizes:', e);
+            }
+        }, 1000);
+        
+        // Initialize PayPal buttons when title screen is shown
+        setTimeout(function() {
+            try {
+                initPayPalButtons();
+            } catch (e) {
+                console.error('Error initializing PayPal buttons:', e);
+            }
+        }, 100);
+    } catch (error) {
+        console.error('Error in showTitleScreen:', error);
+        alert('Error loading character select screen. Check console for details.');
+    }
 }
 
 // Update showCreationScreen to show the back button
@@ -1557,6 +1608,7 @@ function setupLoginKeyHandlers() {
         diamonds: gameState.diamonds,
         fight_cooldown_end: gameState.fightCooldownEnd,
         unlocked_slots: gameState.unlockedSlots,
+        daily_tasks: gameState.dailyTasks,
         updated_at: new Date().toISOString()
     };
 
@@ -1729,13 +1781,18 @@ function retryCloudSave(previousRetryCount) {
             if (localTimestamp && localTimestamp > cloudTimestamp) {
                 console.log('Local data is newer, using local data and syncing to cloud');
                 loadGameData();
-                saveToSupabase(); // Sync the newer local data to cloud
+                saveToSupabase();
             } else {
                 console.log('Loading data from Supabase:', gameData);
                 gameState.fighters = gameData.fighters || [];
                 gameState.diamonds = gameData.diamonds || 0;
                 gameState.fightCooldownEnd = gameData.fight_cooldown_end || 0;
                 gameState.unlockedSlots = gameData.unlocked_slots || [true, false, false, false, false];
+                
+                // Load daily tasks if they exist, otherwise initialize
+                if (gameData.daily_tasks) {
+                    gameState.dailyTasks = gameData.daily_tasks;
+                }
                 
                 // Also save to localStorage
                 saveGameData();
@@ -1746,12 +1803,19 @@ function retryCloudSave(previousRetryCount) {
             loadGameData();
         }
         
+        // Initialize daily tasks (will create if missing or reset if new day)
+        initializeDailyTasks();
+        
         updateFighterSlots();
         updateDiamondDisplay();
     })
     .catch(function(e) {
         console.error('Load failed, using localStorage fallback:', e);
         loadGameData();
+        
+        // Initialize daily tasks
+        initializeDailyTasks();
+        
         updateFighterSlots();
         updateDiamondDisplay();
     });
@@ -1792,11 +1856,14 @@ function retryCloudSave(previousRetryCount) {
         }
 
         function hideAll() {
-            var screens = document.querySelectorAll('.game-screen');
-            for (var i = 0; i < screens.length; i++) {
-                screens[i].style.display = 'none';
-            }
+    var screens = ['loginScreen', 'titleScreen', 'creationScreen', 'fighterScreen', 'fightScreen'];
+    for (var i = 0; i < screens.length; i++) {
+        var screen = document.getElementById(screens[i]);
+        if (screen) {
+            screen.style.display = 'none';
         }
+    }
+}
 
         function updateDiamondDisplay() {
             var titleDiamonds = document.getElementById('titleDiamonds');
@@ -1833,16 +1900,35 @@ function retryCloudSave(previousRetryCount) {
         }
 
         function showFighterScreen() {
-    hideAll();
-    document.getElementById('fighterScreen').style.display = 'block';
-    updateFighterDisplay();
-    updateFightStatus();
-    // Removed updateWeeklyLeaderboard() from here
-    
-    // Initialize PayPal buttons when fighter screen is shown
-    setTimeout(function() {
-        initPayPalButtons();
-    }, 100);
+    try {
+        console.log('showFighterScreen called');
+        console.log('Current fighter:', gameState.currentFighter);
+        
+        hideAll(); // This should hide titleScreen
+        
+        var fighterScreen = document.getElementById('fighterScreen');
+        if (!fighterScreen) {
+            throw new Error('Fighter screen element not found');
+        }
+        
+        fighterScreen.style.display = 'block';
+        console.log('Fighter screen display set to block');
+        
+        document.getElementById('globalBackBtn').style.display = 'block'; // Show back button
+        
+        updateFighterDisplay();
+        console.log('Fighter display updated');
+        
+        updateFightStatus();
+        console.log('Fight status updated');
+        
+        setTimeout(function() {
+            initPayPalButtons();
+        }, 100);
+    } catch (error) {
+        console.error('Error in showFighterScreen:', error);
+        alert('Error displaying character screen: ' + error.message + '\nCheck console for details');
+    }
 }
 function showGlobalLeaderboard() {
     var existingModal = document.getElementById('globalLeaderboardModal');
@@ -1868,7 +1954,137 @@ function showGlobalLeaderboard() {
     updateLeaderboard();
     document.getElementById(originalId).id = tempId;
 }
+function initializeDailyTasks() {
+    if (!gameState.dailyTasks) {
+        gameState.dailyTasks = {
+            lastReset: new Date().toDateString(),
+            winsToday: 0,
+            claimed: {
+                win3: false,
+                win5: false,
+                win10: false,
+                win20: false,
+                win30: false
+            }
+        };
+    }
+    
+    // Check if it's a new day and reset tasks
+    var today = new Date().toDateString();
+    if (gameState.dailyTasks.lastReset !== today) {
+        gameState.dailyTasks = {
+            lastReset: today,
+            winsToday: 0,
+            claimed: {
+                win3: false,
+                win5: false,
+                win10: false,
+                win20: false,
+                win30: false
+            }
+        };
+        saveToSupabase();
+    }
+}
 
+function incrementDailyWins() {
+    initializeDailyTasks();
+    gameState.dailyTasks.winsToday++;
+    saveToSupabase();
+}
+
+function showDailyTasks() {
+    initializeDailyTasks();
+    
+    var tasks = [
+    { id: 'win3', wins: 3, reward: 2, label: 'Win 3 Fights' },
+    { id: 'win5', wins: 5, reward: 6, label: 'Win 5 Fights' },
+    { id: 'win10', wins: 10, reward: 10, label: 'Win 10 Fights' },
+    { id: 'win20', wins: 20, reward: 20, label: 'Win 20 Fights' },
+    { id: 'win30', wins: 30, reward: 30, label: 'Win 30 Fights' }
+];
+    
+    var existingModal = document.getElementById('dailyTasksModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    var tasksHTML = '';
+    for (var i = 0; i < tasks.length; i++) {
+        var task = tasks[i];
+        var completed = gameState.dailyTasks.winsToday >= task.wins;
+        var claimed = gameState.dailyTasks.claimed[task.id];
+        
+        var progressText = Math.min(gameState.dailyTasks.winsToday, task.wins) + '/' + task.wins;
+        var statusColor = completed ? '#6bcf7f' : '#888';
+        
+        tasksHTML += 
+            '<div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between;">' +
+                '<div style="flex: 1;">' +
+                    '<div style="font-size: 1.1em; font-weight: bold; color: #fff; margin-bottom: 5px;">' + task.label + '</div>' +
+                    '<div style="color: ' + statusColor + '; font-size: 0.9em;">' + progressText + ' • Reward: ' + task.reward + ' 💎</div>' +
+                '</div>';
+        
+        if (claimed) {
+            tasksHTML += '<div style="background: #6bcf7f; color: #fff; padding: 8px 16px; border-radius: 6px; font-weight: bold;">✓ CLAIMED</div>';
+        } else if (completed) {
+            tasksHTML += '<button class="btn btn-primary" onclick="claimDailyTask(\'' + task.id + '\', ' + task.reward + ')" style="padding: 8px 20px;">CLAIM</button>';
+        } else {
+            tasksHTML += '<div style="color: #888; padding: 8px 16px;">Incomplete</div>';
+        }
+        
+        tasksHTML += '</div>';
+    }
+    
+    // Calculate time until reset
+    var now = new Date();
+    var tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0);
+    var msUntilReset = tomorrow - now;
+    var hoursUntilReset = Math.floor(msUntilReset / (1000 * 60 * 60));
+    var minutesUntilReset = Math.floor((msUntilReset % (1000 * 60 * 60)) / (1000 * 60));
+    
+    var modalHTML = 
+        '<div id="dailyTasksModal" style="display: block; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; overflow-y: auto;">' +
+            '<div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #1a1a2e; padding: 30px; border-radius: 10px; border: 2px solid #4ecdc4; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto;">' +
+                '<h2 style="color: #4ecdc4; text-align: center; margin-bottom: 10px;">📅 Daily Tasks</h2>' +
+                '<p style="text-align: center; color: #888; font-size: 0.9em; margin-bottom: 20px;">Resets in ' + hoursUntilReset + 'h ' + minutesUntilReset + 'm</p>' +
+                '<div style="margin-bottom: 20px;">' + tasksHTML + '</div>' +
+                '<button class="btn btn-secondary" onclick="closeDailyTasks()" style="width: 100%;">Close</button>' +
+            '</div>' +
+        '</div>';
+    
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+}
+
+function claimDailyTask(taskId, reward) {
+    initializeDailyTasks();
+    
+    // Mark as claimed
+    gameState.dailyTasks.claimed[taskId] = true;
+    
+    // Award diamonds
+    gameState.diamonds += reward;
+    
+    // Save and update
+    saveToSupabase();
+    updateDiamondDisplay();
+    
+    // Close and reopen modal to refresh
+    closeDailyTasks();
+    showDailyTasks();
+    
+    // Show success message
+    showLootMessage('✓ Claimed ' + reward + ' 💎 from daily task!');
+}
+
+function closeDailyTasks() {
+    var modal = document.getElementById('dailyTasksModal');
+    if (modal) {
+        modal.remove();
+    }
+}
 function closeGlobalLeaderboard() {
     var modal = document.getElementById('globalLeaderboardModal');
     if (modal) modal.remove();
@@ -2791,25 +3007,25 @@ function updateWeeklyLeaderboard() {
             
             // All validations passed - create the fighter
             var fighter = {
-                name: name,
-                birthplace: 'Unknown',
-                level: 1,
-                exp: 0,
-                expRequired: 100,
-                hp: 100,
-                maxHp: 100,
-                wins: 0,
-                lossStreak: 0,
-                totalFights: 0,
-                recentOpponents: [],
-                stats: { strength: 1, toughness: 1, agility: 1, luck: 1, speed: 1 },
-                unallocatedStats: 0,
-                specialAttack: null,
-                equipment: {
-                    weapon: { name: 'Wooden Stick', type: 'weapon', slot: 'weapon', power: 5, level: 1, itemLevel: 1, rarity: 'common', statType: 'Damage' },
-                    offHand: null, helmet: null, shoulders: null, gloves: null, chest: null, greaves: null, boots: null
-                }
-            };
+    name: name,
+    birthplace: 'Unknown',
+    level: 1,
+    exp: 0,
+    expRequired: 100,
+    hp: 100,
+    maxHp: 100,
+    wins: 0,
+    lossStreak: 0,
+    totalFights: 0,
+    recentOpponents: [],
+    stats: { strength: 1, toughness: 1, agility: 1, luck: 1, speed: 1 },
+    unallocatedStats: 0,
+    specialAttack: null,
+    equipment: {
+        weapon: { name: 'Wooden Stick', type: 'weapon', slot: 'weapon', power: 5, level: 1, itemLevel: 1, rarity: 'common', statType: 'Damage' },
+        offHand: null, helmet: null, shoulders: null, gloves: null, chest: null, greaves: null, boots: null
+    }
+};
 
             gameState.fighters[gameState.currentSlotIndex] = fighter;
             
@@ -2847,16 +3063,26 @@ function updateWeeklyLeaderboard() {
 }
 
         function selectFighter(slotIndex) {
-            if (!gameState.unlockedSlots[slotIndex]) return;
-            
-            if (gameState.fighters[slotIndex]) {
-                gameState.currentFighter = gameState.fighters[slotIndex];
-                showFighterScreen();
-            } else {
-                gameState.currentSlotIndex = slotIndex;
-                showCreationScreen();
-            }
-        }
+    console.log('selectFighter called with index:', slotIndex);
+    console.log('Unlocked slots:', gameState.unlockedSlots);
+    console.log('Fighter at slot:', gameState.fighters[slotIndex]);
+    
+    if (!gameState.unlockedSlots[slotIndex]) {
+        console.log('Slot not unlocked');
+        return;
+    }
+    
+    if (gameState.fighters[slotIndex]) {
+        gameState.currentFighter = gameState.fighters[slotIndex];
+        console.log('Current fighter set to:', gameState.currentFighter.name);
+        console.log('About to call showFighterScreen');
+        showFighterScreen();
+    } else {
+        gameState.currentSlotIndex = slotIndex;
+        console.log('No fighter in slot, showing creation screen');
+        showCreationScreen();
+    }
+}
 
         function purchaseSlot(slotIndex) {
             if (gameState.unlockedSlots[slotIndex]) {
@@ -3017,6 +3243,7 @@ if (fighter.specialAttack && fighter.specialAttack.name) {
 
     var strengthBonus = (fighter.stats.strength - 1) * 2;
 var toughnessBonus = fighter.stats.toughness >= 2 ? Math.min(50, (fighter.stats.toughness - 1) * 0.6) : 0; // 0.6% per point, max 50%
+var toughnessChance = Math.min(40, (fighter.stats.toughness - 1) * 0.4); // 0.4% per point, max 40%
 var dodgeChance = Math.min(35, (fighter.stats.agility - 1) * 0.35); // 0.35% per point, max 35%
 var speedBonus = Math.min(50, (fighter.stats.speed - 1) * 0.5); // Changed from 1%, max 50%
 var critChance = Math.min(50, (fighter.stats.luck - 1) * 0.5); // 0.5% per point, max 50%
@@ -3089,7 +3316,7 @@ var critChance = Math.min(50, (fighter.stats.luck - 1) * 0.5); // 0.5% per point
         '<hr style="margin: 10px 0; border-color: rgba(255,255,255,0.2);">' +
         unallocatedDisplay +
         '<div class="stat-row"><span>Strength <span style="color: #888; font-size: 0.8em;">(+' + strengthBonus + ' damage)</span>:</span> <span>' + fighter.stats.strength + '</span></div>' +
-        '<div class="stat-row"><span>Toughness <span style="color: #888; font-size: 0.8em;">(-' + toughnessBonus.toFixed(1) + '% damage taken)</span>:</span> <span>' + fighter.stats.toughness + '</span></div>' +
+        '<div class="stat-row"><span>Toughness <span style="color: #888; font-size: 0.8em;">(' + toughnessChance.toFixed(1) + '% chance for 50% damage reduction)</span>:</span> <span>' + fighter.stats.toughness + '</span></div>' +
         '<div class="stat-row"><span>Agility <span style="color: #888; font-size: 0.8em;">(' + dodgeChance.toFixed(1) + '% dodge chance)</span>:</span> <span>' + fighter.stats.agility + '</span></div>' +
         '<div class="stat-row"><span>Luck <span style="color: #888; font-size: 0.8em;">(' + critChance.toFixed(1) + '% crit chance)</span>:</span> <span>' + fighter.stats.luck + '</span></div>' +
         '<div class="stat-row"><span>Speed <span style="color: #888; font-size: 0.8em;">(' + speedBonus.toFixed(1) + '% extra attack chance)</span>:</span> <span>' + fighter.stats.speed + '</span></div>' +        
@@ -3634,51 +3861,51 @@ function fightWithoutRest() {
         }
     };
     
-    // Add defensive equipment for higher level bots - SLIGHTLY REDUCED
-    if (opponentLevel >= 5) {
-        var armorPower = Math.floor(5 + opponentLevel * 1.2); // Reduced from 1.5
-        
-        if (opponentLevel >= 10) {
-            botEquipment.chest = {
-                name: 'Battle Armor',
-                rarity: opponentLevel >= 15 ? 'rare' : 'uncommon',
-                power: armorPower,
-                statType: 'Defense'
-            };
-        }
-        
-        if (opponentLevel >= 15) {
-            botEquipment.helmet = {
-                name: 'War Helm',
-                rarity: opponentLevel >= 20 ? 'epic' : 'rare',
-                power: Math.floor(armorPower * 0.7),
-                statType: 'Defense'
-            };
-            
-            botEquipment.offhand = {
-                name: 'Tower Shield',
-                rarity: opponentLevel >= 20 ? 'epic' : 'rare',
-                power: Math.floor(armorPower * 0.8),
-                statType: 'Defense'
-            };
-        }
-        
-        if (opponentLevel >= 20) {
-            botEquipment.boots = {
-                name: 'Plated Boots',
-                rarity: 'epic',
-                power: Math.floor(armorPower * 0.5),
-                statType: 'Defense'
-            };
-            
-            botEquipment.gloves = {
-                name: 'Gauntlets',
-                rarity: 'epic',
-                power: Math.floor(armorPower * 0.5),
-                statType: 'Defense'
-            };
-        }
+    // Add defensive equipment for higher level bots - HEAVILY REDUCED
+if (opponentLevel >= 5) {
+    var armorPower = Math.floor(3 + opponentLevel * 0.4); // Reduced from 1.2
+    
+    if (opponentLevel >= 10) {
+        botEquipment.chest = {
+            name: 'Battle Armor',
+            rarity: opponentLevel >= 15 ? 'rare' : 'uncommon',
+            power: armorPower,
+            statType: 'Defense'
+        };
     }
+    
+    if (opponentLevel >= 15) {
+        botEquipment.helmet = {
+            name: 'War Helm',
+            rarity: opponentLevel >= 20 ? 'epic' : 'rare',
+            power: Math.floor(armorPower * 0.7),
+            statType: 'Defense'
+        };
+        
+        botEquipment.offhand = {
+            name: 'Tower Shield',
+            rarity: opponentLevel >= 20 ? 'epic' : 'rare',
+            power: Math.floor(armorPower * 0.8),
+            statType: 'Defense'
+        };
+    }
+    
+    if (opponentLevel >= 20) {
+        botEquipment.boots = {
+            name: 'Plated Boots',
+            rarity: 'epic',
+            power: Math.floor(armorPower * 0.5),
+            statType: 'Defense'
+        };
+        
+        botEquipment.gloves = {
+            name: 'Gauntlets',
+            rarity: 'epic',
+            power: Math.floor(armorPower * 0.5),
+            statType: 'Defense'
+        };
+    }
+}
     
     // Stats distribution
     var stats = {
@@ -4017,10 +4244,10 @@ function fightWithoutRest() {
     }
     
     // Critical hit chance
-    var critChance = Math.min(50, (attacker.stats.luck - 1) * 0.5); // 0.5% per point
+    var critChance = Math.min(50, (attacker.stats.luck - 1) * 0.5);
     var isCrit = Math.random() * 100 < critChance;
     
-    // Calculate defense
+    // Calculate defense from armor only
     var totalDefense = 0;
     if (defender.equipment) {
         var equipmentSlotNames = ['offhand', 'helmet', 'shoulders', 'gloves', 'chest', 'greaves', 'boots'];
@@ -4033,26 +4260,34 @@ function fightWithoutRest() {
         }
     }
     
-    var toughnessReduction = Math.min(50, (defender.stats.toughness - 1) * 0.6);
-    var defenseReduction = Math.min(40, totalDefense * 0.5);
-    var totalReduction = Math.min(60, toughnessReduction + defenseReduction);
+    // Defense reduction from armor (capped at 60%)
+    var defenseReduction = Math.min(60, totalDefense * 0.5);
+    damage = Math.floor(damage * (1 - defenseReduction / 100));
     
-    damage = Math.floor(damage * (1 - totalReduction / 100));
+    // Toughness check - chance to reduce damage by 50%
+    var toughnessChance = Math.min(40, (defender.stats.toughness - 1) * 0.4); // 0.4% per point, max 40%
+    var toughnessProc = Math.random() * 100 < toughnessChance;
+    
+    if (toughnessProc) {
+        damage = Math.floor(damage * 0.5); // 50% damage reduction when it procs
+        addToFightLog('<span style="color: #4ecdc4; font-weight: bold;">🛡️ TOUGH! ' + defenderNameText + ' braces for impact and reduces damage by 50%!</span>');
+    }
+    
     damage = Math.max(1, damage);
     
     var attackText = '';
     
     if (isCrit) {
-    damage = Math.floor(damage * 2.0); // Decreased from 2.5x to 2.0x
-    damage = Math.max(2, damage);
-    // Enhanced critical hit display
-    var critTexts = [
-        '<span class="critical-hit-text">⚡ CRITICAL HIT! ⚡</span> ' + attackerNameText + ' finds a weak spot with their ' + weaponText + ' and deals <span class="damage">' + damage + '</span> massive damage!',
-        '<span class="critical-hit-text">💥 CRITICAL STRIKE! 💥</span> ' + attackerNameText + ' lands a devastating blow with their ' + weaponText + ' for <span class="damage">' + damage + '</span> damage!',
-        '<span class="critical-hit-text">🔥 CRITICAL! 🔥</span> ' + attackerNameText + '\'s ' + weaponText + ' strikes true for <span class="damage">' + damage + '</span> crushing damage!'
-    ];
-    attackText = critTexts[Math.floor(Math.random() * critTexts.length)];
-} else {
+        damage = Math.floor(damage * 2.0);
+        damage = Math.max(2, damage);
+        // Enhanced critical hit display
+        var critTexts = [
+            '<span class="critical-hit-text">⚡ CRITICAL HIT! ⚡</span> ' + attackerNameText + ' finds a weak spot with their ' + weaponText + ' and deals <span class="damage">' + damage + '</span> massive damage!',
+            '<span class="critical-hit-text">💥 CRITICAL STRIKE! 💥</span> ' + attackerNameText + ' lands a devastating blow with their ' + weaponText + ' for <span class="damage">' + damage + '</span> damage!',
+            '<span class="critical-hit-text">🔥 CRITICAL! 🔥</span> ' + attackerNameText + '\'s ' + weaponText + ' strikes true for <span class="damage">' + damage + '</span> crushing damage!'
+        ];
+        attackText = critTexts[Math.floor(Math.random() * critTexts.length)];
+    } else {
         // Regular attacks with highlighted names
         var bodyParts = ['chest', 'shoulder', 'arm', 'leg', 'ribs', 'side', 'back'];
         var painSounds = ['grunts in pain', 'winces', 'staggers', 'reels back', 'stumbles'];
@@ -4077,15 +4312,15 @@ function fightWithoutRest() {
     }
     
     // Update HP bars
-if (attackerType === 'player') {
-    var opponentHpPercent = (defender.currentHp / defender.maxHp) * 100;
-    document.getElementById('player2HP').style.width = opponentHpPercent + '%';
-    document.getElementById('player2HPText').textContent = Math.floor(defender.currentHp) + '/' + defender.maxHp;
-} else {
-    var playerHpPercent = (defender.currentHp / defender.maxHp) * 100;
-    document.getElementById('player1HP').style.width = playerHpPercent + '%';
-    document.getElementById('player1HPText').textContent = Math.floor(defender.currentHp) + '/' + defender.maxHp;
-}
+    if (attackerType === 'player') {
+        var opponentHpPercent = (defender.currentHp / defender.maxHp) * 100;
+        document.getElementById('player2HP').style.width = opponentHpPercent + '%';
+        document.getElementById('player2HPText').textContent = Math.floor(defender.currentHp) + '/' + defender.maxHp;
+    } else {
+        var playerHpPercent = (defender.currentHp / defender.maxHp) * 100;
+        document.getElementById('player1HP').style.width = playerHpPercent + '%';
+        document.getElementById('player1HPText').textContent = Math.floor(defender.currentHp) + '/' + defender.maxHp;
+    }
 }
             
             function performSpecialAttack(attacker, defender, attackerType) {
@@ -4101,7 +4336,7 @@ if (attackerType === 'player') {
     
     specialDamage = Math.floor(specialDamage * (0.85 + Math.random() * 0.3));
     
-    // Calculate defense
+    // Calculate defense from armor
     var totalDefense = 0;
     if (defender.equipment) {
         var equipmentSlotNames = ['offhand', 'helmet', 'shoulders', 'gloves', 'chest', 'greaves', 'boots'];
@@ -4114,11 +4349,20 @@ if (attackerType === 'player') {
         }
     }
     
-    var toughnessReduction = Math.min(30, (defender.stats.toughness - 1) * 3);
-    var defenseReduction = Math.min(40, totalDefense * 0.5);
-    var totalReduction = Math.min(60, toughnessReduction + defenseReduction);
+    var defenseReduction = Math.min(60, totalDefense * 0.5);
+    specialDamage = Math.floor(specialDamage * (1 - defenseReduction / 100));
     
-    specialDamage = Math.floor(specialDamage * (1 - totalReduction / 100));
+    // Toughness check
+    var toughnessChance = Math.min(40, (defender.stats.toughness - 1) * 0.4);
+    var toughnessProc = Math.random() * 100 < toughnessChance;
+    
+    if (toughnessProc) {
+        specialDamage = Math.floor(specialDamage * 0.5);
+        var defenderNameClass = attackerType === 'player' ? 'opponent-name' : 'player-name';
+        var defenderNameText = '<span class="' + defenderNameClass + '">' + defender.name + '</span>';
+        addToFightLog('<span style="color: #4ecdc4; font-weight: bold;">🛡️ TOUGH! ' + defenderNameText + ' braces for impact and reduces damage by 50%!</span>');
+    }
+    
     specialDamage = Math.max(3, specialDamage);
     
     defender.currentHp = Math.max(0, defender.currentHp - specialDamage);
@@ -4144,15 +4388,15 @@ if (attackerType === 'player') {
     addToFightLog(specialTexts[Math.floor(Math.random() * specialTexts.length)]);
     
     // Update HP bars
-if (attackerType === 'player') {
-    var opponentHpPercent = (defender.currentHp / defender.maxHp) * 100;
-    document.getElementById('player2HP').style.width = opponentHpPercent + '%';
-    document.getElementById('player2HPText').textContent = Math.floor(defender.currentHp) + '/' + defender.maxHp;
-} else {
-    var playerHpPercent = (defender.currentHp / defender.maxHp) * 100;
-    document.getElementById('player1HP').style.width = playerHpPercent + '%';
-    document.getElementById('player1HPText').textContent = Math.floor(defender.currentHp) + '/' + defender.maxHp;
-}
+    if (attackerType === 'player') {
+        var opponentHpPercent = (defender.currentHp / defender.maxHp) * 100;
+        document.getElementById('player2HP').style.width = opponentHpPercent + '%';
+        document.getElementById('player2HPText').textContent = Math.floor(defender.currentHp) + '/' + defender.maxHp;
+    } else {
+        var playerHpPercent = (defender.currentHp / defender.maxHp) * 100;
+        document.getElementById('player1HP').style.width = playerHpPercent + '%';
+        document.getElementById('player1HPText').textContent = Math.floor(defender.currentHp) + '/' + defender.maxHp;
+    }
 }
             
             function endCombat(player, opponent) {
@@ -4180,6 +4424,9 @@ if (attackerType === 'player') {
         var expGained = Math.floor(20 + opponent.level * 5);
         player.exp += expGained;
         player.wins++;
+
+        // Track daily wins for tasks (account-wide now)
+        incrementDailyWins();
         
         // IMPORTANT: Save immediately after incrementing wins to prevent loss
         saveToSupabase();
@@ -4365,45 +4612,45 @@ if (Math.random() * 100 < equipmentDropChance) {
     var itemLevel = Math.max(1, opponentLevel + Math.floor(Math.random() * 5) - 2);
     
     // Determine rarity based on upgrade/downgrade
-    var rarities;
-    
-    if (isUpgrade) {
-        // Upgrade: same or higher rarity
-        if (itemLevel <= 5) {
-            rarities = [
-                { name: 'common', weight: 50, powerPerLevel: 2, prefix: '' },
-                { name: 'uncommon', weight: 35, powerPerLevel: 2.5, prefix: 'Fine ' },
-                { name: 'rare', weight: 15, powerPerLevel: 3, prefix: 'Superior ' }
-            ];
-        } else if (itemLevel <= 15) {
-            rarities = [
-                { name: 'uncommon', weight: 40, powerPerLevel: 2.5, prefix: 'Fine ' },
-                { name: 'rare', weight: 35, powerPerLevel: 3, prefix: 'Superior ' },
-                { name: 'epic', weight: 20, powerPerLevel: 3.5, prefix: 'Masterwork ' },
-                { name: 'legendary', weight: 5, powerPerLevel: 4, prefix: 'Legendary ' }
-            ];
-        } else if (itemLevel <= 30) {
-            rarities = [
-                { name: 'rare', weight: 35, powerPerLevel: 3, prefix: 'Superior ' },
-                { name: 'epic', weight: 35, powerPerLevel: 3.5, prefix: 'Masterwork ' },
-                { name: 'legendary', weight: 25, powerPerLevel: 4, prefix: 'Legendary ' },
-                { name: 'mythic', weight: 5, powerPerLevel: 5, prefix: 'Mythic ' }
-            ];
-        } else {
-            rarities = [
-                { name: 'epic', weight: 30, powerPerLevel: 3.5, prefix: 'Masterwork ' },
-                { name: 'legendary', weight: 45, powerPerLevel: 4, prefix: 'Legendary ' },
-                { name: 'mythic', weight: 25, powerPerLevel: 5, prefix: 'Mythic ' }
-            ];
-        }
-    } else {
-        // Weak item: lower rarity
+var rarities;
+
+if (isUpgrade) {
+    // Upgrade: same or higher rarity
+    if (itemLevel <= 5) {
         rarities = [
-            { name: 'common', weight: 60, powerPerLevel: 1.5, prefix: '' },
-            { name: 'uncommon', weight: 30, powerPerLevel: 2, prefix: 'Fine ' },
-            { name: 'rare', weight: 10, powerPerLevel: 2.5, prefix: 'Superior ' }
+            { name: 'common', weight: 50, powerPerLevel: 2, prefix: '' },
+            { name: 'uncommon', weight: 35, powerPerLevel: 2.5, prefix: 'Fine ' },
+            { name: 'rare', weight: 15, powerPerLevel: 3, prefix: 'Superior ' }
+        ];
+    } else if (itemLevel <= 15) {
+        rarities = [
+            { name: 'uncommon', weight: 40, powerPerLevel: 2.5, prefix: 'Fine ' },
+            { name: 'rare', weight: 35, powerPerLevel: 3, prefix: 'Superior ' },
+            { name: 'epic', weight: 20, powerPerLevel: 3.5, prefix: 'Masterwork ' },
+            { name: 'legendary', weight: 5, powerPerLevel: 4, prefix: 'Legendary ' }
+        ];
+    } else if (itemLevel <= 30) {
+        rarities = [
+            { name: 'rare', weight: 35, powerPerLevel: 3, prefix: 'Superior ' },
+            { name: 'epic', weight: 35, powerPerLevel: 3.5, prefix: 'Masterwork ' },
+            { name: 'legendary', weight: 25, powerPerLevel: 4, prefix: 'Legendary ' },
+            { name: 'mythic', weight: 5, powerPerLevel: 5, prefix: 'Mythic ' }
+        ];
+    } else {
+        rarities = [
+            { name: 'epic', weight: 30, powerPerLevel: 3.5, prefix: 'Masterwork ' },
+            { name: 'legendary', weight: 45, powerPerLevel: 4, prefix: 'Legendary ' },
+            { name: 'mythic', weight: 25, powerPerLevel: 5, prefix: 'Mythic ' }
         ];
     }
+} else {
+    // Weak item: lower rarity
+    rarities = [
+        { name: 'common', weight: 60, powerPerLevel: 1.5, prefix: '' },
+        { name: 'uncommon', weight: 30, powerPerLevel: 2, prefix: 'Fine ' },
+        { name: 'rare', weight: 10, powerPerLevel: 2.5, prefix: 'Superior ' }
+    ];
+}
     
     // Select rarity
     var totalWeight = rarities.reduce(function(sum, rarity) { return sum + rarity.weight; }, 0);
@@ -4419,20 +4666,18 @@ if (Math.random() * 100 < equipmentDropChance) {
         }
     }
     
-    // Calculate power
-    var basePower = Math.floor(itemLevel * selectedRarity.powerPerLevel);
-    
-    // For upgrades, ensure better than current
-    if (isUpgrade && currentItem) {
-        basePower = Math.max(currentItem.power + 1, basePower);
-    }
-    
-    // For weak items, ensure worse or equal to current
-    if (!isUpgrade && currentItem) {
-        basePower = Math.min(currentItem.power, basePower);
-    }
-    
-    var finalPower = Math.max(1, basePower);
+    // Calculate power based on item level and rarity
+var basePower = Math.floor(itemLevel * selectedRarity.powerPerLevel);
+
+// NERF: Reduce defense item power by 40% to balance armor
+if (itemType.statType === 'Defense') {
+    basePower = Math.floor(basePower * 0.6); // 40% reduction for defense items
+}
+
+var finalPower = Math.max(1, basePower);
+
+// Adjust item level based on upgrade/downgrade
+// No need to adjust power directly - the item level already determines if it's an upgrade
     
     // Generate name (reuse naming logic from generateUpgradeItem)
     var baseName = itemType.names[Math.floor(Math.random() * itemType.names.length)];
