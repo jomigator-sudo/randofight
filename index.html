@@ -254,6 +254,27 @@
     </style>
 </head>
 <body>
+        <!-- Loading Screen -->
+    <div id="loadingScreen" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #1a1a2e, #16213e); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+        <img src="https://randofight.com/randofight%20header.png" alt="Randofight" style="max-width: 400px; width: 80%; margin-bottom: 30px;">
+        
+        <div style="width: 200px; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden; margin-bottom: 20px;">
+            <div id="loadingBar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #4ecdc4, #6c5ce7); border-radius: 3px; transition: width 0.3s ease;"></div>
+        </div>
+        
+        <div id="loadingText" style="color: #4ecdc4; font-size: 1.2em; font-family: 'Courier New', monospace;">Loading game data...</div>
+        
+        <div style="margin-top: 40px;">
+            <div class="spinner" style="width: 40px; height: 40px; border: 4px solid rgba(78, 205, 196, 0.3); border-top-color: #4ecdc4; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+        </div>
+    </div>
+    
+    <style>
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+    
         <img src="https://randofight.com/ninja%20roo%20logo%20white.png" 
      alt="Ninja Roo Games" 
      class="company-logo">
@@ -535,19 +556,44 @@
     currentSlotIndex: 0,
     currentUser: null,
     isLoggedIn: false,
+    currentBoss: null, // Add this line
     dailyTasks: {
         lastReset: new Date().toDateString(),
         winsToday: 0,
         claimed: {
-                win3: false,
-                win5: false,
-                win10: false,
-                win20: false,
-                win30: false
+            win3: false,
+            win5: false,
+            win10: false,
+            win20: false,
+            win30: false
         }
     }
 };
+// Add these functions near the top of your script section, after the gameState declaration
 
+function updateLoadingProgress(percent, message) {
+    var loadingBar = document.getElementById('loadingBar');
+    var loadingText = document.getElementById('loadingText');
+    
+    if (loadingBar) {
+        loadingBar.style.width = percent + '%';
+    }
+    if (loadingText && message) {
+        loadingText.textContent = message;
+    }
+}
+
+function hideLoadingScreen() {
+    var loadingScreen = document.getElementById('loadingScreen');
+    if (loadingScreen) {
+        loadingScreen.style.opacity = '0';
+        loadingScreen.style.transition = 'opacity 0.5s ease';
+        setTimeout(function() {
+            loadingScreen.style.display = 'none';
+        }, 500);
+    }
+}
+        
         // Special attack word combinations for dynamic generation
 var specialAttackPrefixes = ['Dark', 'Light', 'Fire', 'Ice', 'Thunder', 'Shadow', 'Dragon', 'Phoenix', 'Storm', 'Chaos', 
     'Divine', 'Mystic', 'Crimson', 'Azure', 'Golden', 'Silver', 'Void', 'Cosmic', 'Lunar', 'Solar', 
@@ -710,97 +756,110 @@ function showCreationScreen() {
 }
         // Show Diamond Shop Modal
         function showDiamondShop() {
-            var existingModal = document.getElementById('diamondShopModal');
-            if (existingModal) {
-                existingModal.remove();
-            }
-            
-            var modalHTML = 
-                '<div id="diamondShopModal" style="display: block; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; overflow-y: auto;">' +
-                    '<div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #1a1a2e; padding: 20px; border-radius: 10px; border: 2px solid #4ecdc4; max-width: 450px; text-align: center; width: 90%; max-height: 90vh; overflow-y: auto;">' +
-                        '<h3 style="color: #4ecdc4; margin-bottom: 20px;">Diamond Shop</h3>' +
-                        '<p style="margin-bottom: 20px; color: #ccc; font-size: 0.9em;">Purchase diamonds to unlock slots, fight without cooldown, and more!</p>' +
-                        '<div style="display: grid; gap: 15px; margin-bottom: 20px;">' +
-                            '<div class="diamond-pack" style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px; border: 1px solid #666;">' +
-                                '<div style="color: #ffd93d; font-size: 1.1em; font-weight: bold; margin-bottom: 5px;">20 💎</div>' +
-                                '<div style="color: #4ecdc4; font-size: 1.2em; margin-bottom: 10px;">$0.99</div>' +
-                                '<div id="pack1Button" style="min-height: 40px;"></div>' +
-                            '</div>' +
-                            '<div class="diamond-pack" style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px; border: 1px solid #666;">' +
-                                '<div style="color: #ffd93d; font-size: 1.1em; font-weight: bold; margin-bottom: 5px;">45 💎</div>' +
-                                '<div style="color: #4ecdc4; font-size: 1.2em; margin-bottom: 10px;">$1.99</div>' +
-                                '<div id="pack2Button" style="min-height: 40px;"></div>' +
-                            '</div>' +
-                            '<div class="diamond-pack" style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px; border: 1px solid #666; border-color: #ff6b6b;">' +
-                                '<div style="color: #ff6b6b; font-size: 0.8em; margin-bottom: 5px;">POPULAR</div>' +
-                                '<div style="color: #ffd93d; font-size: 1.1em; font-weight: bold; margin-bottom: 5px;">125 💎</div>' +
-                                '<div style="color: #4ecdc4; font-size: 1.2em; margin-bottom: 10px;">$4.99</div>' +
-                                '<div id="pack3Button" style="min-height: 40px;"></div>' +
-                            '</div>' +
-                            '<div class="diamond-pack" style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px; border: 1px solid #666; border-color: #ffd700;">' +
-                                '<div style="color: #ffd700; font-size: 0.8em; margin-bottom: 5px;">BEST VALUE</div>' +
-                                '<div style="color: #ffd93d; font-size: 1.1em; font-weight: bold; margin-bottom: 5px;">300 💎</div>' +
-                                '<div style="color: #4ecdc4; font-size: 1.2em; margin-bottom: 10px;">$9.99</div>' +
-                                '<div id="pack4Button" style="min-height: 40px;"></div>' +
-                            '</div>' +
+    var existingModal = document.getElementById('diamondShopModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    var modalHTML = 
+        '<div id="diamondShopModal" style="display: block; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; overflow-y: auto;">' +
+            '<div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #1a1a2e; padding: 20px; border-radius: 10px; border: 2px solid #4ecdc4; max-width: 450px; text-align: center; width: 90%; max-height: 90vh; overflow-y: auto;">' +
+                '<h3 style="color: #4ecdc4; margin-bottom: 20px;">Diamond Shop</h3>' +
+                '<p style="margin-bottom: 20px; color: #ccc; font-size: 0.9em;">Purchase diamonds to unlock slots, fight without cooldown, and more!</p>' +
+                '<div style="display: grid; gap: 15px; margin-bottom: 20px;">' +
+                    '<div class="diamond-pack" style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px; border: 1px solid #666;">' +
+                        '<div style="color: #ffd93d; font-size: 1.1em; font-weight: bold; margin-bottom: 5px;">50 💎</div>' +
+                        '<div style="color: #4ecdc4; font-size: 1.2em; margin-bottom: 10px;">$0.99</div>' +
+                        '<div style="background: rgba(255,255,255,0.95); padding: 10px; border-radius: 6px; min-height: 40px;">' +
+                            '<div id="pack1Button"></div>' +
                         '</div>' +
-                        '<button class="btn btn-secondary" onclick="closeDiamondShop()" style="width: 100%; padding: 8px;">Close</button>' +
                     '</div>' +
-                '</div>';
-            
-            document.body.insertAdjacentHTML('beforeend', modalHTML);
-            
-            // Initialize PayPal buttons for each pack
-            if (typeof paypal !== 'undefined') {
-                initShopPayPalButton('pack1Button', '0.99', 20);
-                initShopPayPalButton('pack2Button', '1.99', 45);
-                initShopPayPalButton('pack3Button', '4.99', 125);
-                initShopPayPalButton('pack4Button', '9.99', 300);
-            } else {
-                // Fallback if PayPal not available
-                document.getElementById('pack1Button').innerHTML = '<button class="btn btn-primary" onclick="fallbackPurchase(20)" style="width: 100%; font-size: 0.9em;">Purchase (Test)</button>';
-                document.getElementById('pack2Button').innerHTML = '<button class="btn btn-primary" onclick="fallbackPurchase(45)" style="width: 100%; font-size: 0.9em;">Purchase (Test)</button>';
-                document.getElementById('pack3Button').innerHTML = '<button class="btn btn-primary" onclick="fallbackPurchase(125)" style="width: 100%; font-size: 0.9em;">Purchase (Test)</button>';
-                document.getElementById('pack4Button').innerHTML = '<button class="btn btn-primary" onclick="fallbackPurchase(300)" style="width: 100%; font-size: 0.9em;">Purchase (Test)</button>';
-            }
-        }
+                    '<div class="diamond-pack" style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px; border: 1px solid #666;">' +
+                        '<div style="color: #ffd93d; font-size: 1.1em; font-weight: bold; margin-bottom: 5px;">120 💎</div>' +
+                        '<div style="color: #4ecdc4; font-size: 1.2em; margin-bottom: 10px;">$1.99</div>' +
+                        '<div style="background: rgba(255,255,255,0.95); padding: 10px; border-radius: 6px; min-height: 40px;">' +
+                            '<div id="pack2Button"></div>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="diamond-pack" style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px; border: 1px solid #666; border-color: #ff6b6b;">' +
+                        '<div style="color: #ff6b6b; font-size: 0.8em; margin-bottom: 5px;">POPULAR</div>' +
+                        '<div style="color: #ffd93d; font-size: 1.1em; font-weight: bold; margin-bottom: 5px;">350 💎</div>' +
+                        '<div style="color: #4ecdc4; font-size: 1.2em; margin-bottom: 10px;">$4.99</div>' +
+                        '<div style="background: rgba(255,255,255,0.95); padding: 10px; border-radius: 6px; min-height: 40px;">' +
+                            '<div id="pack3Button"></div>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="diamond-pack" style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px; border: 1px solid #666; border-color: #ffd700;">' +
+                        '<div style="color: #ffd700; font-size: 0.8em; margin-bottom: 5px;">BEST VALUE</div>' +
+                        '<div style="color: #ffd93d; font-size: 1.1em; font-weight: bold; margin-bottom: 5px;">800 💎</div>' +
+                        '<div style="color: #4ecdc4; font-size: 1.2em; margin-bottom: 10px;">$9.99</div>' +
+                        '<div style="background: rgba(255,255,255,0.95); padding: 10px; border-radius: 6px; min-height: 40px;">' +
+                            '<div id="pack4Button"></div>' +
+                        '</div>' +
+                    '</div>' +
+                '</div>' +
+                '<button class="btn btn-secondary" onclick="closeDiamondShop()" style="width: 100%; padding: 8px;">Close</button>' +
+            '</div>' +
+        '</div>';
+    
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    // Initialize PayPal buttons for each pack
+    if (typeof paypal !== 'undefined') {
+        initShopPayPalButton('pack1Button', '0.99', 50);
+        initShopPayPalButton('pack2Button', '1.99', 120);
+        initShopPayPalButton('pack3Button', '4.99', 350);
+        initShopPayPalButton('pack4Button', '9.99', 800);
+    } else {
+        // Fallback if PayPal not available
+        document.getElementById('pack1Button').innerHTML = '<button class="btn btn-primary" onclick="fallbackPurchase(50)" style="width: 100%; font-size: 0.9em;">Purchase (Test)</button>';
+        document.getElementById('pack2Button').innerHTML = '<button class="btn btn-primary" onclick="fallbackPurchase(120)" style="width: 100%; font-size: 0.9em;">Purchase (Test)</button>';
+        document.getElementById('pack3Button').innerHTML = '<button class="btn btn-primary" onclick="fallbackPurchase(350)" style="width: 100%; font-size: 0.9em;">Purchase (Test)</button>';
+        document.getElementById('pack4Button').innerHTML = '<button class="btn btn-primary" onclick="fallbackPurchase(800)" style="width: 100%; font-size: 0.9em;">Purchase (Test)</button>';
+    }
+}
 
         function initShopPayPalButton(containerId, price, diamonds) {
-            paypal.Buttons({
-                createOrder: function(data, actions) {
-                    return actions.order.create({
-                        purchase_units: [{
-                            amount: {
-                                value: price,
-                                currency_code: 'USD'
-                            },
-                            description: diamonds + ' Diamonds for RandoFight'
-                        }]
-                    });
-                },
-                onApprove: function(data, actions) {
-                    return actions.order.capture().then(function(details) {
-                        console.log('PayPal payment successful:', details);
-                        closeDiamondShop();
-                        processSuccessfulPayment(details, diamonds);
-                    });
-                },
-                onError: function(err) {
-                    console.error('PayPal payment error:', err);
-                    alert('Payment failed. Please try again.');
-                },
-                onCancel: function(data) {
-                    console.log('PayPal payment cancelled:', data);
-                },
-                style: {
-                    color: 'blue',
-                    shape: 'pill',
-                    label: 'pay',
-                    height: 35,
-                    tagline: false
+    paypal.Buttons({
+        createOrder: function(data, actions) {
+            return actions.order.create({
+                purchase_units: [{
+                    amount: {
+                        value: price,
+                        currency_code: 'USD'
+                    },
+                    description: diamonds + ' Diamonds for RandoFight'
+                }],
+                application_context: {
+                    brand_name: 'RandoFight',
+                    locale: 'en-US',
+                    shipping_preference: 'NO_SHIPPING'
                 }
-            }).render('#' + containerId);
+            });
+        },
+        onApprove: function(data, actions) {
+            return actions.order.capture().then(function(details) {
+                console.log('PayPal payment successful:', details);
+                closeDiamondShop();
+                processSuccessfulPayment(details, diamonds);
+            });
+        },
+        onError: function(err) {
+            console.error('PayPal payment error:', err);
+            alert('Payment failed. Please try again.');
+        },
+        onCancel: function(data) {
+            console.log('PayPal payment cancelled:', data);
+        },
+        style: {
+            color: 'blue',
+            shape: 'pill',
+            label: 'pay',
+            height: 35,
+            tagline: false
         }
+    }).render('#' + containerId);
+}
 
         function closeDiamondShop() {
             var modal = document.getElementById('diamondShopModal');
@@ -944,69 +1003,80 @@ function showCreationScreen() {
 }
 
         function loginUser() {
-            var email = document.getElementById('loginEmail').value.trim();
-            var password = document.getElementById('loginPassword').value;
-            
-            if (!email || !password) {
-                alert('Please enter both email and password.');
-                return;
+    var email = document.getElementById('loginEmail').value.trim();
+    var password = document.getElementById('loginPassword').value;
+    
+    if (!email || !password) {
+        alert('Please enter both email and password.');
+        return;
+    }
+    
+    console.log('Attempting login for:', email);
+    
+    // Show loading screen
+    document.getElementById('loadingScreen').style.display = 'flex';
+    document.getElementById('loadingScreen').style.opacity = '1';
+    updateLoadingProgress(20, 'Authenticating...');
+    
+    hashPassword(password).then(function(hashedPassword) {
+        updateLoadingProgress(40, 'Verifying credentials...');
+        return fetch(SUPABASE_URL + '/rest/v1/users?email=eq.' + encodeURIComponent(email), {
+            method: 'GET',
+            headers: {
+                'apikey': SUPABASE_ANON_KEY,
+                'Authorization': 'Bearer ' + SUPABASE_ANON_KEY
             }
-            
-            console.log('Attempting login for:', email);
-            
-            hashPassword(password).then(function(hashedPassword) {
-                return fetch(SUPABASE_URL + '/rest/v1/users?email=eq.' + encodeURIComponent(email), {
-                    method: 'GET',
-                    headers: {
-                        'apikey': SUPABASE_ANON_KEY,
-                        'Authorization': 'Bearer ' + SUPABASE_ANON_KEY
-                    }
-                });
-            })
-            .then(function(response) {
-                if (!response.ok) {
-                    throw new Error('Login failed: ' + response.status);
-                }
-                return response.json();
-            })
-            .then(function(users) {
-                if (users.length === 0) {
-                    alert('No account found with this email. Please create an account first.');
-                    return;
-                }
-                
-                var user = users[0];
-                
-                return hashPassword(password).then(function(hashedPassword) {
-                    if (user.password_hash === hashedPassword) {
-                        gameState.currentUser = user;
-                        gameState.isLoggedIn = true;
-                        
-                        localStorage.setItem('randofight_session', JSON.stringify({
-                            user_id: user.user_id,
-                            email: user.email,
-                            username: user.username,
-                            loginTime: Date.now()
-                        }));
-                        
-                        document.getElementById('usernameDisplay').textContent = user.username;
-                        console.log('Login successful for:', user.username);
-                        
-                        document.getElementById('loginEmail').value = '';
-                        document.getElementById('loginPassword').value = '';
-                        
-                        loadFromSupabase();
-                        showTitleScreen();
-                    } else {
-                        alert('Incorrect password. Please try again.');
-                    }
-                });
-            })
-            .catch(function(error) {
-                console.error('Login error:', error);
-                alert('Login failed. Please check your connection and try again.');
-            });
+        });
+    })
+    .then(function(response) {
+        if (!response.ok) {
+            throw new Error('Login failed: ' + response.status);
         }
+        return response.json();
+    })
+    .then(function(users) {
+        if (users.length === 0) {
+            hideLoadingScreen();
+            alert('No account found with this email. Please create an account first.');
+            return;
+        }
+        
+        var user = users[0];
+        
+        return hashPassword(password).then(function(hashedPassword) {
+            if (user.password_hash === hashedPassword) {
+                updateLoadingProgress(60, 'Login successful!');
+                gameState.currentUser = user;
+                gameState.isLoggedIn = true;
+                
+                localStorage.setItem('randofight_session', JSON.stringify({
+                    user_id: user.user_id,
+                    email: user.email,
+                    username: user.username,
+                    loginTime: Date.now()
+                }));
+                
+                document.getElementById('usernameDisplay').textContent = user.username;
+                console.log('Login successful for:', user.username);
+                
+                document.getElementById('loginEmail').value = '';
+                document.getElementById('loginPassword').value = '';
+                
+                updateLoadingProgress(80, 'Loading your data...');
+                loadFromSupabase();
+                showTitleScreen();
+            } else {
+                hideLoadingScreen();
+                alert('Incorrect password. Please try again.');
+            }
+        });
+    })
+    .catch(function(error) {
+        console.error('Login error:', error);
+        hideLoadingScreen();
+        alert('Login failed. Please check your connection and try again.');
+    });
+}
 
         function logoutUser() {
             // Check if user is a guest
@@ -1621,12 +1691,12 @@ function setupLoginKeyHandlers() {
         diamonds: gameState.diamonds,
         fight_cooldown_end: gameState.fightCooldownEnd,
         unlocked_slots: gameState.unlockedSlots,
-        daily_tasks: gameState.dailyTasks,
+        daily_tasks: gameState.dailyTasks, // Make sure this is included
         updated_at: new Date().toISOString()
     };
 
     console.log('Saving to Supabase via REST API (attempt ' + (retryCount + 1) + '):', gameData);
-
+            
     // First, check if record exists
     fetch(SUPABASE_URL + '/rest/v1/game_data?user_id=eq.' + encodeURIComponent(userId), {
         method: 'GET',
@@ -1751,14 +1821,19 @@ function retryCloudSave(previousRetryCount) {
 }
         function loadFromSupabase() {
     if (gameState.currentUser && gameState.currentUser.isGuest) {
+        updateLoadingProgress(50, 'Loading local data...');
         loadGameData();
         updateFighterSlots();
         updateDiamondDisplay();
+        updateLoadingProgress(100, 'Ready!');
+        setTimeout(hideLoadingScreen, 300);
         return;
     }
     
     var userId = getUserId();
     console.log('Loading from Supabase via REST API for user:', userId);
+    
+    updateLoadingProgress(20, 'Connecting to server...');
     
     // First check localStorage for comparison
     var localData = localStorage.getItem('randofight_gamedata');
@@ -1769,6 +1844,8 @@ function retryCloudSave(previousRetryCount) {
             localTimestamp = parsed.lastSaved || 0;
         } catch(e) {}
     }
+    
+    updateLoadingProgress(40, 'Fetching your data...');
     
     fetch(SUPABASE_URL + '/rest/v1/game_data?user_id=eq.' + encodeURIComponent(userId), {
         method: 'GET',
@@ -1781,58 +1858,57 @@ function retryCloudSave(previousRetryCount) {
         if (!response.ok) {
             throw new Error('Load failed: ' + response.status);
         }
+        updateLoadingProgress(60, 'Processing data...');
         return response.json();
     })
     .then(function(data) {
-        console.log('Raw Supabase response:', data);
+    console.log('Raw Supabase response:', data);
+    
+    updateLoadingProgress(80, 'Loading characters...');
+    
+    if (data && data.length > 0) {
+        var gameData = data[0];
+        var cloudTimestamp = new Date(gameData.updated_at).getTime();
         
-        if (data && data.length > 0) {
-            var gameData = data[0];
-            var cloudTimestamp = new Date(gameData.updated_at).getTime();
-            
-            // Compare timestamps - use newer data
-            if (localTimestamp && localTimestamp > cloudTimestamp) {
-                console.log('Local data is newer, using local data and syncing to cloud');
-                loadGameData();
-                saveToSupabase();
-            } else {
-                console.log('Loading data from Supabase:', gameData);
-                gameState.fighters = gameData.fighters || [];
-                gameState.diamonds = gameData.diamonds || 0;
-                gameState.fightCooldownEnd = gameData.fight_cooldown_end || 0;
-                gameState.unlockedSlots = gameData.unlocked_slots || [true, false, false, false, false];
-                
-                // Load daily tasks if they exist, otherwise initialize
-                if (gameData.daily_tasks) {
-                    gameState.dailyTasks = gameData.daily_tasks;
-                }
-                
-                // Also save to localStorage
-                saveGameData();
-                console.log('Game loaded from cloud successfully!');
-            }
-        } else {
-            console.log('No saved data found in Supabase - checking localStorage');
+        // Compare timestamps - use newer data
+        if (localTimestamp && localTimestamp > cloudTimestamp) {
+            console.log('Local data is newer, using local data and syncing to cloud');
             loadGameData();
+            saveToSupabase();
+        } else {
+            console.log('Loading data from Supabase:', gameData);
+            gameState.fighters = gameData.fighters || [];
+            gameState.diamonds = gameData.diamonds || 0;
+            gameState.fightCooldownEnd = gameData.fight_cooldown_end || 0;
+            gameState.unlockedSlots = gameData.unlocked_slots || [true, false, false, false, false];
+            
+            // Load daily tasks - IMPORTANT: Load before initializing
+            if (gameData.daily_tasks) {
+                gameState.dailyTasks = gameData.daily_tasks;
+                console.log('Loaded daily tasks from cloud:', gameState.dailyTasks);
+            }
+            
+            // Also save to localStorage
+            saveGameData();
+            console.log('Game loaded from cloud successfully!');
         }
-        
-        // Initialize daily tasks (will create if missing or reset if new day)
-        initializeDailyTasks();
-        
-        updateFighterSlots();
-        updateDiamondDisplay();
-    })
-    .catch(function(e) {
-        console.error('Load failed, using localStorage fallback:', e);
+    } else {
+        console.log('No saved data found in Supabase - checking localStorage');
         loadGameData();
-        
-        // Initialize daily tasks
-        initializeDailyTasks();
-        
-        updateFighterSlots();
-        updateDiamondDisplay();
-    });
-}
+    }
+    
+    // Initialize daily tasks (will create if missing or reset if new day)
+    initializeDailyTasks();
+    
+    updateLoadingProgress(100, 'Ready!');
+    
+    updateFighterSlots();
+    updateDiamondDisplay();
+    
+    // Hide loading screen after a brief delay
+    setTimeout(hideLoadingScreen, 300);
+})
+        }
 
         function saveGameData() {
     try {
@@ -1841,6 +1917,7 @@ function retryCloudSave(previousRetryCount) {
             diamonds: gameState.diamonds,
             fightCooldownEnd: gameState.fightCooldownEnd,
             unlockedSlots: gameState.unlockedSlots,
+            dailyTasks: gameState.dailyTasks, // Add this line
             lastSaved: Date.now()
         });
         localStorage.setItem('randofight_gamedata', gameData);
@@ -1851,22 +1928,33 @@ function retryCloudSave(previousRetryCount) {
 }
 
         function loadGameData() {
-            try {
-                var gameData = localStorage.getItem('randofight_gamedata');
-                if (gameData) {
-                    var data = JSON.parse(gameData);
-                    gameState.fighters = data.fighters || [];
-                    gameState.diamonds = data.diamonds || 0;
-                    gameState.fightCooldownEnd = data.fightCooldownEnd || 0;
-                    gameState.unlockedSlots = data.unlockedSlots || [true, false, false, false, false];
-                    console.log('Game loaded from localStorage');
-                } else {
-                    console.log('No saved data found');
+    try {
+        var gameData = localStorage.getItem('randofight_gamedata');
+        if (gameData) {
+            var data = JSON.parse(gameData);
+            gameState.fighters = data.fighters || [];
+            gameState.diamonds = data.diamonds || 0;
+            gameState.fightCooldownEnd = data.fightCooldownEnd || 0;
+            gameState.unlockedSlots = data.unlockedSlots || [true, false, false, false, false];
+            gameState.dailyTasks = data.dailyTasks || {
+                lastReset: new Date().toDateString(),
+                winsToday: 0,
+                claimed: {
+                    win3: false,
+                    win5: false,
+                    win10: false,
+                    win20: false,
+                    win30: false
                 }
-            } catch (e) {
-                console.log('Load failed:', e);
-            }
+            };
+            console.log('Game loaded from localStorage');
+        } else {
+            console.log('No saved data found');
         }
+    } catch (e) {
+        console.log('Load failed:', e);
+    }
+}
 
         function hideAll() {
     var screens = ['loginScreen', 'titleScreen', 'creationScreen', 'fighterScreen', 'fightScreen'];
@@ -1968,9 +2056,12 @@ function showGlobalLeaderboard() {
     document.getElementById(originalId).id = tempId;
 }
 function initializeDailyTasks() {
+    var today = new Date().toDateString();
+    
+    // If dailyTasks doesn't exist, initialize it
     if (!gameState.dailyTasks) {
         gameState.dailyTasks = {
-            lastReset: new Date().toDateString(),
+            lastReset: today,
             winsToday: 0,
             claimed: {
                 win3: false,
@@ -1980,11 +2071,14 @@ function initializeDailyTasks() {
                 win30: false
             }
         };
+        console.log('Initialized daily tasks for the first time');
+        saveToSupabase();
+        return;
     }
     
-    // Check if it's a new day and reset tasks
-    var today = new Date().toDateString();
+    // Check if it's a new day - only reset if the date has changed
     if (gameState.dailyTasks.lastReset !== today) {
+        console.log('New day detected! Resetting daily tasks. Old date:', gameState.dailyTasks.lastReset, 'New date:', today);
         gameState.dailyTasks = {
             lastReset: today,
             winsToday: 0,
@@ -1997,13 +2091,16 @@ function initializeDailyTasks() {
             }
         };
         saveToSupabase();
+    } else {
+        console.log('Same day - keeping daily tasks progress:', gameState.dailyTasks);
     }
 }
-
 function incrementDailyWins() {
     initializeDailyTasks();
     gameState.dailyTasks.winsToday++;
+    console.log('Incremented daily wins to:', gameState.dailyTasks.winsToday);
     saveToSupabase();
+    saveGameData(); // Also save locally for immediate backup
 }
 
 function showDailyTasks() {
@@ -3737,6 +3834,18 @@ function confirmResetStats(diamondCost, allocatedPoints) {
         gameState.currentFighter.totalFights = 0;
     }
     
+    // 10% chance for boss battle (only at level 30+)
+    var bossChance = 10;
+    var canFightBoss = gameState.currentFighter.level >= 30 && gameState.currentFighter.totalFights >= 6;
+    var isBossFight = canFightBoss && Math.random() * 100 < bossChance;
+    
+    if (isBossFight) {
+        console.log('Boss battle encountered!');
+        var bossOpponent = generateBossOpponent(gameState.currentFighter.level);
+        startFight(gameState.currentFighter, bossOpponent, false);
+        return;
+    }
+    
     // First 6 fights are guaranteed wins
     var guaranteedWin = gameState.currentFighter.totalFights < 6;
     
@@ -3744,7 +3853,7 @@ function confirmResetStats(diamondCost, allocatedPoints) {
     if (!guaranteedWin && gameState.currentFighter.lossStreak >= 4) {
         console.log('Player has lost', gameState.currentFighter.lossStreak, 'times in a row - providing easier opponent');
         var easierLevel = Math.max(1, gameState.currentFighter.level - 3);
-        var botOpponent = generateOpponent(easierLevel, true); // Pass true for guaranteed loss
+        var botOpponent = generateOpponent(easierLevel, true);
         startFight(gameState.currentFighter, botOpponent, false);
         return;
     }
@@ -3793,6 +3902,18 @@ function fightWithoutRest() {
         gameState.currentFighter.totalFights = 0;
     }
     
+    // 10% chance for boss battle (only at level 30+)
+    var bossChance = 10;
+    var canFightBoss = gameState.currentFighter.level >= 30 && gameState.currentFighter.totalFights >= 6;
+    var isBossFight = canFightBoss && Math.random() * 100 < bossChance;
+    
+    if (isBossFight) {
+        console.log('Boss battle encountered! (Diamond fight)');
+        var bossOpponent = generateBossOpponent(gameState.currentFighter.level);
+        startFight(gameState.currentFighter, bossOpponent, true);
+        return;
+    }
+    
     // First 6 fights are guaranteed wins
     var guaranteedWin = gameState.currentFighter.totalFights < 6;
     
@@ -3800,7 +3921,7 @@ function fightWithoutRest() {
     if (!guaranteedWin && gameState.currentFighter.lossStreak >= 4) {
         console.log('Player has lost', gameState.currentFighter.lossStreak, 'times in a row - providing easier opponent');
         var easierLevel = Math.max(1, gameState.currentFighter.level - 3);
-        var botOpponent = generateOpponent(easierLevel, true); // Pass true for guaranteed loss
+        var botOpponent = generateOpponent(easierLevel, true);
         botOpponent.stats.strength = Math.max(1, botOpponent.stats.strength - 1);
         botOpponent.stats.toughness = Math.max(1, botOpponent.stats.toughness - 1);
         startFight(gameState.currentFighter, botOpponent, true);
@@ -3811,24 +3932,24 @@ function fightWithoutRest() {
     if (guaranteedWin || gameState.currentFighter.level <= 5) {
         console.log(guaranteedWin ? 'Guaranteed win diamond fight #' + (gameState.currentFighter.totalFights + 1) : 'Level ' + gameState.currentFighter.level + ' diamond fight - matching with bot opponent');
         var botOpponent = generateOpponent(gameState.currentFighter.level, guaranteedWin);
-        startFight(gameState.currentFighter, botOpponent, true); // true = diamond fight
+        startFight(gameState.currentFighter, botOpponent, true);
     } else {
         console.log('Looking for opponents for diamond fight...');
         findOpponentFromSupabase(gameState.currentFighter.level)
             .then(function(opponent) {
                 if (opponent) {
                     console.log('Found real player opponent for diamond fight:', opponent.name);
-                    startFight(gameState.currentFighter, opponent, true); // true = diamond fight
+                    startFight(gameState.currentFighter, opponent, true);
                 } else {
                     console.log('No real players found for diamond fight, generating AI opponent');
                     var botOpponent = generateOpponent(gameState.currentFighter.level, false);
-                    startFight(gameState.currentFighter, botOpponent, true); // true = diamond fight
+                    startFight(gameState.currentFighter, botOpponent, true);
                 }
             })
             .catch(function(error) {
                 console.error('Diamond fight matchmaking error, using AI opponent:', error);
                 var botOpponent = generateOpponent(gameState.currentFighter.level, false);
-                startFight(gameState.currentFighter, botOpponent, true); // true = diamond fight
+                startFight(gameState.currentFighter, botOpponent, true);
             });
     }
 }
@@ -4173,7 +4294,174 @@ if (opponentLevel >= 5) {
         isBot: true
     };
 }
+function generateBossOpponent(playerLevel) {
+    var bossNames = [
+        'The Devourer', 'Shadow Tyrant', 'Crimson Overlord', 'Void Emperor', 'Death Incarnate',
+        'The Annihilator', 'Chaos Lord', 'Eternal Destroyer', 'Nightmare King', 'Blood Sovereign',
+        'The Executioner', 'Doom Bringer', 'Infernal Warlord', 'Dark Harbinger', 'The Ravager',
+        'Oblivion Master', 'Cataclysm', 'The Reaper', 'Abyssal Fiend', 'Vengeance Incarnate',
+        'The Tormentor', 'Plague Bearer', 'Skull Crusher', 'Soul Eater', 'The Desecrator',
+        'Crimson Nightmare', 'Shadow Demon', 'The Butcher', 'Wraith Lord', 'The Defiler',
+        'Bone Collector', 'The Malevolent', 'Dread King', 'The Corruptor', 'Venom Master',
+        'The Slaughterer', 'Dark Apostle', 'The Impaler', 'Hellfire Lord', 'The Damned One',
+        'Chaos Incarnate', 'The Scourge', 'Death\'s Shadow', 'The Tyrant', 'Abyss Walker',
+        'The Fallen One', 'Nightmare Spawn', 'The Dreadlord', 'Obsidian Fiend', 'The Conqueror'
+    ];
+    
+    // Boss-specific legendary weapons that match their theme
+    var bossWeapons = [
+        { name: 'Fang of the Devourer', type: 'Dagger' },
+        { name: 'Scepter of Shadows', type: 'Staff' },
+        { name: 'Crimson Reaver', type: 'Axe' },
+        { name: 'Void Scythe', type: 'Scythe' },
+        { name: 'Death\'s Embrace', type: 'Scythe' },
+        { name: 'The Annihilator', type: 'Hammer' },
+        { name: 'Chaos Blade', type: 'Sword' },
+        { name: 'Eternity\'s End', type: 'Greatsword' },
+        { name: 'Nightmare\'s Edge', type: 'Sword' },
+        { name: 'Bloodletter', type: 'Axe' },
+        { name: 'The Executioner\'s Axe', type: 'Axe' },
+        { name: 'Doomhammer', type: 'Hammer' },
+        { name: 'Inferno\'s Wrath', type: 'Mace' },
+        { name: 'Harbinger of Ruin', type: 'Halberd' },
+        { name: 'The Ravager\'s Claw', type: 'Gauntlet' },
+        { name: 'Staff of Oblivion', type: 'Staff' },
+        { name: 'World Ender', type: 'Greatsword' },
+        { name: 'Soul Reaper', type: 'Scythe' },
+        { name: 'Abyssal Maw', type: 'Mace' },
+        { name: 'Vengeance Incarnate', type: 'Sword' },
+        { name: 'The Tormentor\'s Flail', type: 'Flail' },
+        { name: 'Pestilence', type: 'Staff' },
+        { name: 'Skull Splitter', type: 'Hammer' },
+        { name: 'Soul Drinker', type: 'Blade' },
+        { name: 'Profane Edge', type: 'Sword' },
+        { name: 'Crimson Terror', type: 'Axe' },
+        { name: 'Shadow Fang', type: 'Dagger' },
+        { name: 'Butcher\'s Cleaver', type: 'Cleaver' },
+        { name: 'Wraith Caller', type: 'Staff' },
+        { name: 'Corruption', type: 'Sword' },
+        { name: 'Bone Crusher', type: 'Mace' },
+        { name: 'Malice', type: 'Blade' },
+        { name: 'Crown of Dread', type: 'Scepter' },
+        { name: 'The Corruptor\'s Touch', type: 'Staff' },
+        { name: 'Venom Fang', type: 'Spear' },
+        { name: 'The Slaughterer', type: 'Axe' },
+        { name: 'Dark Covenant', type: 'Sword' },
+        { name: 'The Impaler', type: 'Spear' },
+        { name: 'Hellfire Brand', type: 'Sword' },
+        { name: 'Damnation', type: 'Greatsword' },
+        { name: 'Chaos Incarnate', type: 'Blade' },
+        { name: 'The Scourge', type: 'Whip' },
+        { name: 'Shadow\'s Grasp', type: 'Claw' },
+        { name: 'Tyranny', type: 'Mace' },
+        { name: 'Abyssal Blade', type: 'Sword' },
+        { name: 'Fallen Grace', type: 'Sword' },
+        { name: 'Nightmare Manifest', type: 'Staff' },
+        { name: 'The Dreadlord\'s Glaive', type: 'Glaive' },
+        { name: 'Obsidian Fang', type: 'Dagger' },
+        { name: 'The Conqueror\'s Blade', type: 'Sword' }
+    ];
+    
+    var bossLevel = Math.max(playerLevel, playerLevel + Math.floor(Math.random() * 3)); // Same level or higher
+    
+    // Boss has significantly more HP
+    var hpGain = 0;
+    for (var lvl = 1; lvl < bossLevel; lvl++) {
+        if (lvl > 50) {
+            hpGain += 50;
+        } else if (lvl > 30) {
+            hpGain += 35;
+        } else if (lvl > 15) {
+            hpGain += 25;
+        } else {
+            hpGain += 20;
+        }
+    }
+    var bossMaxHp = Math.floor((100 + hpGain) * 1.5); // 50% more HP than normal
+    
+    // Select boss name and matching weapon
+    var bossIndex = Math.floor(Math.random() * bossNames.length);
+    var bossName = bossNames[bossIndex];
+    var bossWeapon = bossWeapons[bossIndex];
+    
+    // Boss weapon - always powerful and legendary/mythic
+    var weaponRarity = Math.random() < 0.3 ? 'mythic' : 'legendary'; // 30% mythic, 70% legendary
+    var bossWeaponPower = Math.floor(bossLevel * 3 + 20); // Strong weapon
+    
+    var bossWeaponItem = {
+        name: bossWeapon.name,
+        rarity: weaponRarity,
+        power: bossWeaponPower,
+        statType: 'Damage',
+        weaponType: bossWeapon.type // Store the weapon type for flavor
+    };
+    
+    // Boss equipment - well-armored
+    var bossEquipment = {
+        weapon: bossWeaponItem
+    };
+    
+    // Add defensive equipment
+    var armorPower = Math.floor(5 + bossLevel * 0.6);
+    
+    if (bossLevel >= 10) {
+        bossEquipment.chest = {
+            name: 'Boss Armor',
+            rarity: 'epic',
+            power: armorPower,
+            statType: 'Defense'
+        };
+        bossEquipment.helmet = {
+            name: 'Boss Helm',
+            rarity: 'epic',
+            power: Math.floor(armorPower * 0.7),
+            statType: 'Defense'
+        };
+        bossEquipment.offhand = {
+            name: 'Boss Shield',
+            rarity: 'epic',
+            power: Math.floor(armorPower * 0.8),
+            statType: 'Defense'
+        };
+    }
+    
+    // Boss stats - well-rounded and powerful
+    var stats = {
+        strength: Math.max(3, Math.floor(bossLevel / 4)),
+        toughness: Math.max(3, Math.floor(bossLevel / 4)),
+        agility: Math.max(2, Math.floor(bossLevel / 6)),
+        luck: Math.max(2, Math.floor(bossLevel / 6)),
+        speed: Math.max(2, Math.floor(bossLevel / 6))
+    };
+    
+    // Distribute extra points
+    var extraPoints = Math.floor(bossLevel * 0.7);
+    var statNames = ['strength', 'toughness', 'agility', 'luck', 'speed'];
+    for (var i = 0; i < extraPoints; i++) {
+        var randomStat = statNames[Math.floor(Math.random() * statNames.length)];
+        stats[randomStat]++;
+    }
+    
+    return {
+        name: bossName,
+        birthplace: 'The Abyss',
+        level: bossLevel,
+        hp: bossMaxHp,
+        maxHp: bossMaxHp,
+        currentHp: bossMaxHp,
+        wins: Math.floor(bossLevel * 10),
+        stats: stats,
+        equipment: bossEquipment,
+        specialAttack: bossLevel >= 10 ? {
+            name: generateSpecialAttackName()
+        } : null,
+        isRealPlayer: false,
+        isBot: true,
+        isBoss: true // Mark as boss
+    };
+}
 
+        
         function updateLeaderboard() {
     var content = document.getElementById('leaderboardContent');
     
@@ -4288,9 +4576,18 @@ html +=
     });
 }
 
-        function startFight(player, opponent, isDiamondFight) {
+function startFight(player, opponent, isDiamondFight) {
     hideAll();
-    document.getElementById('fightScreen').style.display = 'block';
+    var fightScreen = document.getElementById('fightScreen');
+    fightScreen.style.display = 'block';
+    
+    // Change background color to blood red if boss fight
+    if (opponent.isBoss) {
+        fightScreen.style.background = 'linear-gradient(135deg, #8B0000, #4a0000)';
+    } else {
+        fightScreen.style.background = 'linear-gradient(135deg, #1a1a2e, #16213e)';
+    }
+    
     // Hide the header and logo during fights
     var headerContainer = document.querySelector('h1.title');
     if (headerContainer) {
@@ -4304,37 +4601,39 @@ html +=
     player.currentHp = player.maxHp;
     opponent.currentHp = opponent.maxHp;
     // Initialize special attack meters
-player.specialMeter = 0;
-opponent.specialMeter = 0;
-player.specialReady = false;
-opponent.specialReady = false;
-player.useSpecialNext = false;
-opponent.useSpecialNext = false;
-            // Reset the visual special attack bars
-document.getElementById('player1Special').style.width = '0%';
-document.getElementById('player2Special').style.width = '0%';
-document.getElementById('player1SpecialBtn').style.display = 'none';
-// Hide/show special attack UI based on level
-var player1SpecialBar = document.getElementById('player1Special').parentElement.parentElement;
-var player2SpecialBar = document.getElementById('player2Special').parentElement.parentElement;
-var player1SpecialBtn = document.getElementById('player1SpecialBtn');
+    player.specialMeter = 0;
+    opponent.specialMeter = 0;
+    player.specialReady = false;
+    opponent.specialReady = false;
+    player.useSpecialNext = false;
+    opponent.useSpecialNext = false;
+    
+    // Reset the visual special attack bars
+    document.getElementById('player1Special').style.width = '0%';
+    document.getElementById('player2Special').style.width = '0%';
+    document.getElementById('player1SpecialBtn').style.display = 'none';
+    // Hide/show special attack UI based on level
+    var player1SpecialBar = document.getElementById('player1Special').parentElement.parentElement;
+    var player2SpecialBar = document.getElementById('player2Special').parentElement.parentElement;
+    var player1SpecialBtn = document.getElementById('player1SpecialBtn');
 
-if (player.level >= 10 && player.specialAttack) {
-    player1SpecialBar.style.display = 'block';
-    player1SpecialBtn.parentElement.style.display = 'block';
-} else {
-    player1SpecialBar.style.display = 'none';
-    player1SpecialBtn.style.display = 'none';
-}
+    if (player.level >= 10 && player.specialAttack) {
+        player1SpecialBar.style.display = 'block';
+        player1SpecialBtn.parentElement.style.display = 'block';
+    } else {
+        player1SpecialBar.style.display = 'none';
+        player1SpecialBtn.style.display = 'none';
+    }
 
-if (opponent.level >= 10 && opponent.specialAttack) {
-    player2SpecialBar.style.display = 'block';
-} else {
-    player2SpecialBar.style.display = 'none';
-}
+    if (opponent.level >= 10 && opponent.specialAttack) {
+        player2SpecialBar.style.display = 'block';
+    } else {
+        player2SpecialBar.style.display = 'none';
+    }
             
-    // Store whether this is a diamond fight
+    // Store whether this is a diamond fight and boss fight
     player.isDiamondFight = isDiamondFight;
+    player.isBossFight = opponent.isBoss || false;
     
     // Track recent opponents if it's a real player
     if (opponent.isRealPlayer && opponent.fighterIdentifier) {
@@ -4353,8 +4652,14 @@ if (opponent.level >= 10 && opponent.specialAttack) {
         console.log('Updated recent opponents:', player.recentOpponents);
     }
 
+    // Display opponent name with boss indicator
+    var opponentDisplayName = opponent.name;
+    if (opponent.isBoss) {
+        opponentDisplayName = opponent.name + ' 💀 (BOSS)';
+    }
+    
     document.getElementById('player1Name').textContent = player.name + ' (Level ' + player.level + ', ' + player.wins + ' wins)';
-    document.getElementById('player2Name').textContent = opponent.name + ' (Level ' + opponent.level + ', ' + opponent.wins + ' wins)';
+    document.getElementById('player2Name').textContent = opponentDisplayName + ' (Level ' + opponent.level + ', ' + opponent.wins + ' wins)';
     
     document.getElementById('player1HPText').textContent = Math.floor(player.currentHp) + '/' + player.maxHp;
     document.getElementById('player2HPText').textContent = Math.floor(opponent.currentHp) + '/' + opponent.maxHp;
@@ -4364,7 +4669,12 @@ if (opponent.level >= 10 && opponent.specialAttack) {
     var fightLog = document.getElementById('fightLog');
     fightLog.innerHTML = '';
 
-    addToFightLog('<div class="story-title">' + player.name + ' vs ' + opponent.name + '</div>');
+    if (opponent.isBoss) {
+        addToFightLog('<div class="story-title" style="color: #ff0000; font-size: 1.3em;">💀 BOSS BATTLE 💀</div>');
+        addToFightLog('<span style="color: #ff6b6b; font-weight: bold;">You have encountered a fearsome boss: ' + opponent.name + '!</span>');
+    } else {
+        addToFightLog('<div class="story-title">' + player.name + ' vs ' + opponent.name + '</div>');
+    }
     addToFightLog('Fight begins!');
     
     setTimeout(function() { simulateFight(player, opponent); }, 1500);
@@ -4695,7 +5005,10 @@ var toughnessProc = Math.random() * 100 < toughnessChance;
             
             function endCombat(player, opponent) {
     var playerWon = player.currentHp > 0;
-    
+
+    // Store battle result BEFORE restoring HP
+    player.didLoseBossFight = !playerWon && (player.isBossFight || false);
+                
     // Increment total fights counter
     if (player.totalFights === undefined) {
         player.totalFights = 0;
@@ -4731,44 +5044,66 @@ var toughnessProc = Math.random() * 100 < toughnessChance;
         
         addToFightLog('<span class="exp-gain">Gained ' + expGained + ' EXP!</span>');
 
-// Replace the equipment drop system with this:
-var equipmentDropChance = 25;
-if (Math.random() * 100 < equipmentDropChance) {
-    var isUpgrade = Math.random() * 100 < 60; // 60% upgrade, 40% weak/same
-    var droppedItem = generateLootItem(player, opponent.level, isUpgrade);
+// Boss loot - guaranteed Legendary or Mythic
+if (player.isBossFight) {
+    var isMythic = Math.random() * 100 < 30; // 30% chance for Mythic, 70% for Legendary
+    var bossLoot = generateBossLoot(player, opponent.level, isMythic);
     
-    if (droppedItem) {
-        var itemLevelText = droppedItem.itemLevel ? 'Lv.' + droppedItem.itemLevel + ' ' : '';
-        var rarityText = droppedItem.rarity ? ' (' + droppedItem.rarity.charAt(0).toUpperCase() + droppedItem.rarity.slice(1) + ')' : '';
+    if (bossLoot) {
+        var itemLevelText = bossLoot.itemLevel ? 'Lv.' + bossLoot.itemLevel + ' ' : '';
+        var rarityText = bossLoot.rarity ? ' (' + bossLoot.rarity.charAt(0).toUpperCase() + bossLoot.rarity.slice(1) + ')' : '';
         
-        addToFightLog('<span class="' + droppedItem.rarity + '">🎁 ' + opponent.name + ' dropped: ' + 
-            itemLevelText + droppedItem.name + rarityText + 
-            ' (+' + droppedItem.power + ' ' + droppedItem.statType + ')!</span>');
+        addToFightLog('<span class="' + bossLoot.rarity + '" style="font-size: 1.2em;">🎁 BOSS DEFEATED! ' + 
+            opponent.name + ' dropped: ' + 
+            itemLevelText + bossLoot.name + rarityText + 
+            ' (+' + bossLoot.power + ' ' + bossLoot.statType + ')!</span>');
         
-        // Store the dropped item to show in modal after combat
-        player.pendingLoot = droppedItem;
+        player.pendingLoot = bossLoot;
+    }
+} else {
+    // Regular equipment drop
+    var equipmentDropChance = 25;
+    if (Math.random() * 100 < equipmentDropChance) {
+        var isUpgrade = Math.random() * 100 < 60;
+        var droppedItem = generateLootItem(player, opponent.level, isUpgrade);
+        
+        if (droppedItem) {
+            var itemLevelText = droppedItem.itemLevel ? 'Lv.' + droppedItem.itemLevel + ' ' : '';
+            var rarityText = droppedItem.rarity ? ' (' + droppedItem.rarity.charAt(0).toUpperCase() + droppedItem.rarity.slice(1) + ')' : '';
+            
+            addToFightLog('<span class="' + droppedItem.rarity + '">🎁 ' + opponent.name + ' dropped: ' + 
+                itemLevelText + droppedItem.name + rarityText + 
+                ' (+' + droppedItem.power + ' ' + droppedItem.statType + ')!</span>');
+            
+            player.pendingLoot = droppedItem;
+        }
     }
 }
         
     } else {
-        // Loss handling...
-        if (player.lossStreak === undefined) {
-            player.lossStreak = 0;
-        }
-        player.lossStreak++;
-        
-        var defeatTexts = [
-            '<span class="defeat">💀 ' + player.name + ' has been defeated in battle! 💀</span>',
-            '<span class="defeat">💀 ' + player.name + ' falls to their opponent! 💀</span>',
-            '<span class="defeat">💀 ' + opponent.name + ' proves too strong for ' + player.name + '! 💀</span>',
-            '<span class="defeat">💀 ' + player.name + ' fought valiantly but could not prevail! 💀</span>'
-        ];
-        addToFightLog(defeatTexts[Math.floor(Math.random() * defeatTexts.length)]);
-        
-        var consolationExp = Math.floor(5 + opponent.level);
-        player.exp += consolationExp;
-        addToFightLog('<span class="exp-gain">Gained ' + consolationExp + ' consolation EXP for the effort!</span>');
+    // Loss handling...
+    if (player.lossStreak === undefined) {
+        player.lossStreak = 0;
     }
+    player.lossStreak++;
+    
+    var defeatTexts = [
+        '<span class="defeat">💀 ' + player.name + ' has been defeated in battle! 💀</span>',
+        '<span class="defeat">💀 ' + player.name + ' falls to their opponent! 💀</span>',
+        '<span class="defeat">💀 ' + opponent.name + ' proves too strong for ' + player.name + '! 💀</span>',
+        '<span class="defeat">💀 ' + player.name + ' fought valiantly but could not prevail! 💀</span>'
+    ];
+    addToFightLog(defeatTexts[Math.floor(Math.random() * defeatTexts.length)]);
+    
+    var consolationExp = Math.floor(5 + opponent.level);
+    player.exp += consolationExp;
+    addToFightLog('<span class="exp-gain">Gained ' + consolationExp + ' consolation EXP for the effort!</span>');
+    
+    // Store boss data if this was a boss fight (for rematch option)
+    if (player.isBossFight) {
+        gameState.currentBoss = opponent;
+    }
+}
     
     // Check for level up
     while (player.exp >= player.expRequired) {
@@ -5050,6 +5385,107 @@ var finalPower = Math.max(1, basePower);
         statType: itemType.statType
     };
 }
+        function generateBossLoot(player, bossLevel, isMythic) {
+    var itemTypes = [
+        { 
+            slot: 'weapon', 
+            statType: 'Damage', 
+            names: ['Blade', 'Sword', 'Axe', 'Hammer', 'Staff', 'Scythe']
+        },
+        { 
+            slot: 'helmet', 
+            statType: 'Defense', 
+            names: ['Helm', 'Crown', 'Mask', 'Circlet']
+        },
+        { 
+            slot: 'chest', 
+            statType: 'Defense', 
+            names: ['Armor', 'Plate', 'Mail', 'Cuirass']
+        },
+        { 
+            slot: 'gloves', 
+            statType: 'Defense', 
+            names: ['Gauntlets', 'Gloves', 'Grips']
+        },
+        { 
+            slot: 'boots', 
+            statType: 'Defense', 
+            names: ['Boots', 'Greaves', 'Treads']
+        },
+        { 
+            slot: 'offhand', 
+            statType: 'Defense', 
+            names: ['Shield', 'Buckler', 'Ward']
+        },
+        { 
+            slot: 'shoulders', 
+            statType: 'Defense', 
+            names: ['Pauldrons', 'Guards', 'Plates']
+        },
+        { 
+            slot: 'greaves', 
+            statType: 'Defense', 
+            names: ['Greaves', 'Guards', 'Plates']
+        }
+    ];
+    
+    // Select random item type
+    var itemType = itemTypes[Math.floor(Math.random() * itemTypes.length)];
+    var baseName = itemType.names[Math.floor(Math.random() * itemType.names.length)];
+    
+    // Boss item level is higher
+    var itemLevel = Math.max(bossLevel, bossLevel + Math.floor(Math.random() * 3));
+    
+    var rarity, powerPerLevel, prefix;
+    
+    if (isMythic) {
+        rarity = 'mythic';
+        powerPerLevel = 5;
+        
+        // Mythic boss names
+        var mythicNames = [
+            'Worldbreaker', 'Godslayer', 'Eternity\'s Edge', 'Chaos Reaper', 'Divine Wrath',
+            'Oblivion', 'Extinction', 'Annihilation', 'Genesis', 'Omega',
+            'The Destroyer', 'Universe Render', 'Reality Splitter', 'Void Caller',
+            'The Absolution', 'The Reckoning', 'Primordial Fury', 'Cosmic Terror'
+        ];
+        baseName = mythicNames[Math.floor(Math.random() * mythicNames.length)];
+    } else {
+        rarity = 'legendary';
+        powerPerLevel = 4;
+        
+        // Legendary boss names
+        var legendaryNames = [
+            'Dragonslayer', 'Stormbringer', 'Soulrender', 'Flamestrike', 'Frostbite',
+            'Shadowbane', 'Lightbringer', 'Doomblade', 'Excalibur', 'Mjolnir',
+            'Vorpal', 'Reaver', 'Skullcrusher', 'Heartseeker', 'Souleater',
+            'Worldender', 'Kingslayer', 'Demonbane', 'Godsend', 'Eternity',
+            'Nemesis', 'Ragnarok', 'Armageddon', 'Cataclysm', 'Apocalypse'
+        ];
+        baseName = legendaryNames[Math.floor(Math.random() * legendaryNames.length)];
+    }
+    
+    // Calculate power
+    var basePower = Math.floor(itemLevel * powerPerLevel);
+    
+    // Defense items get 60% power
+    if (itemType.statType === 'Defense') {
+        basePower = Math.floor(basePower * 0.6);
+    }
+    
+    var finalPower = Math.max(1, basePower);
+    
+    return {
+        name: baseName,
+        type: itemType.slot,
+        slot: itemType.slot,
+        power: finalPower,
+        level: bossLevel,
+        itemLevel: itemLevel,
+        rarity: rarity,
+        statType: itemType.statType
+    };
+}
             
             function levelUp(fighter) {
     fighter.level++;
@@ -5110,6 +5546,16 @@ if (fighter.level === 10) {
         companyLogo.style.display = 'block';
     }
     
+    // Check if player lost to a boss - show rematch modal
+    if (gameState.currentFighter && gameState.currentBoss && gameState.currentFighter.didLoseBossFight) {
+        gameState.currentFighter.didLoseBossFight = false; // Clear the flag
+        showRematchModal(gameState.currentBoss);
+        return;
+    }
+    
+    // Clear boss data if player won
+    gameState.currentBoss = null;
+    
     // Check if there's pending loot to show
     if (gameState.currentFighter && gameState.currentFighter.pendingLoot) {
         showLootModal(gameState.currentFighter.pendingLoot);
@@ -5117,7 +5563,6 @@ if (fighter.level === 10) {
         showFighterScreen();
     }
 }
-
         function showLootModal(item) {
     var fighter = gameState.currentFighter;
     var currentItem = fighter.equipment[item.slot];
@@ -5190,6 +5635,89 @@ if (fighter.level === 10) {
     document.body.insertAdjacentHTML('beforeend', modalHTML);
 }
 
+        function showRematchModal(boss) {
+    var existingModal = document.getElementById('rematchModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    var modalHTML = 
+        '<div id="rematchModal" style="display: block; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 3000;">' +
+            '<div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: linear-gradient(135deg, #8B0000, #4a0000); padding: 30px; border-radius: 10px; border: 3px solid #ff0000; max-width: 450px; width: 90%; text-align: center; box-shadow: 0 0 30px rgba(255, 0, 0, 0.5);">' +
+                '<h2 style="color: #ff6b6b; margin-bottom: 20px; font-size: 2em; text-shadow: 2px 2px 4px rgba(0,0,0,0.8);">💀 DEFEATED 💀</h2>' +
+                
+                '<div style="background: rgba(0,0,0,0.5); padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 2px solid #ff6b6b;">' +
+                    '<div style="color: #fff; font-size: 1.2em; margin-bottom: 10px; font-weight: bold;">' + boss.name + ' has crushed you!</div>' +
+                    '<div style="color: #ff6b6b; font-size: 1em;">Level ' + boss.level + ' Boss</div>' +
+                '</div>' +
+                
+                '<p style="color: #ccc; margin-bottom: 20px; font-size: 1em; line-height: 1.5;">The boss stands victorious over your fallen body. Will you rise again to challenge this fearsome foe?</p>' +
+                
+                '<div style="background: rgba(255, 215, 0, 0.2); padding: 15px; border-radius: 8px; margin-bottom: 25px; border: 2px solid #ffd93d;">' +
+                    '<div style="color: #ffd93d; font-size: 1.1em; font-weight: bold; margin-bottom: 8px;">⚔️ REMATCH AVAILABLE ⚔️</div>' +
+                    '<div style="color: #fff; font-size: 0.9em;">Immediately challenge the boss again!</div>' +
+                    '<div style="color: #ffd93d; font-size: 1.2em; font-weight: bold; margin-top: 10px;">Cost: 10 💎</div>' +
+                '</div>' +
+                
+                '<div style="display: flex; flex-direction: column; gap: 15px;">' +
+                    '<button class="btn" style="background: #ff0000; color: #fff; padding: 15px 30px; font-size: 1.2em; font-weight: bold; border: 2px solid #fff;" onclick="acceptRematch()" ' + (gameState.diamonds < 10 ? 'disabled' : '') + '>⚔️ REMATCH (10 💎)</button>' +
+                    '<button class="btn btn-secondary" onclick="declineRematch()" style="padding: 12px 30px; font-size: 1em;">Retreat</button>' +
+                '</div>' +
+                
+                (gameState.diamonds < 10 ? '<div style="color: #ff6b6b; font-size: 0.9em; margin-top: 15px;">⚠️ Not enough diamonds! You need 10 💎 to rematch.</div>' : '') +
+            '</div>' +
+        '</div>';
+    
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+}
+
+function acceptRematch() {
+    var modal = document.getElementById('rematchModal');
+    if (modal) {
+        modal.remove();
+    }
+    
+    // Check if player has enough diamonds
+    if (gameState.diamonds < 10) {
+        alert('You need 10 💎 to rematch the boss!');
+        showFighterScreen();
+        return;
+    }
+    
+    // Deduct diamonds
+    gameState.diamonds -= 10;
+    saveToSupabase();
+    updateDiamondDisplay();
+    
+    // Get the boss from storage
+    var boss = gameState.currentBoss;
+    if (!boss) {
+        alert('Boss data lost! Returning to character screen.');
+        showFighterScreen();
+        return;
+    }
+    
+    // Restore player to full HP for rematch
+    gameState.currentFighter.hp = gameState.currentFighter.maxHp;
+    gameState.currentFighter.currentHp = gameState.currentFighter.maxHp;
+    
+    // Start the fight again with the same boss
+    startFight(gameState.currentFighter, boss, false);
+}
+
+function declineRematch() {
+    var modal = document.getElementById('rematchModal');
+    if (modal) {
+        modal.remove();
+    }
+    
+    // Clear boss data
+    gameState.currentBoss = null;
+    
+    // Return to fighter screen
+    showFighterScreen();
+}
+        
 function equipLoot() {
     var fighter = gameState.currentFighter;
     if (!fighter || !fighter.pendingLoot) return;
@@ -5262,46 +5790,54 @@ function showLootMessage(message) {
     }, 2000);
 }
         
-        function initGame() {
-            console.log('RandoFight initializing...');
-            
-            // Force clear any password reset tokens first
-            console.log('Clearing any existing reset tokens...');
-            localStorage.removeItem('reset_token_demo');
-            localStorage.removeItem('reset_user_id');
-            
-            // Initialize EmailJS early
-            setTimeout(function() {
-                initEmailJS();
-            }, 1000);
-            
-            try {
-                // Check if this is a password reset link first (only URL parameters, not localStorage)
-                var urlParams = new URLSearchParams(window.location.search);
-                var tokenFromURL = urlParams.get('reset');
-                
-                if (tokenFromURL) {
-                    console.log('URL reset token found:', tokenFromURL);
-                    showResetPasswordForm();
-                    return;
-                }
-                
-                // Check for existing login session
-                if (checkExistingSession()) {
-                    console.log('Valid session found, loading game data...');
-                    loadFromSupabase();
-                    showTitleScreen();
-                } else {
-                    console.log('No valid session, showing login screen...');
-                    showLoginScreen();
-                }
-            } catch (error) {
-                console.error('Init error, forcing login screen:', error);
-                showLoginScreen();
-            }
-            
-            setInterval(updateFightStatus, 1000);
+function initGame() {
+    console.log('RandoFight initializing...');
+    
+    updateLoadingProgress(10, 'Initializing...');
+    
+    // Force clear any password reset tokens first
+    console.log('Clearing any existing reset tokens...');
+    localStorage.removeItem('reset_token_demo');
+    localStorage.removeItem('reset_user_id');
+    
+    // Initialize EmailJS early
+    setTimeout(function() {
+        initEmailJS();
+    }, 1000);
+    
+    try {
+        // Check if this is a password reset link first (only URL parameters, not localStorage)
+        var urlParams = new URLSearchParams(window.location.search);
+        var tokenFromURL = urlParams.get('reset');
+        
+        if (tokenFromURL) {
+            console.log('URL reset token found:', tokenFromURL);
+            hideLoadingScreen();
+            showResetPasswordForm();
+            return;
         }
+        
+        // Check for existing login session
+        if (checkExistingSession()) {
+            console.log('Valid session found, loading game data...');
+            loadFromSupabase();
+            showTitleScreen();
+        } else {
+            console.log('No valid session, showing login screen...');
+            updateLoadingProgress(100, 'Ready!');
+            setTimeout(function() {
+                hideLoadingScreen();
+                showLoginScreen();
+            }, 300);
+        }
+    } catch (error) {
+        console.error('Init error, forcing login screen:', error);
+        hideLoadingScreen();
+        showLoginScreen();
+    }
+    
+    setInterval(updateFightStatus, 1000);
+}
 
         // Add a manual cleanup function you can call from browser console
         window.clearResetTokens = function() {
