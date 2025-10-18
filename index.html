@@ -5112,7 +5112,16 @@ if (fighter.level === 10) {
     if (companyLogo) {
         companyLogo.style.display = 'block';
     }
+    // Check if player lost to a boss - show rematch modal
+    if (gameState.currentFighter && gameState.currentBoss && gameState.currentFighter.didLoseBossFight) {
+        gameState.currentFighter.didLoseBossFight = false; // Clear the flag
+        showRematchModal(gameState.currentBoss);
+        return;
+    }
     
+    // Clear boss data if player won
+    gameState.currentBoss = null;
+            
     // Check if there's pending loot to show
     if (gameState.currentFighter && gameState.currentFighter.pendingLoot) {
         showLootModal(gameState.currentFighter.pendingLoot);
