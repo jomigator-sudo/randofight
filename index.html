@@ -295,6 +295,32 @@
     font-size: 1.05em;
     text-shadow: 0 0 8px rgba(177, 156, 217, 0.5);
 }
+        .password-toggle-btn {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    color: #4ecdc4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2em;
+    line-height: 1;
+    min-width: 30px;
+    min-height: 30px;
+}
+
+.password-toggle-btn:hover {
+    color: #6c5ce7;
+}
+
+.password-toggle-btn.showing {
+    color: #ff6b6b;
+}
     </style>
 </head>
 <body>
@@ -346,47 +372,58 @@
 
     <div class="creation-form">
         <div id="loginForm">
-            <h3 style="text-align: center; margin-bottom: 20px; color: #4ecdc4;">Login</h3>
-            <div class="form-group">
-                <label for="loginEmail">Email:</label>
-                <input type="email" id="loginEmail" placeholder="Enter your email">
-            </div>
-            <div class="form-group">
-                <label for="loginPassword">Password:</label>
-                <input type="password" id="loginPassword" placeholder="Enter your password">
-            </div>
-            <div style="text-align: center; margin-top: 20px;">
-                <button class="btn btn-primary" onclick="loginUser()">Login</button>
-                <button class="btn btn-secondary" onclick="showSignupForm()">Create Account</button>
-            </div>
-            <div style="text-align: center; margin-top: 15px;">
-                <button class="btn" style="background: #6c757d; color: #fff; font-size: 0.9em;" onclick="showForgotPasswordForm()">Forgot Password?</button>
-            </div>
-            <div style="text-align: center; margin-top: 20px; border-top: 1px solid #444; padding-top: 15px;">
-                <button class="btn" style="background: #28a745; color: #fff; font-size: 1em; padding: 12px 24px;" onclick="playAsGuest()">Play as Guest</button>
-                <p style="color: #888; font-size: 0.8em; margin-top: 10px;">Play without an account (progress saved locally)</p>
-            </div>
+    <h3 style="text-align: center; margin-bottom: 20px; color: #4ecdc4;">Login</h3>
+    <div class="form-group">
+        <label for="loginEmail">Email:</label>
+        <input type="email" id="loginEmail" placeholder="Enter your email">
+    </div>
+<div class="form-group">
+    <label for="loginPassword">Password:</label>
+    <div style="position: relative; width: 100%;">
+        <input type="password" id="loginPassword" placeholder="Enter your password" style="padding-right: 45px; width: 100%;">
+        <button type="button" onclick="togglePasswordVisibility('loginPassword', 'loginPasswordToggle')" id="loginPasswordToggle" class="password-toggle-btn">
+            🔒
+        </button>
+    </div>
+</div>
+    <div style="text-align: center; margin-top: 20px;">
+        <button class="btn btn-primary" onclick="loginUser()">Login</button>
+        <button class="btn btn-secondary" onclick="showSignupForm()">Create Account</button>
+    </div>
+    <div style="text-align: center; margin-top: 15px;">
+        <button class="btn" style="background: #6c757d; color: #fff; font-size: 0.9em;" onclick="showForgotPasswordForm()">Forgot Password?</button>
+    </div>
+    <div style="text-align: center; margin-top: 20px; border-top: 1px solid #444; padding-top: 15px;">
+        <button class="btn" style="background: #28a745; color: #fff; font-size: 1em; padding: 12px 24px;" onclick="playAsGuest()">Play as Guest</button>
+        <p style="color: #888; font-size: 0.8em; margin-top: 10px;">Play without an account (progress saved locally)</p>
+    </div>
+</div>
         </div>
 
         <div id="signupForm" style="display: none;">
-            <h3 style="text-align: center; margin-bottom: 20px; color: #4ecdc4;">Create Account</h3>
-            <div class="form-group">
-                <label for="signupEmail">Email:</label>
-                <input type="email" id="signupEmail" placeholder="Enter your email">
-            </div>
-            <div class="form-group">
-                <label for="signupPassword">Password:</label>
-                <input type="password" id="signupPassword" placeholder="Choose a password (min 6 characters)">
-            </div>
-            <div class="form-group">
-                <label for="signupUsername">Username:</label>
-                <input type="text" id="signupUsername" placeholder="Choose a username" maxlength="20">
-            </div>
-            <div style="text-align: center; margin-top: 20px;">
-                <button class="btn btn-primary" onclick="signupUser()">Create Account</button>
-                <button class="btn btn-secondary" onclick="showLoginForm()">Back to Login</button>
-            </div>
-        </div>
+    <h3 style="text-align: center; margin-bottom: 20px; color: #4ecdc4;">Create Account</h3>
+    <div class="form-group">
+        <label for="signupEmail">Email:</label>
+        <input type="email" id="signupEmail" placeholder="Enter your email">
+    </div>
+<div class="form-group">
+    <label for="signupPassword">Password:</label>
+    <div style="position: relative; width: 100%;">
+        <input type="password" id="signupPassword" placeholder="Choose a password (min 6 characters)" style="padding-right: 45px; width: 100%;">
+        <button type="button" onclick="togglePasswordVisibility('signupPassword', 'signupPasswordToggle')" id="signupPasswordToggle" class="password-toggle-btn">
+            🔒
+        </button>
+    </div>
+</div>
+    <div class="form-group">
+        <label for="signupUsername">Username:</label>
+        <input type="text" id="signupUsername" placeholder="Choose a username" maxlength="20">
+    </div>
+    <div style="text-align: center; margin-top: 20px;">
+        <button class="btn btn-primary" onclick="signupUser()">Create Account</button>
+        <button class="btn btn-secondary" onclick="showLoginForm()">Back to Login</button>
+    </div>
+</div>
 
         <div id="forgotPasswordForm" style="display: none;">
             <h3 style="text-align: center; margin-bottom: 20px; color: #4ecdc4;">Reset Password</h3>
@@ -404,33 +441,38 @@
         </div>
 
         <div id="resetPasswordForm" style="display: none;">
-            <h3 style="text-align: center; margin-bottom: 20px; color: #4ecdc4;">Set New Password</h3>
-            <p style="text-align: center; margin-bottom: 20px; color: #ccc; font-size: 0.9em;">
-                Enter your new password below.
-            </p>
-            <div class="form-group">
-                <label for="newPassword">New Password:</label>
-                <input type="password" id="newPassword" placeholder="Enter new password (min 6 characters)">
-            </div>
-            <div class="form-group">
-                <label for="confirmPassword">Confirm Password:</label>
-                <input type="password" id="confirmPassword" placeholder="Confirm new password">
-            </div>
-            <div style="text-align: center; margin-top: 20px;">
-                <button class="btn btn-primary" onclick="resetPassword()">Update Password</button>
-                <button class="btn btn-secondary" onclick="showLoginForm()">Back to Login</button>
-            </div>
-        </div>
+    <h3 style="text-align: center; margin-bottom: 20px; color: #4ecdc4;">Set New Password</h3>
+    <p style="text-align: center; margin-bottom: 20px; color: #ccc; font-size: 0.9em;">
+        Enter your new password below.
+    </p>
+<div class="form-group">
+    <label for="newPassword">New Password:</label>
+    <div style="position: relative; width: 100%;">
+        <input type="password" id="newPassword" placeholder="Enter new password (min 6 characters)" style="padding-right: 45px; width: 100%;">
+        <button type="button" onclick="togglePasswordVisibility('newPassword', 'newPasswordToggle')" id="newPasswordToggle" class="password-toggle-btn">
+            🔒
+        </button>
     </div>
-    
-    <!-- Developer Credits -->
-    <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #333;">
-        <p style="color: #888; font-size: 0.9em; margin-bottom: 5px;">Made by JM Contreras, Ninja Roo Games</p>
-        <p style="color: #888; font-size: 0.85em;">
-            Contact Us: 
-            <a href="mailto:ninjaroogames@gmail.com" style="color: #4ecdc4; text-decoration: none;">ninjaroogames@gmail.com</a>
-        </p>
+</div>
+<div class="form-group">
+    <label for="confirmPassword">Confirm Password:</label>
+    <div style="position: relative; width: 100%;">
+        <input type="password" id="confirmPassword" placeholder="Confirm new password" style="padding-right: 45px; width: 100%;">
+        <button type="button" onclick="togglePasswordVisibility('confirmPassword', 'confirmPasswordToggle')" id="confirmPasswordToggle" class="password-toggle-btn">
+            🔒
+        </button>
     </div>
+</div>
+    <div style="text-align: center; margin-top: 20px;">
+        <button class="btn btn-primary" onclick="resetPassword()">Update Password</button>
+        <button class="btn btn-secondary" onclick="showLoginForm()">Back to Login</button>
+    </div>
+</div>
+    <!-- Credits Button -->
+    <div style="text-align: center; margin-top: 30px;">
+        <button class="btn" style="background: rgba(255,255,255,0.1); color: #888; padding: 8px 20px; font-size: 0.85em;" onclick="showCreditsModal()">ℹ️ Credits</button>
+    </div>
+</div> <!-- This closes loginScreen -->
 </div>
 
 <!-- Character Select Screen -->
@@ -444,14 +486,15 @@
     </div>
 
     <div class="ui-buttons">
-    <span style="color: #ffd93d; font-size: 1.2em; margin-right: 20px;">Diamonds: <span id="titleDiamonds">0</span> 💎</span>
-    <div id="titlePaypalButton" class="paypal-button-container"></div>
-    <button class="btn btn-secondary" onclick="showGlobalLeaderboard()">Leaderboard</button>
-    <button class="btn" style="background: #ffd93d; color: #333;" onclick="showWeeklyTournament()">🏆 Weekly</button>
-    <button class="btn" style="background: #4ecdc4; color: #fff;" onclick="showDailyTasks()">📅 Daily</button>
-</div>
+        <span style="color: #ffd93d; font-size: 1.2em; margin-right: 20px;">Diamonds: <span id="titleDiamonds">0</span> 💎</span>
+        <div id="titlePaypalButton" class="paypal-button-container"></div>
+        <button class="btn btn-secondary" onclick="showGlobalLeaderboard()">Leaderboard</button>
+        <button class="btn" style="background: #ffd93d; color: #333;" onclick="showWeeklyTournament()">🏆 Weekly</button>
+        <button class="btn" style="background: #4ecdc4; color: #fff;" onclick="showDailyTasks()">📅 Daily</button>
+    </div>
 
     <div class="fighter-slots">
+        <!-- Fighter slot HTML -->
         <div class="fighter-slot" id="slot-container-0" onclick="selectFighter(0)">
             <div class="slot-number">Slot 1</div>
             <div class="fighter-name">Empty Slot</div>
@@ -475,27 +518,22 @@
         </div>
     </div>
     
-<!-- Refer, Discord and Logout buttons at bottom -->
-<div style="text-align: center; margin: 30px 0 20px 0;">
-    <button class="btn" style="background: #ffd93d; color: #333; padding: 10px 30px; margin-right: 10px; font-weight: bold;" onclick="showReferralModal()">🎁 Refer Friends</button>
-    <button class="btn" style="background: #5865F2; color: #fff; padding: 10px 30px; margin-right: 10px;" onclick="openDiscord()">
-        <svg style="width: 20px; height: 20px; vertical-align: middle; margin-right: 5px;" viewBox="0 0 71 55" fill="none">
-            <path d="M60.1045 4.8978C55.5792 2.8214 50.7265 1.2916 45.6527 0.41542C45.5603 0.39851 45.468 0.440769 45.4204 0.525289C44.7963 1.6353 44.105 3.0834 43.6209 4.2216C38.1637 3.4046 32.7345 3.4046 27.3892 4.2216C26.905 3.0581 26.1886 1.6353 25.5617 0.525289C25.5141 0.443589 25.4218 0.40133 25.3294 0.41542C20.2584 1.2888 15.4057 2.8186 10.8776 4.8978C10.8384 4.9147 10.8048 4.9429 10.7825 4.9795C1.57795 18.7309 -0.943561 32.1443 0.293408 45.3914C0.299005 45.4562 0.335386 45.5182 0.385761 45.5576C6.45866 50.0174 12.3413 52.7249 18.1147 54.5195C18.2071 54.5477 18.305 54.5139 18.3638 54.4378C19.7295 52.5728 20.9469 50.6063 21.9907 48.5383C22.0523 48.4172 21.9935 48.2735 21.8676 48.2256C19.9366 47.4931 18.0979 46.6 16.3292 45.5858C16.1893 45.5041 16.1781 45.304 16.3068 45.2082C16.679 44.9293 17.0513 44.6391 17.4067 44.3461C17.471 44.2926 17.5606 44.2813 17.6362 44.3151C29.2558 49.6202 41.8354 49.6202 53.3179 44.3151C53.3935 44.2785 53.4831 44.2898 53.5502 44.3433C53.9057 44.6363 54.2779 44.9293 54.6529 45.2082C54.7816 45.304 54.7732 45.5041 54.6333 45.5858C52.8646 46.6197 51.0259 47.4931 49.0921 48.2228C48.9662 48.2707 48.9102 48.4172 48.9718 48.5383C50.038 50.6034 51.2554 52.5699 52.5959 54.435C52.6519 54.5139 52.7526 54.5477 52.845 54.5195C58.6464 52.7249 64.529 50.0174 70.6019 45.5576C70.6551 45.5182 70.6887 45.459 70.6943 45.3942C72.1747 30.0791 68.2147 16.7757 60.1968 4.9823C60.1772 4.9429 60.1437 4.9147 60.1045 4.8978ZM23.7259 37.3253C20.2276 37.3253 17.3451 34.1136 17.3451 30.1693C17.3451 26.225 20.1717 23.0133 23.7259 23.0133C27.308 23.0133 30.1626 26.2532 30.1066 30.1693C30.1066 34.1136 27.28 37.3253 23.7259 37.3253ZM47.3178 37.3253C43.8196 37.3253 40.9371 34.1136 40.9371 30.1693C40.9371 26.225 43.7636 23.0133 47.3178 23.0133C50.9 23.0133 53.7545 26.2532 53.6986 30.1693C53.6986 34.1136 50.9 37.3253 47.3178 37.3253Z" fill="currentColor"/>
-        </svg>
-        Join Discord
-    </button>
-    <button class="btn btn-secondary" onclick="logoutUser()" style="padding: 10px 30px;">Logout</button>
-</div>
-    
-    <!-- Developer Credits -->
-    <div style="text-align: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid #333;">
-        <p style="color: #888; font-size: 0.9em; margin-bottom: 5px;">Made by JM Contreras, Ninja Roo Games</p>
-        <p style="color: #888; font-size: 0.85em;">
-            Contact Us: 
-            <a href="mailto:ninjaroogames@gmail.com" style="color: #4ecdc4; text-decoration: none;">ninjaroogames@gmail.com</a>
-        </p>
+    <!-- Refer, Discord and Logout buttons at bottom -->
+    <div style="text-align: center; margin: 30px 0 20px 0;">
+        <button class="btn" style="background: #ffd93d; color: #333; padding: 10px 30px; margin-right: 10px; font-weight: bold;" onclick="showReferralModal()">🎁 Refer Friends</button>
+        <button class="btn" style="background: #5865F2; color: #fff; padding: 10px 30px; margin-right: 10px;" onclick="openDiscord()">
+            <svg style="width: 20px; height: 20px; vertical-align: middle; margin-right: 5px;" viewBox="0 0 71 55" fill="none">
+                <path d="M60.1045 4.8978C55.5792 2.8214 50.7265 1.2916 45.6527 0.41542C45.5603 0.39851 45.468 0.440769 45.4204 0.525289C44.7963 1.6353 44.105 3.0834 43.6209 4.2216C38.1637 3.4046 32.7345 3.4046 27.3892 4.2216C26.905 3.0581 26.1886 1.6353 25.5617 0.525289C25.5141 0.443589 25.4218 0.40133 25.3294 0.41542C20.2584 1.2888 15.4057 2.8186 10.8776 4.8978C10.8384 4.9147 10.8048 4.9429 10.7825 4.9795C1.57795 18.7309 -0.943561 32.1443 0.293408 45.3914C0.299005 45.4562 0.335386 45.5182 0.385761 45.5576C6.45866 50.0174 12.3413 52.7249 18.1147 54.5195C18.2071 54.5477 18.305 54.5139 18.3638 54.4378C19.7295 52.5728 20.9469 50.6063 21.9907 48.5383C22.0523 48.4172 21.9935 48.2735 21.8676 48.2256C19.9366 47.4931 18.0979 46.6 16.3292 45.5858C16.1893 45.5041 16.1781 45.304 16.3068 45.2082C16.679 44.9293 17.0513 44.6391 17.4067 44.3461C17.471 44.2926 17.5606 44.2813 17.6362 44.3151C29.2558 49.6202 41.8354 49.6202 53.3179 44.3151C53.3935 44.2785 53.4831 44.2898 53.5502 44.3433C53.9057 44.6363 54.2779 44.9293 54.6529 45.2082C54.7816 45.304 54.7732 45.5041 54.6333 45.5858C52.8646 46.6197 51.0259 47.4931 49.0921 48.2228C48.9662 48.2707 48.9102 48.4172 48.9718 48.5383C50.038 50.6034 51.2554 52.5699 52.5959 54.435C52.6519 54.5139 52.7526 54.5477 52.845 54.5195C58.6464 52.7249 64.529 50.0174 70.6019 45.5576C70.6551 45.5182 70.6887 45.459 70.6943 45.3942C72.1747 30.0791 68.2147 16.7757 60.1968 4.9823C60.1772 4.9429 60.1437 4.9147 60.1045 4.8978ZM23.7259 37.3253C20.2276 37.3253 17.3451 34.1136 17.3451 30.1693C17.3451 26.225 20.1717 23.0133 23.7259 23.0133C27.308 23.0133 30.1626 26.2532 30.1066 30.1693C30.1066 34.1136 27.28 37.3253 23.7259 37.3253ZM47.3178 37.3253C43.8196 37.3253 40.9371 34.1136 40.9371 30.1693C40.9371 26.225 43.7636 23.0133 47.3178 23.0133C50.9 23.0133 53.7545 26.2532 53.6986 30.1693C53.6986 34.1136 50.9 37.3253 47.3178 37.3253Z" fill="currentColor"/>
+            </svg>
+            Join Discord
+        </button>
+        <button class="btn btn-secondary" onclick="logoutUser()" style="padding: 10px 30px;">Logout</button>
     </div>
-</div>
+        <!-- Credits Button -->
+    <div style="text-align: center; margin-top: 20px;">
+        <button class="btn" style="background: rgba(255,255,255,0.1); color: #888; padding: 8px 20px; font-size: 0.85em;" onclick="showCreditsModal()">ℹ️ Credits</button>
+    </div>
+</div> <!-- This closes titleScreen -->
 
 <!-- Fighter Creation Screen -->
 <div id="creationScreen" class="game-screen">
@@ -526,12 +564,12 @@
     <div style="display: flex; justify-content: center; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; align-items: center; padding: 0 10px;">
     
     <div style="display: flex; justify-content: center; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; align-items: center; padding: 0 10px;">
-    <button class="btn btn-fight" onclick="findFight()" id="fightBtn" style="padding: 10px 18px; font-size: 0.9em;">Find Fight</button>
-    <button class="btn btn-primary" onclick="fightWithoutRest()" id="fightWithoutRestBtn" style="padding: 10px 18px; font-size: 0.9em;">Fight 💎</button>
-    <button class="btn" style="background: #ffd93d; color: #333; padding: 10px 18px; font-size: 0.9em;" onclick="showWeeklyTournamentFromFighter()">🏆 Weekly Tournament</button>
-    <button class="btn" style="background: #4ecdc4; color: #fff; padding: 10px 18px; font-size: 0.9em;" onclick="showDailyTasks()">📅 Daily</button>
-    <div id="fighterPaypalButton" class="paypal-button-container"></div>
-</div>
+        <button class="btn btn-fight" onclick="findFight()" id="fightBtn" style="padding: 10px 18px; font-size: 0.9em;">Find Fight</button>
+        <button class="btn btn-primary" onclick="fightWithoutRest()" id="fightWithoutRestBtn" style="padding: 10px 18px; font-size: 0.9em;">Fight 💎</button>
+        <button class="btn" style="background: #ffd93d; color: #333; padding: 10px 18px; font-size: 0.9em;" onclick="showWeeklyTournamentFromFighter()">🏆 Weekly Tournament</button>
+        <button class="btn" style="background: #4ecdc4; color: #fff; padding: 10px 18px; font-size: 0.9em;" onclick="showDailyTasks()">📅 Daily</button>
+        <div id="fighterPaypalButton" class="paypal-button-container"></div>
+    </div>
     </div>
     <div class="fight-status">
         <div class="diamonds-display">Diamonds: <span id="diamonds">0</span> 💎</div>
@@ -549,11 +587,13 @@
         </div>
     </div>
     
-       <!-- Delete Fighter button at bottom -->
+    <!-- Delete Fighter button at bottom -->
     <div style="text-align: center; margin: 30px 0 20px 0;">
         <button class="btn" style="background: #e74c3c; color: #fff; padding: 12px 30px;" onclick="deleteFighter();">Delete Fighter</button>
     </div>
-</div>  <!-- This closes fighterScreen -->
+    
+    <!-- NO DEVELOPER CREDITS HERE -->
+</div>
 
 <!-- Fight Screen -->
 <div id="fightScreen" class="game-screen">
@@ -667,6 +707,25 @@ function hideLoadingScreen() {
 function closeDiscordModal() {
     var modal = document.getElementById('discordModal');
     if (modal) modal.remove();
+}
+        
+        function togglePasswordVisibility(inputId, buttonId) {
+    var input = document.getElementById(inputId);
+    var button = document.getElementById(buttonId);
+    
+    if (!input || !button) return;
+    
+    if (input.type === 'password') {
+        // Password is hidden, clicking will show it
+        input.type = 'text';
+        button.textContent = '👁️'; // Open eye when visible
+        button.classList.add('showing');
+    } else {
+        // Password is visible, clicking will hide it
+        input.type = 'password';
+        button.textContent = '🔒'; // Lock icon when hidden
+        button.classList.remove('showing');
+    }
 }
         
         // Special attack word combinations for dynamic generation
@@ -799,6 +858,52 @@ function showTitleScreen() {
         updateFighterSlots();
         updateDiamondDisplay();
         
+        // Update the logout/create account button based on account type
+        var logoutBtn = document.querySelector('button[onclick="logoutUser()"]') || 
+                       document.querySelector('.btn-secondary[onclick="logoutUser()"]');
+        
+        // Also check for the create account button
+        if (!logoutBtn) {
+            var allButtons = document.querySelectorAll('#titleScreen button');
+            for (var i = 0; i < allButtons.length; i++) {
+                if (allButtons[i].textContent.includes('Logout') || allButtons[i].textContent.includes('Create Account')) {
+                    logoutBtn = allButtons[i];
+                    break;
+                }
+            }
+        }
+        
+        if (logoutBtn) {
+            // Check if user is a guest
+            if (gameState.currentUser && gameState.currentUser.isGuest) {
+                console.log('Setting button to Create Account for guest');
+                logoutBtn.textContent = 'Create Account';
+                logoutBtn.removeAttribute('onclick');
+                logoutBtn.onclick = createAccountFromGuest;
+            } else {
+                console.log('Setting button to Logout for logged-in user');
+                logoutBtn.textContent = 'Logout';
+                logoutBtn.removeAttribute('onclick');
+                logoutBtn.onclick = logoutUser;
+            }
+        }
+        
+        // Update cloud save message based on account type
+        var cloudSaveMessage = document.querySelector('div[style*="background: rgba(34, 197, 94, 0.2)"]') ||
+                              document.querySelector('div[style*="background: rgba(245, 158, 11, 0.2)"]');
+        
+        if (cloudSaveMessage) {
+            if (gameState.currentUser && gameState.currentUser.isGuest) {
+                cloudSaveMessage.innerHTML = '<p style="color: #f59e0b; font-size: 0.9em; margin: 0;">⚠️ <strong>Playing as Guest:</strong> Your progress is saved locally. Create an account to sync across devices!</p>';
+                cloudSaveMessage.style.background = 'rgba(245, 158, 11, 0.2)';
+                cloudSaveMessage.style.borderColor = '#f59e0b';
+            } else {
+                cloudSaveMessage.innerHTML = '<p style="color: #22c55e; font-size: 0.9em; margin: 0;">✅ <strong>Cloud Save Enabled:</strong> Your characters are automatically saved and will persist across devices and sessions!</p>';
+                cloudSaveMessage.style.background = 'rgba(34, 197, 94, 0.2)';
+                cloudSaveMessage.style.borderColor = '#22c55e';
+            }
+        }
+        
         // Check for weekly prizes when entering title screen
         setTimeout(function() {
             try {
@@ -843,31 +948,35 @@ function showCreationScreen() {
                 '<p style="margin-bottom: 20px; color: #ccc; font-size: 0.9em;">Purchase diamonds to unlock slots, fight without cooldown, and more!</p>' +
                 '<div style="display: grid; gap: 15px; margin-bottom: 20px;">' +
                     '<div class="diamond-pack" style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px; border: 1px solid #666;">' +
-                        '<div style="color: #ffd93d; font-size: 1.1em; font-weight: bold; margin-bottom: 5px;">50 💎</div>' +
-                        '<div style="color: #4ecdc4; font-size: 1.2em; margin-bottom: 10px;">$0.99</div>' +
+                        '<div style="color: #ffd93d; font-size: 1.1em; font-weight: bold; margin-bottom: 5px;">100 💎</div>' +
+                        '<div style="color: #4ecdc4; font-size: 1.2em; margin-bottom: 5px;">$0.99</div>' +
+                        '<div style="color: #888; font-size: 0.75em; margin-bottom: 10px;">$0.0099 per diamond</div>' +
                         '<div style="background: rgba(255,255,255,0.95); padding: 10px; border-radius: 6px; min-height: 40px;">' +
                             '<div id="pack1Button"></div>' +
                         '</div>' +
                     '</div>' +
                     '<div class="diamond-pack" style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px; border: 1px solid #666;">' +
-                        '<div style="color: #ffd93d; font-size: 1.1em; font-weight: bold; margin-bottom: 5px;">120 💎</div>' +
-                        '<div style="color: #4ecdc4; font-size: 1.2em; margin-bottom: 10px;">$1.99</div>' +
+                        '<div style="color: #ffd93d; font-size: 1.1em; font-weight: bold; margin-bottom: 5px;">250 💎</div>' +
+                        '<div style="color: #4ecdc4; font-size: 1.2em; margin-bottom: 5px;">$1.99</div>' +
+                        '<div style="color: #888; font-size: 0.75em; margin-bottom: 10px;">$0.0080 per diamond <span style="color: #6bcf7f;">(19% bonus!)</span></div>' +
                         '<div style="background: rgba(255,255,255,0.95); padding: 10px; border-radius: 6px; min-height: 40px;">' +
                             '<div id="pack2Button"></div>' +
                         '</div>' +
                     '</div>' +
                     '<div class="diamond-pack" style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px; border: 1px solid #666; border-color: #ff6b6b;">' +
                         '<div style="color: #ff6b6b; font-size: 0.8em; margin-bottom: 5px;">POPULAR</div>' +
-                        '<div style="color: #ffd93d; font-size: 1.1em; font-weight: bold; margin-bottom: 5px;">350 💎</div>' +
-                        '<div style="color: #4ecdc4; font-size: 1.2em; margin-bottom: 10px;">$4.99</div>' +
+                        '<div style="color: #ffd93d; font-size: 1.1em; font-weight: bold; margin-bottom: 5px;">700 💎</div>' +
+                        '<div style="color: #4ecdc4; font-size: 1.2em; margin-bottom: 5px;">$4.99</div>' +
+                        '<div style="color: #888; font-size: 0.75em; margin-bottom: 10px;">$0.0071 per diamond <span style="color: #6bcf7f;">(40% bonus!)</span></div>' +
                         '<div style="background: rgba(255,255,255,0.95); padding: 10px; border-radius: 6px; min-height: 40px;">' +
                             '<div id="pack3Button"></div>' +
                         '</div>' +
                     '</div>' +
                     '<div class="diamond-pack" style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px; border: 1px solid #666; border-color: #ffd700;">' +
                         '<div style="color: #ffd700; font-size: 0.8em; margin-bottom: 5px;">BEST VALUE</div>' +
-                        '<div style="color: #ffd93d; font-size: 1.1em; font-weight: bold; margin-bottom: 5px;">800 💎</div>' +
-                        '<div style="color: #4ecdc4; font-size: 1.2em; margin-bottom: 10px;">$9.99</div>' +
+                        '<div style="color: #ffd93d; font-size: 1.1em; font-weight: bold; margin-bottom: 5px;">1,700 💎</div>' +
+                        '<div style="color: #4ecdc4; font-size: 1.2em; margin-bottom: 5px;">$9.99</div>' +
+                        '<div style="color: #888; font-size: 0.75em; margin-bottom: 10px;">$0.0059 per diamond <span style="color: #6bcf7f;">(70% bonus!)</span></div>' +
                         '<div style="background: rgba(255,255,255,0.95); padding: 10px; border-radius: 6px; min-height: 40px;">' +
                             '<div id="pack4Button"></div>' +
                         '</div>' +
@@ -881,16 +990,16 @@ function showCreationScreen() {
     
     // Initialize PayPal buttons for each pack
     if (typeof paypal !== 'undefined') {
-        initShopPayPalButton('pack1Button', '0.99', 50);
-        initShopPayPalButton('pack2Button', '1.99', 120);
-        initShopPayPalButton('pack3Button', '4.99', 350);
-        initShopPayPalButton('pack4Button', '9.99', 800);
+        initShopPayPalButton('pack1Button', '0.99', 100);
+        initShopPayPalButton('pack2Button', '1.99', 250);
+        initShopPayPalButton('pack3Button', '4.99', 700);
+        initShopPayPalButton('pack4Button', '9.99', 1700);
     } else {
         // Fallback if PayPal not available
-        document.getElementById('pack1Button').innerHTML = '<button class="btn btn-primary" onclick="fallbackPurchase(50)" style="width: 100%; font-size: 0.9em;">Purchase (Test)</button>';
-        document.getElementById('pack2Button').innerHTML = '<button class="btn btn-primary" onclick="fallbackPurchase(120)" style="width: 100%; font-size: 0.9em;">Purchase (Test)</button>';
-        document.getElementById('pack3Button').innerHTML = '<button class="btn btn-primary" onclick="fallbackPurchase(350)" style="width: 100%; font-size: 0.9em;">Purchase (Test)</button>';
-        document.getElementById('pack4Button').innerHTML = '<button class="btn btn-primary" onclick="fallbackPurchase(800)" style="width: 100%; font-size: 0.9em;">Purchase (Test)</button>';
+        document.getElementById('pack1Button').innerHTML = '<button class="btn btn-primary" onclick="fallbackPurchase(100)" style="width: 100%; font-size: 0.9em;">Purchase (Test)</button>';
+        document.getElementById('pack2Button').innerHTML = '<button class="btn btn-primary" onclick="fallbackPurchase(250)" style="width: 100%; font-size: 0.9em;">Purchase (Test)</button>';
+        document.getElementById('pack3Button').innerHTML = '<button class="btn btn-primary" onclick="fallbackPurchase(700)" style="width: 100%; font-size: 0.9em;">Purchase (Test)</button>';
+        document.getElementById('pack4Button').innerHTML = '<button class="btn btn-primary" onclick="fallbackPurchase(1700)" style="width: 100%; font-size: 0.9em;">Purchase (Test)</button>';
     }
 }
 
@@ -1267,41 +1376,49 @@ function showCreationScreen() {
                     body: JSON.stringify(newUser)
                 })
                 .then(function(response) {
-                    if (response.ok) {
-                        // If we have guest data, transfer it to the new account
-                        if (guestData) {
-                            gameState.currentUser = newUser;
-                            gameState.isLoggedIn = true;
-                            gameState.fighters = guestData.fighters;
-                            gameState.diamonds = guestData.diamonds;
-                            gameState.fightCooldownEnd = guestData.fightCooldownEnd;
-                            gameState.unlockedSlots = guestData.unlockedSlots;
-                            
-                            // Save guest data to the cloud
-                            saveToSupabase();
-                            
-                            localStorage.setItem('randofight_session', JSON.stringify({
-                                user_id: newUser.user_id,
-                                email: newUser.email,
-                                username: newUser.username,
-                                loginTime: Date.now()
-                            }));
-                            
-                            alert('Account created successfully and your guest progress has been transferred to the cloud!');
-                            document.getElementById('usernameDisplay').textContent = newUser.username;
-                            showTitleScreen();
-                        } else {
-                            alert('Account created successfully! Please login with your new credentials.');
-                            showLoginForm();
-                        }
-                        
-                        document.getElementById('signupEmail').value = '';
-                        document.getElementById('signupPassword').value = '';
-                        document.getElementById('signupUsername').value = '';
-                    } else {
-                        throw new Error('Signup failed: ' + response.status);
-                    }
-                });
+    if (response.ok) {
+        // If we have guest data, transfer it to the new account
+        if (guestData) {
+            gameState.currentUser = newUser;
+            gameState.isLoggedIn = true;
+            gameState.fighters = guestData.fighters;
+            gameState.diamonds = guestData.diamonds;
+            gameState.fightCooldownEnd = guestData.fightCooldownEnd;
+            gameState.unlockedSlots = guestData.unlockedSlots;
+            
+            // Save guest data to the cloud
+            saveToSupabase();
+            
+            localStorage.setItem('randofight_session', JSON.stringify({
+                user_id: newUser.user_id,
+                email: newUser.email,
+                username: newUser.username,
+                loginTime: Date.now()
+            }));
+            
+            alert('Account created successfully and your guest progress has been transferred to the cloud!');
+            document.getElementById('usernameDisplay').textContent = newUser.username;
+            
+            // Clear form fields
+            document.getElementById('signupEmail').value = '';
+            document.getElementById('signupPassword').value = '';
+            document.getElementById('signupUsername').value = '';
+            
+            // Show title screen - this will trigger the button fix
+            showTitleScreen();
+        } else {
+            alert('Account created successfully! Please login with your new credentials.');
+            showLoginForm();
+            
+            // Clear form fields
+            document.getElementById('signupEmail').value = '';
+            document.getElementById('signupPassword').value = '';
+            document.getElementById('signupUsername').value = '';
+        }
+    } else {
+        throw new Error('Signup failed: ' + response.status);
+    }
+});
             })
             .catch(function(error) {
                 if (error !== 'Email exists' && error !== 'Username exists') {
@@ -4945,24 +5062,33 @@ if (attacker.level >= 10 && attacker.specialAttack && attacker.specialAvailable 
             btn.style.opacity = '0.5';
         }
     } else if (attackerType === 'opponent') {
-        // AI uses special attack strategically:
-        // - 30% chance when opponent HP is below 40% (finishing move)
-        // - 20% chance when own HP is below 30% (desperation move)
-        // - 10% chance randomly each turn
-        var opponentHpPercent = (defender.currentHp / defender.maxHp) * 100;
+        // Check if opponent is in critical health (below 25%) - MUST use special before dying
         var ownHpPercent = (attacker.currentHp / attacker.maxHp) * 100;
-        var useChance = 10; // Base 10% chance
+        var opponentHpPercent = (defender.currentHp / defender.maxHp) * 100;
         
-        if (opponentHpPercent < 40) {
-            useChance = 30; // Higher chance to finish off weak opponent
-        } else if (ownHpPercent < 30) {
-            useChance = 20; // Use as desperation move
-        }
-        
-        if (Math.random() * 100 < useChance) {
-            console.log('Opponent using special attack!');
+        // Critical condition: If bot HP is below 25%, use special immediately
+        if (ownHpPercent < 25) {
+            console.log('Opponent using special attack (critical HP)!');
             shouldUseSpecial = true;
             attacker.specialUsed = true;
+        } else {
+            // Normal strategic usage:
+            // - 40% chance when opponent HP is below 40% (finishing move)
+            // - 25% chance when own HP is below 50% (desperation move)
+            // - 15% chance randomly each turn
+            var useChance = 15; // Base 15% chance
+            
+            if (opponentHpPercent < 40) {
+                useChance = 40; // Higher chance to finish off weak opponent
+            } else if (ownHpPercent < 50) {
+                useChance = 25; // Use as desperation move
+            }
+            
+            if (Math.random() * 100 < useChance) {
+                console.log('Opponent using special attack!');
+                shouldUseSpecial = true;
+                attacker.specialUsed = true;
+            }
         }
     }
 }
@@ -4971,6 +5097,23 @@ if (shouldUseSpecial) {
     setTimeout(function() {
         performSpecialAttack(attacker, defender, attackerType);
     }, 500);
+}
+
+// NEW: Check if opponent should use special attack as last resort before dying
+if (attackerType === 'player' && defender.level >= 10 && defender.specialAttack && 
+    defender.specialAvailable && !defender.specialUsed && defender.currentHp > 0) {
+    
+    // If opponent HP is critically low (below 20%) after taking damage, use special immediately
+    var opponentHpPercent = (defender.currentHp / defender.maxHp) * 100;
+    if (opponentHpPercent < 20) {
+        console.log('Opponent using special attack as last resort!');
+        defender.specialUsed = true;
+        setTimeout(function() {
+            if (defender.currentHp > 0) { // Make sure still alive
+                performSpecialAttack(defender, attacker, 'opponent');
+            }
+        }, 1000);
+    }
 }
     
     // Update HP bars
@@ -6133,6 +6276,65 @@ function claimReferralReward(newUserId) {
     .catch(function(error) {
         console.error('Error claiming referral rewards:', error);
     });
+}
+function showCreditsModal() {
+    var existingModal = document.getElementById('creditsModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    var modalHTML = 
+        '<div id="creditsModal" style="display: block; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 2000; overflow-y: auto;">' +
+            '<div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #1a1a2e; padding: 40px; border-radius: 15px; border: 3px solid #4ecdc4; max-width: 500px; width: 90%; box-shadow: 0 0 30px rgba(78, 205, 196, 0.3);">' +
+                '<h2 style="color: #4ecdc4; text-align: center; margin-bottom: 30px; font-size: 2em;">🎮 RandoFight Credits</h2>' +
+                
+                '<div style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 10px; margin-bottom: 20px;">' +
+                    '<h3 style="color: #ffd93d; text-align: center; margin-bottom: 15px; font-size: 1.3em;">Developer</h3>' +
+                    '<div style="text-align: center; margin-bottom: 15px;">' +
+                        '<p style="color: #fff; font-size: 1.1em; margin-bottom: 5px;">JM Contreras</p>' +
+                        '<p style="color: #888; font-size: 0.9em;">Lead Developer</p>' +
+                    '</div>' +
+                '</div>' +
+                
+                '<div style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 10px; margin-bottom: 20px;">' +
+                    '<h3 style="color: #ffd93d; text-align: center; margin-bottom: 15px; font-size: 1.3em;">Studio</h3>' +
+                    '<div style="text-align: center;">' +
+                        '<p style="color: #fff; font-size: 1.1em; margin-bottom: 10px;">Ninja Roo Games</p>' +
+                        '<img src="https://randofight.com/ninja%20roo%20logo%20white.png" alt="Ninja Roo Games" style="width: 80px; margin: 10px auto; display: block; opacity: 0.8;">' +
+                    '</div>' +
+                '</div>' +
+                
+                '<div style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 10px; margin-bottom: 25px;">' +
+                    '<h3 style="color: #ffd93d; text-align: center; margin-bottom: 15px; font-size: 1.3em;">Special Thanks</h3>' +
+                    '<div style="text-align: center;">' +
+                        '<p style="color: #ccc; font-size: 0.95em; margin-bottom: 8px;">• Brian Angelo Pris</p>' +
+                        '<p style="color: #ccc; font-size: 0.95em; margin-bottom: 8px;">• Daniel Dabalos</p>' +
+                        '<p style="color: #ccc; font-size: 0.95em;">• Hanniel Espaldon</p>' +
+                    '</div>' +
+                '</div>' +
+                
+                '<div style="text-align: center; margin-bottom: 25px;">' +
+                    '<p style="color: #888; font-size: 0.9em; margin-bottom: 10px;">Contact Us:</p>' +
+                    '<a href="mailto:ninjaroogames@gmail.com" style="color: #4ecdc4; text-decoration: none; font-size: 1em; font-weight: bold;">ninjaroogames@gmail.com</a>' +
+                '</div>' +
+                
+                '<div style="text-align: center; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1);">' +
+                    '<p style="color: #666; font-size: 0.8em;">© 2025 Ninja Roo Games. All rights reserved.</p>' +
+                    '<p style="color: #666; font-size: 0.8em; margin-top: 5px;">Version 1.0</p>' +
+                '</div>' +
+                
+                '<button class="btn btn-secondary" onclick="closeCreditsModal()" style="width: 100%; margin-top: 20px; padding: 12px;">Close</button>' +
+            '</div>' +
+        '</div>';
+    
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+}
+
+function closeCreditsModal() {
+    var modal = document.getElementById('creditsModal');
+    if (modal) {
+        modal.remove();
+    }
 }
         
 function initGame() {
