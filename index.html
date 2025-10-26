@@ -255,7 +255,8 @@
   width: 80px;
   opacity: 0.8;
   z-index: 1000;
-  pointer-events: none; /* Prevents the logo from interfering with clicks */
+  pointer-events: none;
+  display: none; /* ADD THIS LINE */
 }
 
 /* Add this to fix header spacing */
@@ -3841,21 +3842,14 @@ function updateFighterDisplay() {
 
     var specialDisplay;
 if (fighter.specialAttack && fighter.specialAttack.name) {
-    // Updated formula to match the balanced version
-    var specialBaseDamage = fighter.level * 4 + 20; // Changed from * 8 + 15
-    var specialStrengthBonus = (fighter.stats.strength - 1) * 2; // Changed from * 4
+    // Special attack damage (no strength bonus)
+    var specialBaseDamage = fighter.level * 4 + 20;
     
-    // Display format: Attack Name (base + bonus damage)
-    if (specialStrengthBonus > 0) {
-        specialDisplay = '<div class="stat-row"><span>Special Attack:</span> <span class="special">' + 
-            fighter.specialAttack.name + ' (' + specialBaseDamage + ' + ' + specialStrengthBonus + ' damage)</span></div>';
-    } else {
-        specialDisplay = '<div class="stat-row"><span>Special Attack:</span> <span class="special">' + 
-            fighter.specialAttack.name + ' (' + specialBaseDamage + ' damage)</span></div>';
-    }
+    specialDisplay = '<div class="stat-row"><span>Special Attack:</span> <span class="special">' + 
+        fighter.specialAttack.name + ' (' + specialBaseDamage + ' damage)</span></div>';
 } else {
-        specialDisplay = '<div class="stat-row"><span>Special Attack:</span> <span style="color: #888;">Unlocks at Level 10</span></div>';
-    }
+    specialDisplay = '<div class="stat-row"><span>Special Attack:</span> <span style="color: #888;">Unlocks at Level 10</span></div>';
+}
 
     var strengthBonus = (fighter.stats.strength - 1) * 2;
 var toughnessBonus = fighter.stats.toughness >= 2 ? Math.min(50, (fighter.stats.toughness - 1) * 0.6) : 0; // 0.6% per point, max 50%
@@ -5464,16 +5458,35 @@ function getEventEffect() {
         return null;
     }
     
+    // If already used, don't return it again
+    if (currentBattleEvent.effectUsed) {
+        return null;
+    }
+    
     var result = currentBattleEvent.result;
     var effect = result.success ? result.option.successEffect : result.option.failEffect;
     
-    // Clear the event after getting the effect
-    var eventEffect = {
-        effect: effect,
-        applied: false
-    };
+    // Determine if this event involves a projectile/object
+    var eventId = currentBattleEvent.event.id;
+    var usesObject = ['thrown_rock', 'throwing_knife', 'dust_cloud'].indexOf(eventId) !== -1;
+    var objectName = '';
     
-    return eventEffect;
+    if (eventId === 'thrown_rock') {
+        objectName = 'rock';
+    } else if (eventId === 'throwing_knife') {
+        objectName = 'throwing knife';
+    } else if (eventId === 'dust_cloud') {
+        objectName = 'dust cloud attack';
+    }
+    
+    // DON'T mark as used here - let performAttack mark it when actually applied
+    
+    return {
+        effect: effect,
+        applied: false,
+        usesObject: usesObject,
+        objectName: objectName
+    };
 }
 
 function startFight(player, opponent, isDiamondFight) {
@@ -5666,35 +5679,89 @@ if (shouldTriggerBattleEvent(turnCount, player, opponent)) {
     fightTurn();
 }
             
-            function performAttack(attacker, defender, attackerType) {
-    // Check for event effects
+function performAttack(attacker, defender, attackerType) {
+    // Check for event effects at the START of the attack
     var eventEffect = getEventEffect();
-    
+    var attackSource = null;
+    var pendingEventEffect = null;
+
+    // Event effects only apply when OPPONENT attacks PLAYER
     if (eventEffect && !eventEffect.applied && attackerType === 'opponent') {
         eventEffect.applied = true;
+        currentBattleEvent.effectUsed = true;
+        
+        // If event uses an object, track it for later
+        if (eventEffect.usesObject && eventEffect.objectName) {
+            attackSource = eventEffect.objectName;
+        }
         
         if (eventEffect.effect === 'avoided') {
-            // Player avoided the attack completely
-            addToFightLog('<span class="dodge">⚡ EVENT BONUS: ' + defender.name + ' avoided the attack thanks to the event!</span>');
+            addToFightLog('<span class="dodge">⚡ EVENT BONUS: ' + defender.name + ' avoided the ' + (attackSource || 'attack') + ' thanks to the event!</span>');
             return;
         } else if (eventEffect.effect === 'counter') {
-            // Player counters - opponent takes damage instead
             var counterDamage = Math.floor((10 + (defender.stats.strength - 1) * 2) * 1.5);
-            attacker.currentHp = Math.max(0, attacker.currentHp - counterDamage);
-            addToFightLog('<span style="color: #6bcf7f; font-weight: bold;">⚡ EVENT BONUS: ' + defender.name + ' counters for <span class="damage">' + counterDamage + '</span> damage!</span>');
             
-            if (attackerType === 'player') {
-                var opponentHpPercent = (attacker.currentHp / attacker.maxHp) * 100;
-                document.getElementById('player2HP').style.width = opponentHpPercent + '%';
-                document.getElementById('player2HPText').textContent = Math.floor(attacker.currentHp) + '/' + attacker.maxHp;
-            } else {
-                var playerHpPercent = (attacker.currentHp / attacker.maxHp) * 100;
-                document.getElementById('player1HP').style.width = playerHpPercent + '%';
-                document.getElementById('player1HPText').textContent = Math.floor(attacker.currentHp) + '/' + attacker.maxHp;
+            if (defender.equipment && defender.equipment.weapon) {
+                counterDamage += defender.equipment.weapon.power || 0;
             }
+            
+            attacker.currentHp = Math.max(0, attacker.currentHp - counterDamage);
+            addToFightLog('<span style="color: #6bcf7f; font-weight: bold;">⚡ EVENT BONUS: ' + defender.name + ' counters the ' + (attackSource || 'attack') + ' for <span class="damage">' + counterDamage + '</span> damage!</span>');
+            
+            var opponentHpPercent = (attacker.currentHp / attacker.maxHp) * 100;
+            document.getElementById('player2HP').style.width = opponentHpPercent + '%';
+            document.getElementById('player2HPText').textContent = Math.floor(attacker.currentHp) + '/' + attacker.maxHp;
+            
             return;
+        } else if (eventEffect.effect === 'reduced' || eventEffect.effect === 'increased') {
+            pendingEventEffect = eventEffect.effect;
         }
-        // 'reduced' and 'increased' effects are handled below in damage calculation
+    }
+    
+    // Check if special attack should be used BEFORE performing normal attack
+    var shouldUseSpecial = false;
+
+    if (attacker.level >= 10 && attacker.specialAttack && attacker.specialAvailable && !attacker.specialUsed) {
+        if (attackerType === 'player' && attacker.useSpecialNext) {
+            shouldUseSpecial = true;
+            attacker.useSpecialNext = false;
+            attacker.specialUsed = true;
+            
+            var btn = document.getElementById('player1SpecialBtn');
+            if (btn) {
+                btn.disabled = true;
+                btn.textContent = '⚡ Special Used';
+                btn.style.opacity = '0.5';
+            }
+        } else if (attackerType === 'opponent') {
+            var ownHpPercent = (attacker.currentHp / attacker.maxHp) * 100;
+            var opponentHpPercent = (defender.currentHp / defender.maxHp) * 100;
+            
+            if (ownHpPercent < 25) {
+                console.log('Opponent using special attack (critical HP)!');
+                shouldUseSpecial = true;
+                attacker.specialUsed = true;
+            } else {
+                var useChance = 15;
+                if (opponentHpPercent < 40) {
+                    useChance = 40;
+                } else if (ownHpPercent < 50) {
+                    useChance = 25;
+                }
+                
+                if (Math.random() * 100 < useChance) {
+                    console.log('Opponent using special attack!');
+                    shouldUseSpecial = true;
+                    attacker.specialUsed = true;
+                }
+            }
+        }
+    }
+
+    // If using special attack, do that instead of normal attack
+    if (shouldUseSpecial) {
+        performSpecialAttack(attacker, defender, attackerType);
+        return; // Exit early, don't do normal attack
     }
     
     var baseDamage = 10 + (attacker.stats.strength - 1) * 2;
@@ -5746,28 +5813,28 @@ if (shouldTriggerBattleEvent(turnCount, player, opponent)) {
     }
     
     // Defense reduction from armor (capped at 60%)
-var defenseReduction = Math.min(60, totalDefense * 0.25);
-damage = Math.floor(damage * (1 - defenseReduction / 100));
+    var defenseReduction = Math.min(60, totalDefense * 0.25);
+    damage = Math.floor(damage * (1 - defenseReduction / 100));
 
-// Apply event effect modifiers
-if (eventEffect && !eventEffect.applied && attackerType === 'opponent') {
-    eventEffect.applied = true;
-    var originalDamage = damage;
-    
-    if (eventEffect.effect === 'reduced') {
-        damage = Math.floor(damage * 0.5); // Take 50% less damage
-        var damageReduced = originalDamage - damage;
-        addToFightLog('<span style="color: #6bcf7f;">⚡ EVENT BONUS: Damage reduced by ' + damageReduced + '! (From ' + originalDamage + ' to ' + damage + ')</span>');
-    } else if (eventEffect.effect === 'increased') {
-        damage = Math.floor(damage * 1.5); // Take 50% more damage
-        var damageIncreased = damage - originalDamage;
-        addToFightLog('<span style="color: #ff6b6b;">❌ EVENT PENALTY: Damage increased by ' + damageIncreased + '! (From ' + originalDamage + ' to ' + damage + ')</span>');
+    // Apply event effect modifiers for damage reduction/increase
+    // This must happen BEFORE toughness check
+    if (pendingEventEffect && attackerType === 'opponent') {
+        var originalDamage = damage;
+        
+        if (pendingEventEffect === 'reduced') {
+            damage = Math.floor(damage * 0.5); // Take 50% less damage
+            var damageReduced = originalDamage - damage;
+            addToFightLog('<span style="color: #6bcf7f;">⚡ EVENT BONUS: Damage reduced by ' + damageReduced + '! (From ' + originalDamage + ' to ' + damage + ')</span>');
+        } else if (pendingEventEffect === 'increased') {
+            damage = Math.floor(damage * 1.5); // Take 50% more damage
+            var damageIncreased = damage - originalDamage;
+            addToFightLog('<span style="color: #ff6b6b;">❌ EVENT PENALTY: Damage increased by ' + damageIncreased + '! (From ' + originalDamage + ' to ' + damage + ')</span>');
+        }
     }
-}
 
-// Toughness check - chance to reduce damage by 50%
-var toughnessChance = Math.min(50, (defender.stats.toughness - 1) * 0.5);
-var toughnessProc = Math.random() * 100 < toughnessChance;
+    // Toughness check - chance to reduce damage by 50%
+    var toughnessChance = Math.min(50, (defender.stats.toughness - 1) * 0.5);
+    var toughnessProc = Math.random() * 100 < toughnessChance;
     
     if (toughnessProc) {
         damage = Math.floor(damage * 0.5); // 50% damage reduction when it procs
@@ -5778,14 +5845,24 @@ var toughnessProc = Math.random() * 100 < toughnessChance;
     
     var attackText = '';
     
+    // Determine what weapon/object was used
+    var displayWeapon;
+    if (attackSource) {
+        // Event object (rock, knife, etc.)
+        displayWeapon = '<span class="uncommon">' + attackSource + '</span>';
+    } else {
+        // Regular weapon
+        displayWeapon = weaponText;
+    }
+
     if (isCrit) {
         damage = Math.floor(damage * 2.0);
         damage = Math.max(2, damage);
         // Enhanced critical hit display
         var critTexts = [
-            '<span class="critical-hit-text">⚡ CRITICAL HIT! ⚡</span> ' + attackerNameText + ' finds a weak spot with their ' + weaponText + ' and deals <span class="damage">' + damage + '</span> massive damage!',
-            '<span class="critical-hit-text">💥 CRITICAL STRIKE! 💥</span> ' + attackerNameText + ' lands a devastating blow with their ' + weaponText + ' for <span class="damage">' + damage + '</span> damage!',
-            '<span class="critical-hit-text">🔥 CRITICAL! 🔥</span> ' + attackerNameText + '\'s ' + weaponText + ' strikes true for <span class="damage">' + damage + '</span> crushing damage!'
+            '<span class="critical-hit-text">⚡ CRITICAL HIT! ⚡</span> ' + attackerNameText + ' finds a weak spot with their ' + displayWeapon + ' and deals <span class="damage">' + damage + '</span> massive damage!',
+            '<span class="critical-hit-text">💥 CRITICAL STRIKE! 💥</span> ' + attackerNameText + ' lands a devastating blow with their ' + displayWeapon + ' for <span class="damage">' + damage + '</span> damage!',
+            '<span class="critical-hit-text">🔥 CRITICAL! 🔥</span> ' + attackerNameText + '\'s ' + displayWeapon + ' strikes true for <span class="damage">' + damage + '</span> crushing damage!'
         ];
         attackText = critTexts[Math.floor(Math.random() * critTexts.length)];
     } else {
@@ -5794,9 +5871,9 @@ var toughnessProc = Math.random() * 100 < toughnessChance;
         var painSounds = ['grunts in pain', 'winces', 'staggers', 'reels back', 'stumbles'];
         
         var attackVariations = [
-            attackerNameText + ' strikes with their ' + weaponText + ', dealing <span class="damage">' + damage + '</span> damage to ' + defenderNameText + '!',
-            attackerNameText + '\'s ' + weaponText + ' hits ' + defenderNameText + '\'s ' + bodyParts[Math.floor(Math.random() * bodyParts.length)] + ' for <span class="damage">' + damage + '</span> damage!',
-            defenderNameText + ' ' + painSounds[Math.floor(Math.random() * painSounds.length)] + ' as ' + attackerNameText + '\'s ' + weaponText + ' connects for <span class="damage">' + damage + '</span> damage!'
+            attackerNameText + ' strikes with their ' + displayWeapon + ', dealing <span class="damage">' + damage + '</span> damage to ' + defenderNameText + '!',
+            attackerNameText + '\'s ' + displayWeapon + ' hits ' + defenderNameText + '\'s ' + bodyParts[Math.floor(Math.random() * bodyParts.length)] + ' for <span class="damage">' + damage + '</span> damage!',
+            defenderNameText + ' ' + painSounds[Math.floor(Math.random() * painSounds.length)] + ' as ' + attackerNameText + '\'s ' + displayWeapon + ' connects for <span class="damage">' + damage + '</span> damage!'
         ];
         attackText = attackVariations[Math.floor(Math.random() * attackVariations.length)];
     }
@@ -5804,78 +5881,6 @@ var toughnessProc = Math.random() * 100 < toughnessChance;
     defender.currentHp = Math.max(0, defender.currentHp - damage);
     
     addToFightLog(attackText);
-                
-// Check if special attack should be used
-var shouldUseSpecial = false;
-
-if (attacker.level >= 10 && attacker.specialAttack && attacker.specialAvailable && !attacker.specialUsed) {
-    if (attackerType === 'player' && attacker.useSpecialNext) {
-        console.log('Player using special attack now!');
-        shouldUseSpecial = true;
-        attacker.useSpecialNext = false;
-        attacker.specialUsed = true;
-        
-        // Update button to show it was used
-        var btn = document.getElementById('player1SpecialBtn');
-        if (btn) {
-            btn.disabled = true;
-            btn.textContent = '⚡ Special Used';
-            btn.style.opacity = '0.5';
-        }
-    } else if (attackerType === 'opponent') {
-        // Check if opponent is in critical health (below 25%) - MUST use special before dying
-        var ownHpPercent = (attacker.currentHp / attacker.maxHp) * 100;
-        var opponentHpPercent = (defender.currentHp / defender.maxHp) * 100;
-        
-        // Critical condition: If bot HP is below 25%, use special immediately
-        if (ownHpPercent < 25) {
-            console.log('Opponent using special attack (critical HP)!');
-            shouldUseSpecial = true;
-            attacker.specialUsed = true;
-        } else {
-            // Normal strategic usage:
-            // - 40% chance when opponent HP is below 40% (finishing move)
-            // - 25% chance when own HP is below 50% (desperation move)
-            // - 15% chance randomly each turn
-            var useChance = 15; // Base 15% chance
-            
-            if (opponentHpPercent < 40) {
-                useChance = 40; // Higher chance to finish off weak opponent
-            } else if (ownHpPercent < 50) {
-                useChance = 25; // Use as desperation move
-            }
-            
-            if (Math.random() * 100 < useChance) {
-                console.log('Opponent using special attack!');
-                shouldUseSpecial = true;
-                attacker.specialUsed = true;
-            }
-        }
-    }
-}
-
-if (shouldUseSpecial) {
-    setTimeout(function() {
-        performSpecialAttack(attacker, defender, attackerType);
-    }, 500);
-}
-
-// NEW: Check if opponent should use special attack as last resort before dying
-if (attackerType === 'player' && defender.level >= 10 && defender.specialAttack && 
-    defender.specialAvailable && !defender.specialUsed && defender.currentHp > 0) {
-    
-    // If opponent HP is critically low (below 20%) after taking damage, use special immediately
-    var opponentHpPercent = (defender.currentHp / defender.maxHp) * 100;
-    if (opponentHpPercent < 20) {
-        console.log('Opponent using special attack as last resort!');
-        defender.specialUsed = true;
-        setTimeout(function() {
-            if (defender.currentHp > 0) { // Make sure still alive
-                performSpecialAttack(defender, attacker, 'opponent');
-            }
-        }, 1000);
-    }
-}
     
     // Update HP bars
     if (attackerType === 'player') {
@@ -5918,9 +5923,9 @@ function playerUseSpecial() {
     if (attackerType === 'opponent') {
         addToFightLog('<span style="color: #ff6b6b; font-weight: bold;">⚠️ ' + attacker.name + ' prepares their special attack!</span>');
     }
-                
-    var specialBaseDamage = attacker.level * 4 + 20;
-    var specialDamage = specialBaseDamage + specialStrengthBonus;
+    
+    // Calculate special attack damage - NO STRENGTH BONUS
+    var specialDamage = attacker.level * 4 + 20;
     
     if (attacker.equipment && attacker.equipment.weapon) {
         specialDamage += attacker.equipment.weapon.power || 0;
@@ -5946,7 +5951,7 @@ function playerUseSpecial() {
     
     // Toughness check
     var toughnessChance = Math.min(50, (defender.stats.toughness - 1) * 0.5);
-var toughnessProc = Math.random() * 100 < toughnessChance;
+    var toughnessProc = Math.random() * 100 < toughnessChance;
     
     if (toughnessProc) {
         specialDamage = Math.floor(specialDamage * 0.5);
@@ -5958,7 +5963,7 @@ var toughnessProc = Math.random() * 100 < toughnessChance;
     specialDamage = Math.max(3, specialDamage);
     
     defender.currentHp = Math.max(0, defender.currentHp - specialDamage);
-    // Special attacks don't generate meter
+    
     // Determine name classes
     var attackerNameClass = attackerType === 'player' ? 'player-name' : 'opponent-name';
     var defenderNameClass = attackerType === 'player' ? 'opponent-name' : 'player-name';
@@ -7067,7 +7072,7 @@ function showCreditsModal() {
                 '<div style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 10px; margin-bottom: 25px;">' +
                     '<h3 style="color: #ffd93d; text-align: center; margin-bottom: 15px; font-size: 1.3em;">Special Thanks</h3>' +
                     '<div style="text-align: center;">' +
-                        '<p style="color: #ccc; font-size: 0.95em; margin-bottom: 8px;">• Brian Angelo Pris</p>' +
+                        '<p style="color: #ccc; font-size: 0.95em; margin-bottom: 8px;">• John Tamala</p>' +
                         '<p style="color: #ccc; font-size: 0.95em; margin-bottom: 8px;">• Daniel Dabalos</p>' +
                         '<p style="color: #ccc; font-size: 0.95em;">• Hanniel Espaldon</p>' +
                     '</div>' +
