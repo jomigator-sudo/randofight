@@ -321,6 +321,129 @@
 .password-toggle-btn.showing {
     color: #ff6b6b;
 }
+    
+        .event-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.95);
+    z-index: 4000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.event-container {
+    background: linear-gradient(135deg, #1a1a2e, #16213e);
+    border: 3px solid #ff6b6b;
+    border-radius: 15px;
+    padding: 30px;
+    max-width: 600px;
+    width: 90%;
+    box-shadow: 0 0 30px rgba(255, 107, 107, 0.5);
+}
+
+.event-title {
+    color: #ff6b6b;
+    font-size: 1.5em;
+    text-align: center;
+    margin-bottom: 20px;
+    font-weight: bold;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+}
+
+.event-description {
+    color: #fff;
+    font-size: 1.1em;
+    line-height: 1.6;
+    margin-bottom: 25px;
+    text-align: center;
+    padding: 15px;
+    background: rgba(255, 107, 107, 0.1);
+    border-radius: 8px;
+}
+
+.event-timer {
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 1.2em;
+    color: #ffd93d;
+    font-weight: bold;
+}
+
+.event-timer.urgent {
+    color: #ff6b6b;
+    animation: pulse 0.5s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.event-options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.event-option {
+    background: rgba(78, 205, 196, 0.1);
+    border: 2px solid #4ecdc4;
+    border-radius: 8px;
+    padding: 15px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: left;
+}
+
+.event-option:hover {
+    background: rgba(78, 205, 196, 0.2);
+    transform: translateX(5px);
+    border-color: #6c5ce7;
+}
+
+.event-option-title {
+    color: #4ecdc4;
+    font-size: 1.1em;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.event-option-stat {
+    color: #888;
+    font-size: 0.9em;
+    margin-bottom: 8px;
+}
+
+.event-option-chance {
+    color: #ffd93d;
+    font-size: 1em;
+    font-weight: bold;
+}
+
+.event-option-effect {
+    color: #ccc;
+    font-size: 0.9em;
+    margin-top: 5px;
+    font-style: italic;
+}
+
+@media (max-width: 768px) {
+    .event-container {
+        padding: 20px;
+    }
+    
+    .event-title {
+        font-size: 1.2em;
+    }
+    
+    .event-description {
+        font-size: 1em;
+    }
+}
     </style>
 </head>
 <body>
@@ -502,19 +625,19 @@
         </div>
         <div class="fighter-slot locked" id="slot-container-1" onclick="purchaseSlot(1)">
             <div class="slot-number">Slot 2</div>
-            <div>Purchase this slot for 100 💎</div>
+            <div>Purchase this slot for 200 💎</div>
         </div>
         <div class="fighter-slot locked" id="slot-container-2" onclick="purchaseSlot(2)">
             <div class="slot-number">Slot 3</div>
-            <div>Purchase this slot for 100 💎</div>
+            <div>Purchase this slot for 200 💎</div>
         </div>
         <div class="fighter-slot locked" id="slot-container-3" onclick="purchaseSlot(3)">
             <div class="slot-number">Slot 4</div>
-            <div>Purchase this slot for 100 💎</div>
+            <div>Purchase this slot for 200 💎</div>
         </div>
         <div class="fighter-slot locked" id="slot-container-4" onclick="purchaseSlot(4)">
             <div class="slot-number">Slot 5</div>
-            <div>Purchase this slot for 100 💎</div>
+            <div>Purchase this slot for 200 💎</div>
         </div>
     </div>
     
@@ -3582,12 +3705,12 @@ html += '<div class="leaderboard-entry"' + highlightStyle + '>' +
                 return;
             }
             
-            if (gameState.diamonds < 100) {
-                alert('You need 100 diamonds to unlock this slot! You currently have ' + gameState.diamonds + ' diamonds.');
+            if (gameState.diamonds < 200) {
+                alert('You need 200 diamonds to unlock this slot! You currently have ' + gameState.diamonds + ' diamonds.');
                 return;
             }
             
-            gameState.diamonds -= 100;
+            gameState.diamonds -= 200;
             gameState.unlockedSlots[slotIndex] = true;
             updateDiamondDisplay();
             updateFighterSlots();
@@ -3631,7 +3754,7 @@ html += '<div class="leaderboard-entry"' + highlightStyle + '>' +
                 } else {
                     slotContainer.classList.add('locked');
                     var lockedContent = document.createElement('div');
-                    lockedContent.innerHTML = 'Purchase this slot for 100 💎';
+                    lockedContent.innerHTML = 'Purchase this slot for 200 💎';
                     slotContainer.appendChild(lockedContent);
                     slotContainer.onclick = function(index) {
                         return function() { purchaseSlot(index); };
@@ -4767,6 +4890,592 @@ html +=
     });
 }
 
+        // Battle Events System
+var battleEvents = [
+    {
+        id: 'thrown_rock',
+        title: '🪨 INCOMING PROJECTILE!',
+        description: '{opponent} picks up a rock and hurls it at you with tremendous force!',
+        options: [
+            {
+                name: 'Dodge',
+                stat: 'agility',
+                description: 'Use your agility to sidestep the rock',
+                successEffect: 'avoided',
+                failEffect: 'normal',
+                effectText: {
+                    success: 'You nimbly dodge the rock!',
+                    fail: 'The rock hits you!'
+                }
+            },
+            {
+                name: 'Block',
+                stat: 'toughness',
+                description: 'Brace yourself and block with your arms',
+                successEffect: 'reduced',
+                failEffect: 'normal',
+                effectText: {
+                    success: 'You block most of the impact!',
+                    fail: 'The rock breaks through your guard!'
+                }
+            },
+            {
+                name: 'Pray to Lady Luck',
+                stat: 'luck',
+                description: 'Hope the rock misses you',
+                successEffect: 'avoided',
+                failEffect: 'normal',
+                effectText: {
+                    success: 'The rock miraculously veers off course!',
+                    fail: 'Lady Luck abandons you - the rock hits!'
+                }
+            }
+        ]
+    },
+    {
+        id: 'dust_cloud',
+        title: '💨 BLINDING DUST!',
+        description: '{opponent} kicks up a massive cloud of dust, obscuring your vision!',
+        options: [
+            {
+                name: 'Close Eyes & Listen',
+                stat: 'agility',
+                description: 'Rely on hearing to anticipate the attack',
+                successEffect: 'counter',
+                failEffect: 'normal',
+                effectText: {
+                    success: 'You hear the attack coming and counter perfectly!',
+                    fail: 'You misjudge the direction and get hit!'
+                }
+            },
+            {
+                name: 'Stand Ground',
+                stat: 'toughness',
+                description: 'Protect yourself and endure the attack',
+                successEffect: 'reduced',
+                failEffect: 'normal',
+                effectText: {
+                    success: 'You weather the blind assault!',
+                    fail: 'The surprise attack overwhelms you!'
+                }
+            },
+            {
+                name: 'Charge Forward',
+                stat: 'strength',
+                description: 'Rush through the dust and attack',
+                successEffect: 'counter',
+                failEffect: 'increased',
+                effectText: {
+                    success: 'You land a devastating blow through the dust!',
+                    fail: 'You stumble blindly and take extra damage!'
+                }
+            }
+        ]
+    },
+    {
+        id: 'weapon_break',
+        title: '⚔️ WEAPON CLASH!',
+        description: 'Your weapons collide with incredible force! One might break!',
+        options: [
+            {
+                name: 'Overpower',
+                stat: 'strength',
+                description: 'Use raw strength to dominate',
+                successEffect: 'counter',
+                failEffect: 'normal',
+                effectText: {
+                    success: 'You overpower your opponent and strike!',
+                    fail: 'Your opponent pushes you back and attacks!'
+                }
+            },
+            {
+                name: 'Deflect',
+                stat: 'agility',
+                description: 'Use finesse to redirect the force',
+                successEffect: 'avoided',
+                failEffect: 'normal',
+                effectText: {
+                    success: 'You skillfully deflect and avoid damage!',
+                    fail: 'The deflection fails and you take the hit!'
+                }
+            },
+            {
+                name: 'Hold Firm',
+                stat: 'toughness',
+                description: 'Lock weapons and endure the strain',
+                successEffect: 'reduced',
+                failEffect: 'normal',
+                effectText: {
+                    success: 'You hold firm and minimize the impact!',
+                    fail: 'Your defense crumbles under pressure!'
+                }
+            }
+        ]
+    },
+    {
+        id: 'ground_shake',
+        title: '⚡ GROUND TREMOR!',
+        description: '{opponent} strikes the ground, causing it to shake violently beneath you!',
+        options: [
+            {
+                name: 'Jump',
+                stat: 'agility',
+                description: 'Leap into the air to avoid the shockwave',
+                successEffect: 'avoided',
+                failEffect: 'normal',
+                effectText: {
+                    success: 'You leap over the shockwave gracefully!',
+                    fail: 'You mistimed the jump and fall hard!'
+                }
+            },
+            {
+                name: 'Plant Feet',
+                stat: 'toughness',
+                description: 'Root yourself and resist the tremor',
+                successEffect: 'reduced',
+                failEffect: 'normal',
+                effectText: {
+                    success: 'You stand firm like a mountain!',
+                    fail: 'The tremor knocks you off balance!'
+                }
+            },
+            {
+                name: 'Roll Away',
+                stat: 'speed',
+                description: 'Quickly roll to stable ground',
+                successEffect: 'avoided',
+                failEffect: 'normal',
+                effectText: {
+                    success: 'You swiftly roll to safety!',
+                    fail: 'You stumble while rolling and get hit!'
+                }
+            }
+        ]
+    },
+    {
+        id: 'feint_attack',
+        title: '🎭 DECEPTIVE STRIKE!',
+        description: '{opponent} feints an attack! Can you read their true intention?',
+        options: [
+            {
+                name: 'Predict Movement',
+                stat: 'luck',
+                description: 'Trust your instincts',
+                successEffect: 'counter',
+                failEffect: 'increased',
+                effectText: {
+                    success: 'You predicted correctly and counter!',
+                    fail: 'You fell for the feint completely!'
+                }
+            },
+            {
+                name: 'React Quickly',
+                stat: 'speed',
+                description: 'Wait and react to the real attack',
+                successEffect: 'avoided',
+                failEffect: 'normal',
+                effectText: {
+                    success: 'Your quick reflexes save you!',
+                    fail: 'You react too late!'
+                }
+            },
+            {
+                name: 'Full Defense',
+                stat: 'toughness',
+                description: 'Guard against all possibilities',
+                successEffect: 'reduced',
+                failEffect: 'normal',
+                effectText: {
+                    success: 'Your solid defense holds!',
+                    fail: 'The attack finds a gap in your defense!'
+                }
+            }
+        ]
+    },
+    {
+        id: 'spinning_attack',
+        title: '🌪️ WHIRLWIND ASSAULT!',
+        description: '{opponent} begins spinning rapidly with weapon extended!',
+        options: [
+            {
+                name: 'Backstep',
+                stat: 'speed',
+                description: 'Quickly retreat out of range',
+                successEffect: 'avoided',
+                failEffect: 'normal',
+                effectText: {
+                    success: 'You retreat just in time!',
+                    fail: 'You weren\'t fast enough to escape!'
+                }
+            },
+            {
+                name: 'Duck Under',
+                stat: 'agility',
+                description: 'Slide beneath the spinning blade',
+                successEffect: 'counter',
+                failEffect: 'increased',
+                effectText: {
+                    success: 'You slide under and strike from below!',
+                    fail: 'The blade catches you while ducking!'
+                }
+            },
+            {
+                name: 'Endure',
+                stat: 'toughness',
+                description: 'Brace for the spinning strikes',
+                successEffect: 'reduced',
+                failEffect: 'normal',
+                effectText: {
+                    success: 'You endure the assault with minimal damage!',
+                    fail: 'The spinning attack batters you!'
+                }
+            }
+        ]
+    },
+    {
+        id: 'overhead_smash',
+        title: '💥 DEVASTATING OVERHEAD!',
+        description: '{opponent} raises their weapon high for a crushing overhead smash!',
+        options: [
+            {
+                name: 'Side Roll',
+                stat: 'agility',
+                description: 'Roll to the side at the last moment',
+                successEffect: 'avoided',
+                failEffect: 'normal',
+                effectText: {
+                    success: 'You roll aside as the weapon crashes down!',
+                    fail: 'You didn\'t roll far enough!'
+                }
+            },
+            {
+                name: 'Parry Upward',
+                stat: 'strength',
+                description: 'Meet the attack with your own force',
+                successEffect: 'counter',
+                failEffect: 'increased',
+                effectText: {
+                    success: 'You deflect the attack and counter!',
+                    fail: 'The overhead attack crushes through your parry!'
+                }
+            },
+            {
+                name: 'Cross Block',
+                stat: 'toughness',
+                description: 'Block with weapon held horizontally',
+                successEffect: 'reduced',
+                failEffect: 'normal',
+                effectText: {
+                    success: 'Your block absorbs most of the force!',
+                    fail: 'The overhead attack breaks through!'
+                }
+            }
+        ]
+    },
+    {
+        id: 'charge_attack',
+        title: '🐂 CHARGING RUSH!',
+        description: '{opponent} lowers their stance and charges at you like a bull!',
+        options: [
+            {
+                name: 'Sidestep',
+                stat: 'speed',
+                description: 'Move out of the way quickly',
+                successEffect: 'avoided',
+                failEffect: 'increased',
+                effectText: {
+                    success: 'You sidestep elegantly!',
+                    fail: 'The charge catches you!'
+                }
+            },
+            {
+                name: 'Stand Firm',
+                stat: 'strength',
+                description: 'Meet the charge head-on',
+                successEffect: 'counter',
+                failEffect: 'increased',
+                effectText: {
+                    success: 'You stop the charge and counter!',
+                    fail: 'You get bowled over!'
+                }
+            },
+            {
+                name: 'Brace for Impact',
+                stat: 'toughness',
+                description: 'Prepare to absorb the collision',
+                successEffect: 'reduced',
+                failEffect: 'normal',
+                effectText: {
+                    success: 'You weather the charge!',
+                    fail: 'The impact staggers you!'
+                }
+            }
+        ]
+    },
+    {
+        id: 'throwing_knife',
+        title: '🗡️ HIDDEN BLADE!',
+        description: '{opponent} suddenly produces a throwing knife and aims at you!',
+        options: [
+            {
+                name: 'Deflect',
+                stat: 'agility',
+                description: 'Swat the knife away',
+                successEffect: 'avoided',
+                failEffect: 'normal',
+                effectText: {
+                    success: 'You deflect the knife with your weapon!',
+                    fail: 'The knife grazes you!'
+                }
+            },
+            {
+                name: 'Matrix Dodge',
+                stat: 'luck',
+                description: 'Attempt an impossible dodge',
+                successEffect: 'counter',
+                failEffect: 'normal',
+                effectText: {
+                    success: 'You dodge impossibly and counter-attack!',
+                    fail: 'The knife finds its mark!'
+                }
+            },
+            {
+                name: 'Tank It',
+                stat: 'toughness',
+                description: 'Let your armor absorb it',
+                successEffect: 'reduced',
+                failEffect: 'normal',
+                effectText: {
+                    success: 'Your armor deflects the blade!',
+                    fail: 'The knife pierces through!'
+                }
+            }
+        ]
+    },
+    {
+        id: 'grapple_attempt',
+        title: '🤼 GRAPPLE ATTEMPT!',
+        description: '{opponent} rushes in to grab and grapple you!',
+        options: [
+            {
+                name: 'Break Free',
+                stat: 'strength',
+                description: 'Use raw power to escape',
+                successEffect: 'counter',
+                failEffect: 'increased',
+                effectText: {
+                    success: 'You break free and strike back!',
+                    fail: 'You\'re caught in the grapple!'
+                }
+            },
+            {
+                name: 'Slip Away',
+                stat: 'agility',
+                description: 'Use technique to escape the hold',
+                successEffect: 'avoided',
+                failEffect: 'normal',
+                effectText: {
+                    success: 'You slip out of the grapple!',
+                    fail: 'You get caught!'
+                }
+            },
+            {
+                name: 'Counter-Grapple',
+                stat: 'toughness',
+                description: 'Reverse the grapple',
+                successEffect: 'reduced',
+                failEffect: 'normal',
+                effectText: {
+                    success: 'You reverse the position!',
+                    fail: 'The grapple overwhelms you!'
+                }
+            }
+        ]
+    }
+];
+
+var currentBattleEvent = null;
+var eventTimer = null;
+
+function shouldTriggerBattleEvent(turnCount, player, opponent) {
+    // Only trigger once per battle
+    if (currentBattleEvent) {
+        return false;
+    }
+    
+    // Check if either player is below 50% HP - don't trigger event if fight is almost over
+    var playerHpPercent = (player.currentHp / player.maxHp) * 100;
+    var opponentHpPercent = (opponent.currentHp / opponent.maxHp) * 100;
+    
+    if (playerHpPercent < 50 || opponentHpPercent < 50) {
+        console.log('Event skipped: One fighter below 50% HP');
+        return false;
+    }
+    
+    // 25% chance to trigger on turns 2-5 (early/mid fight)
+    if (turnCount >= 2 && turnCount <= 5) {
+        return Math.random() * 100 < 25;
+    }
+    
+    return false;
+}
+
+function triggerBattleEvent(player, opponent) {
+    // Select random event
+    var randomEvent = battleEvents[Math.floor(Math.random() * battleEvents.length)];
+    currentBattleEvent = {
+        event: randomEvent,
+        player: player,
+        opponent: opponent,
+        resolved: false
+    };
+    
+    showBattleEventModal(randomEvent, player, opponent);
+}
+
+function showBattleEventModal(event, player, opponent) {
+    var description = event.description.replace('{opponent}', opponent.name);
+    
+    var optionsHTML = '';
+    for (var i = 0; i < event.options.length; i++) {
+        var option = event.options[i];
+        var stat = option.stat;
+        var statValue = player.stats[stat];
+        var successChance = calculateEventSuccessChance(statValue);
+        
+        optionsHTML += 
+            '<div class="event-option" onclick="selectEventOption(' + i + ')">' +
+                '<div class="event-option-title">' + option.name + '</div>' +
+                '<div class="event-option-stat">' + stat.charAt(0).toUpperCase() + stat.slice(1) + ' ' + statValue + '</div>' +
+                '<div class="event-option-chance">' + successChance + '% Success Chance</div>' +
+                '<div class="event-option-effect">' + option.description + '</div>' +
+            '</div>';
+    }
+    
+    var modalHTML = 
+        '<div id="battleEventModal" class="event-modal">' +
+            '<div class="event-container">' +
+                '<div class="event-title">' + event.title + '</div>' +
+                '<div class="event-description">' + description + '</div>' +
+                '<div class="event-timer" id="eventTimer">Time remaining: <span id="eventTimerCount">30</span>s</div>' +
+                '<div class="event-options">' + optionsHTML + '</div>' +
+            '</div>' +
+        '</div>';
+    
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    startEventTimer();
+}
+
+function calculateEventSuccessChance(statValue) {
+    // New Formula: Base 5% + (stat value * 1.5%)
+    // Example: Stat 1 = 6.5%, Stat 10 = 20%, Stat 25 = 42.5%, Stat 50 = 80%, Stat 63+ = 100%
+    // This makes low stats much harder and requires higher investment for guaranteed success
+    return Math.min(100, 5 + (statValue * 1.5));
+}
+
+function startEventTimer() {
+    var timeLeft = 30;
+    var timerElement = document.getElementById('eventTimerCount');
+    var timerContainer = document.getElementById('eventTimer');
+    
+    eventTimer = setInterval(function() {
+        timeLeft--;
+        if (timerElement) {
+            timerElement.textContent = timeLeft;
+        }
+        
+        if (timeLeft <= 10 && timerContainer) {
+            timerContainer.classList.add('urgent');
+        }
+        
+        if (timeLeft <= 0) {
+            clearInterval(eventTimer);
+            // Auto-select random option
+            var randomOption = Math.floor(Math.random() * currentBattleEvent.event.options.length);
+            selectEventOption(randomOption, true);
+        }
+    }, 1000);
+}
+
+function selectEventOption(optionIndex, autoSelected) {
+    if (!currentBattleEvent || currentBattleEvent.resolved) return;
+    
+    clearInterval(eventTimer);
+    
+    var event = currentBattleEvent.event;
+    var option = event.options[optionIndex];
+    var player = currentBattleEvent.player;
+    var statValue = player.stats[option.stat];
+    var successChance = calculateEventSuccessChance(statValue);
+    
+    var success = Math.random() * 100 < successChance;
+    
+    currentBattleEvent.resolved = true;
+    currentBattleEvent.result = {
+        option: option,
+        success: success,
+        autoSelected: autoSelected
+    };
+    
+    closeBattleEventModal();
+    showEventResult(option, success, autoSelected);
+}
+
+function closeBattleEventModal() {
+    var modal = document.getElementById('battleEventModal');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+function showEventResult(option, success, autoSelected) {
+    var resultText = success ? option.effectText.success : option.effectText.fail;
+    
+    if (autoSelected) {
+        addToFightLog('<span style="color: #888;">⏱️ Time ran out! Randomly chose: ' + option.name + '</span>');
+    }
+    
+    if (success) {
+        addToFightLog('<span style="color: #6bcf7f; font-weight: bold; font-size: 1.1em;">✅ EVENT SUCCESS! ' + resultText + '</span>');
+        
+        // Show what effect will happen
+        if (option.successEffect === 'avoided') {
+            addToFightLog('<span style="color: #6bcf7f;">→ You will take NO damage from the next attack!</span>');
+        } else if (option.successEffect === 'counter') {
+            addToFightLog('<span style="color: #6bcf7f;">→ You will COUNTER the next attack!</span>');
+        } else if (option.successEffect === 'reduced') {
+            addToFightLog('<span style="color: #6bcf7f;">→ You will take 50% LESS damage from the next attack!</span>');
+        }
+    } else {
+        addToFightLog('<span style="color: #ff6b6b; font-weight: bold; font-size: 1.1em;">❌ EVENT FAILED! ' + resultText + '</span>');
+        
+        // Show what effect will happen
+        if (option.failEffect === 'normal') {
+            addToFightLog('<span style="color: #888;">→ You will take normal damage from the next attack.</span>');
+        } else if (option.failEffect === 'increased') {
+            addToFightLog('<span style="color: #ff6b6b;">→ You will take 50% MORE damage from the next attack!</span>');
+        }
+    }
+}
+
+function getEventEffect() {
+    if (!currentBattleEvent || !currentBattleEvent.resolved) {
+        return null;
+    }
+    
+    var result = currentBattleEvent.result;
+    var effect = result.success ? result.option.successEffect : result.option.failEffect;
+    
+    // Clear the event after getting the effect
+    var eventEffect = {
+        effect: effect,
+        applied: false
+    };
+    
+    return eventEffect;
+}
+
 function startFight(player, opponent, isDiamondFight) {
     hideAll();
     var fightScreen = document.getElementById('fightScreen');
@@ -4879,27 +5588,33 @@ function startFight(player, opponent, isDiamondFight) {
         function simulateFight(player, opponent) {
     var turnCount = 1;
     var maxTurns = 100;
-    
-    // Arrays for varied combat text
-    var attackVerbs = ['strikes', 'slashes', 'punches', 'kicks', 'smashes', 'hammers', 'pounds', 'batters', 'thrashes', 'wallops'];
-    var dodgeTexts = ['sidesteps the attack', 'ducks under the blow', 'weaves away', 'rolls to safety', 'leaps back', 'twists away', 'slips aside', 'dances away from danger', 'evades with grace', 'narrowly avoids the strike'];
-    var critTexts = ['finds a weak spot', 'lands a devastating blow', 'strikes with perfect form', 'connects with brutal force', 'delivers a crushing hit', 'finds an opening', 'strikes with deadly precision', 'unleashes their full power'];
-    var weaponHits = ['blade cuts deep', 'weapon finds its mark', 'steel bites flesh', 'iron meets bone', 'weapon strikes true', 'blade slices through defenses'];
-    var bodyParts = ['chest', 'shoulder', 'arm', 'leg', 'ribs', 'side', 'back'];
-    var painSounds = ['grunts in pain', 'winces', 'staggers', 'reels back', 'stumbles', 'cries out', 'gasps'];
+    currentBattleEvent = null; // Reset event for new fight
     
     function fightTurn() {
-    if (turnCount > maxTurns || player.currentHp <= 0 || opponent.currentHp <= 0) {
-        endCombat(player, opponent);
-        return;
-    }
-    
-    // NERFED: Calculate speed-based extra attacks (0.5% per point instead of 1%)
-    var playerSpeedChance = Math.min(50, (player.stats.speed - 1) * 0.5); // Changed from 1
-    var playerExtraAttack = Math.random() * 100 < playerSpeedChance;
-    
-    var opponentSpeedChance = Math.min(50, (opponent.stats.speed - 1) * 0.5); // Changed from 1
-    var opponentExtraAttack = Math.random() * 100 < opponentSpeedChance;
+        if (turnCount > maxTurns || player.currentHp <= 0 || opponent.currentHp <= 0) {
+            endCombat(player, opponent);
+            return;
+        }
+        
+        // Check for battle event trigger
+if (shouldTriggerBattleEvent(turnCount, player, opponent)) {
+    triggerBattleEvent(player, opponent);
+            // Wait for event to resolve before continuing
+            var checkResolved = setInterval(function() {
+                if (currentBattleEvent && currentBattleEvent.resolved) {
+                    clearInterval(checkResolved);
+                    setTimeout(fightTurn, 1000); // Continue fight after event
+                }
+            }, 100);
+            return;
+        }
+        
+        // NERFED: Calculate speed-based extra attacks (0.5% per point instead of 1%)
+        var playerSpeedChance = Math.min(50, (player.stats.speed - 1) * 0.5);
+        var playerExtraAttack = Math.random() * 100 < playerSpeedChance;
+        
+        var opponentSpeedChance = Math.min(50, (opponent.stats.speed - 1) * 0.5);
+        var opponentExtraAttack = Math.random() * 100 < opponentSpeedChance;
         
         // Player attacks first
         if (player.currentHp > 0) {
@@ -4952,6 +5667,36 @@ function startFight(player, opponent, isDiamondFight) {
 }
             
             function performAttack(attacker, defender, attackerType) {
+    // Check for event effects
+    var eventEffect = getEventEffect();
+    
+    if (eventEffect && !eventEffect.applied && attackerType === 'opponent') {
+        eventEffect.applied = true;
+        
+        if (eventEffect.effect === 'avoided') {
+            // Player avoided the attack completely
+            addToFightLog('<span class="dodge">⚡ EVENT BONUS: ' + defender.name + ' avoided the attack thanks to the event!</span>');
+            return;
+        } else if (eventEffect.effect === 'counter') {
+            // Player counters - opponent takes damage instead
+            var counterDamage = Math.floor((10 + (defender.stats.strength - 1) * 2) * 1.5);
+            attacker.currentHp = Math.max(0, attacker.currentHp - counterDamage);
+            addToFightLog('<span style="color: #6bcf7f; font-weight: bold;">⚡ EVENT BONUS: ' + defender.name + ' counters for <span class="damage">' + counterDamage + '</span> damage!</span>');
+            
+            if (attackerType === 'player') {
+                var opponentHpPercent = (attacker.currentHp / attacker.maxHp) * 100;
+                document.getElementById('player2HP').style.width = opponentHpPercent + '%';
+                document.getElementById('player2HPText').textContent = Math.floor(attacker.currentHp) + '/' + attacker.maxHp;
+            } else {
+                var playerHpPercent = (attacker.currentHp / attacker.maxHp) * 100;
+                document.getElementById('player1HP').style.width = playerHpPercent + '%';
+                document.getElementById('player1HPText').textContent = Math.floor(attacker.currentHp) + '/' + attacker.maxHp;
+            }
+            return;
+        }
+        // 'reduced' and 'increased' effects are handled below in damage calculation
+    }
+    
     var baseDamage = 10 + (attacker.stats.strength - 1) * 2;
     
     // Equipment bonus
@@ -5001,12 +5746,28 @@ function startFight(player, opponent, isDiamondFight) {
     }
     
     // Defense reduction from armor (capped at 60%)
-    var defenseReduction = Math.min(60, totalDefense * 0.25);
-    damage = Math.floor(damage * (1 - defenseReduction / 100));
+var defenseReduction = Math.min(60, totalDefense * 0.25);
+damage = Math.floor(damage * (1 - defenseReduction / 100));
+
+// Apply event effect modifiers
+if (eventEffect && !eventEffect.applied && attackerType === 'opponent') {
+    eventEffect.applied = true;
+    var originalDamage = damage;
     
-    // Toughness check - chance to reduce damage by 50%
-    var toughnessChance = Math.min(50, (defender.stats.toughness - 1) * 0.5); // 0.5% per point, max 50%
-    var toughnessProc = Math.random() * 100 < toughnessChance;
+    if (eventEffect.effect === 'reduced') {
+        damage = Math.floor(damage * 0.5); // Take 50% less damage
+        var damageReduced = originalDamage - damage;
+        addToFightLog('<span style="color: #6bcf7f;">⚡ EVENT BONUS: Damage reduced by ' + damageReduced + '! (From ' + originalDamage + ' to ' + damage + ')</span>');
+    } else if (eventEffect.effect === 'increased') {
+        damage = Math.floor(damage * 1.5); // Take 50% more damage
+        var damageIncreased = damage - originalDamage;
+        addToFightLog('<span style="color: #ff6b6b;">❌ EVENT PENALTY: Damage increased by ' + damageIncreased + '! (From ' + originalDamage + ' to ' + damage + ')</span>');
+    }
+}
+
+// Toughness check - chance to reduce damage by 50%
+var toughnessChance = Math.min(50, (defender.stats.toughness - 1) * 0.5);
+var toughnessProc = Math.random() * 100 < toughnessChance;
     
     if (toughnessProc) {
         damage = Math.floor(damage * 0.5); // 50% damage reduction when it procs
@@ -5159,7 +5920,6 @@ function playerUseSpecial() {
     }
                 
     var specialBaseDamage = attacker.level * 4 + 20;
-    var specialStrengthBonus = (attacker.stats.strength - 1) * 2;
     var specialDamage = specialBaseDamage + specialStrengthBonus;
     
     if (attacker.equipment && attacker.equipment.weapon) {
