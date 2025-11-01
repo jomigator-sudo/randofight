@@ -445,6 +445,139 @@
         font-size: 1em;
     }
 }
+
+.clash-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.95);
+    z-index: 5000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.clash-container {
+    background: linear-gradient(135deg, #1a1a2e, #16213e);
+    border: 3px solid #ffd93d;
+    border-radius: 15px;
+    padding: 30px;
+    max-width: 600px;
+    width: 90%;
+    box-shadow: 0 0 30px rgba(255, 217, 61, 0.5);
+}
+
+.clash-title {
+    color: #ffd93d;
+    font-size: 1.8em;
+    text-align: center;
+    margin-bottom: 20px;
+    font-weight: bold;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    animation: pulse 1s infinite;
+}
+
+.clash-timer {
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 1.5em;
+    color: #ff6b6b;
+    font-weight: bold;
+}
+
+.clash-info {
+    background: rgba(255,255,255,0.1);
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+
+.clash-fighters {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 20px;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.clash-fighter {
+    text-align: center;
+}
+
+.clash-fighter-name {
+    color: #4ecdc4;
+    font-size: 1.1em;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.clash-attack-name {
+    color: #ffd93d;
+    font-size: 1em;
+    margin-bottom: 10px;
+}
+
+.clash-damage {
+    color: #ff6b6b;
+    font-size: 1.3em;
+    font-weight: bold;
+}
+
+.clash-vs {
+    color: #fff;
+    font-size: 2em;
+    font-weight: bold;
+}
+
+.clash-bar-container {
+    width: 100%;
+    height: 40px;
+    background: rgba(0,0,0,0.3);
+    border-radius: 20px;
+    overflow: hidden;
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.clash-bar {
+    position: absolute;
+    top: 0;
+    height: 100%;
+    transition: width 0.5s ease;
+}
+
+.clash-bar-player {
+    left: 0;
+    background: linear-gradient(90deg, #4ecdc4, #6c5ce7);
+}
+
+.clash-bar-opponent {
+    right: 0;
+    background: linear-gradient(90deg, #ff6b6b, #ff8c42);
+}
+
+.clash-center-line {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    width: 2px;
+    height: 100%;
+    background: #fff;
+    z-index: 1;
+}
+
+@keyframes clashShake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+
+.clashing {
+    animation: clashShake 0.1s infinite;
+}
+        
     </style>
 </head>
 <body>
@@ -592,10 +725,11 @@
         <button class="btn btn-secondary" onclick="showLoginForm()">Back to Login</button>
     </div>
 </div>
-    <!-- Credits Button -->
-    <div style="text-align: center; margin-top: 30px;">
-        <button class="btn" style="background: rgba(255,255,255,0.1); color: #888; padding: 8px 20px; font-size: 0.85em;" onclick="showCreditsModal()">ℹ️ Credits</button>
-    </div>
+    <!-- Credits and News Buttons -->
+<div style="text-align: center; margin-top: 30px; display: flex; gap: 10px; justify-content: center;">
+    <button class="btn" style="background: rgba(255,255,255,0.1); color: #888; padding: 8px 20px; font-size: 0.85em;" onclick="showNewsModal()">📰 News</button>
+    <button class="btn" style="background: rgba(255,255,255,0.1); color: #888; padding: 8px 20px; font-size: 0.85em;" onclick="showCreditsModal()">ℹ️ Credits</button>
+</div>
 </div> <!-- This closes loginScreen -->
 </div>
 
@@ -653,10 +787,11 @@
         </button>
         <button class="btn btn-secondary" onclick="logoutUser()" style="padding: 10px 30px;">Logout</button>
     </div>
-        <!-- Credits Button -->
-    <div style="text-align: center; margin-top: 20px;">
-        <button class="btn" style="background: rgba(255,255,255,0.1); color: #888; padding: 8px 20px; font-size: 0.85em;" onclick="showCreditsModal()">ℹ️ Credits</button>
-    </div>
+        <!-- Credits and News Buttons -->
+<div style="text-align: center; margin-top: 20px; display: flex; gap: 10px; justify-content: center;">
+    <button class="btn" style="background: rgba(255,255,255,0.1); color: #888; padding: 8px 20px; font-size: 0.85em;" onclick="showNewsModal()">📰 News</button>
+    <button class="btn" style="background: rgba(255,255,255,0.1); color: #888; padding: 8px 20px; font-size: 0.85em;" onclick="showCreditsModal()">ℹ️ Credits</button>
+</div>
 </div> <!-- This closes titleScreen -->
 
 <!-- Fighter Creation Screen -->
@@ -784,6 +919,11 @@
         }
     }
 };
+
+var fightPaused = false;       
+var clashTimer = null;
+var clashTimeLeft = 10;
+        
 // Add these functions near the top of your script section, after the gameState declaration
 
 function updateLoadingProgress(percent, message) {
@@ -3376,11 +3516,11 @@ function checkWeeklyPrizes() {
             
             // Award prize based on BEST rank only (not for each fighter)
             var prizeAmount = 0;
-            if (bestRankForAccount === 1) prizeAmount = 100;
-            else if (bestRankForAccount === 2) prizeAmount = 50;
-            else if (bestRankForAccount === 3) prizeAmount = 25;
-            else if (bestRankForAccount >= 4 && bestRankForAccount <= 10) prizeAmount = 10;
-            
+            if (bestRankForAccount === 1) prizeAmount = 300;  // Changed from 100
+            else if (bestRankForAccount === 2) prizeAmount = 150;  // Changed from 50
+            else if (bestRankForAccount === 3) prizeAmount = 75;  // Changed from 25
+            else if (bestRankForAccount >= 4 && bestRankForAccount <= 10) prizeAmount = 30;  // Changed from 10
+                        
             if (prizeAmount > 0) {
                 // Award diamonds only once
                 gameState.diamonds += prizeAmount;
@@ -3478,10 +3618,10 @@ function updateWeeklyLeaderboard() {
                 var rank = i + 1;
                 
                 var prizeText = '';
-                if (rank === 1) prizeText = ' (100💎)';
-                else if (rank === 2) prizeText = ' (50💎)';
-                else if (rank === 3) prizeText = ' (25💎)';
-                else if (rank >= 4 && rank <= 10) prizeText = ' (10💎)';
+                if (rank === 1) prizeText = ' (300💎)';  // Changed from 100💎
+                else if (rank === 2) prizeText = ' (150💎)';  // Changed from 50💎
+                else if (rank === 3) prizeText = ' (75💎)';  // Changed from 25💎
+                else if (rank >= 4 && rank <= 10) prizeText = ' (30💎)';  // Changed from 10💎
                 
                 var medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : rank + '.';
                 
@@ -4129,10 +4269,7 @@ function confirmResetStats(diamondCost, allocatedPoints) {
         return;
     }
     
-    // Set cooldown immediately when regular fight starts
-    gameState.fightCooldownEnd = Date.now() + (60 * 1000);
-    saveToSupabase();
-    updateFightStatus();
+    // DON'T set cooldown here - it will be set when returning to fighter screen
     
     // Initialize fight tracking
     if (gameState.currentFighter.lossStreak === undefined) {
@@ -4394,19 +4531,19 @@ function fightWithoutRest() {
     }
     
     // Calculate HP with scaling based on level
-var hpGain = 0;
-for (var lvl = 1; lvl < opponentLevel; lvl++) {
-    if (lvl > 50) {
-        hpGain += 50;
-    } else if (lvl > 30) {
-        hpGain += 35;
-    } else if (lvl > 15) {
-        hpGain += 25;
-    } else {
-        hpGain += 20;
+    var hpGain = 0;
+    for (var lvl = 1; lvl < opponentLevel; lvl++) {
+        if (lvl > 50) {
+            hpGain += 50;
+        } else if (lvl > 30) {
+            hpGain += 35;
+        } else if (lvl > 15) {
+            hpGain += 25;
+        } else {
+            hpGain += 20;
+        }
     }
-}
-var opponentMaxHp = Math.floor(100 + hpGain);
+    var opponentMaxHp = Math.floor(100 + hpGain);
     
     // If guaranteed loss, reduce HP further
     if (guaranteedLoss) {
@@ -4459,7 +4596,32 @@ var opponentMaxHp = Math.floor(100 + hpGain);
         ]
     };
     
-    // Select weapon tier based on level - REBALANCED
+    // BALANCED weapon generation - match or slightly exceed player's weapon
+    var playerWeaponPower = 0;
+    var playerTotalArmor = 0;
+
+    // Safely check for player equipment
+    try {
+        if (gameState && gameState.currentFighter && gameState.currentFighter.equipment) {
+            if (gameState.currentFighter.equipment.weapon) {
+                playerWeaponPower = gameState.currentFighter.equipment.weapon.power || 0;
+            }
+            
+            // Calculate player's total armor
+            var armorSlots = ['offhand', 'helmet', 'shoulders', 'gloves', 'chest', 'greaves', 'boots'];
+            for (var i = 0; i < armorSlots.length; i++) {
+                var slot = armorSlots[i];
+                var item = gameState.currentFighter.equipment[slot];
+                if (item && item.statType === 'Defense') {
+                    playerTotalArmor += item.power || 0;
+                }
+            }
+        }
+    } catch (e) {
+        console.log('Error reading player equipment:', e);
+    }
+
+    // Select weapon tier based on level
     var weaponTier;
     if (opponentLevel <= 5) {
         weaponTier = weaponOptions.low;
@@ -4474,19 +4636,28 @@ var opponentMaxHp = Math.floor(100 + hpGain);
     } else {
         weaponTier = weaponOptions.legendary;
     }
-    
+
     // Random weapon from appropriate tier
     var selectedWeapon = weaponTier[Math.floor(Math.random() * weaponTier.length)];
-    
-    // REDUCED weapon scaling for better balance
-    var weaponPowerBonus = Math.floor(opponentLevel * 0.5); // Reduced from 0.8
-    selectedWeapon.power = selectedWeapon.power + weaponPowerBonus;
-    
-    // Weaker weapons for guaranteed losses
-    if (guaranteedLoss && selectedWeapon.power > 5) {
-        selectedWeapon.power = Math.floor(selectedWeapon.power * 0.6);
+
+    // Calculate weapon power
+    var weaponPowerBonus = Math.floor(opponentLevel * 0.5);
+    var baseWeaponPower = selectedWeapon.power + weaponPowerBonus;
+
+    // If player has a weapon, match it or make bot weapon similar
+    if (playerWeaponPower > 0) {
+        var minBotWeapon = Math.floor(playerWeaponPower * 0.9);
+        var maxBotWeapon = Math.floor(playerWeaponPower * 1.2);
+        baseWeaponPower = Math.max(minBotWeapon, Math.min(maxBotWeapon, baseWeaponPower));
     }
-    
+
+    // Weaker weapons for guaranteed losses
+    if (guaranteedLoss && baseWeaponPower > 5) {
+        baseWeaponPower = Math.floor(baseWeaponPower * 0.6);
+    }
+
+    selectedWeapon.power = baseWeaponPower;
+
     // Generate armor for bots
     var botEquipment = {
         weapon: {
@@ -4496,52 +4667,69 @@ var opponentMaxHp = Math.floor(100 + hpGain);
             statType: 'Damage'
         }
     };
-    
-    // Add defensive equipment for higher level bots - HEAVILY REDUCED
-if (opponentLevel >= 5) {
-    var armorPower = Math.floor(3 + opponentLevel * 0.4); // Reduced from 1.2
-    
-    if (opponentLevel >= 10) {
-        botEquipment.chest = {
-            name: 'Battle Armor',
-            rarity: opponentLevel >= 15 ? 'rare' : 'uncommon',
-            power: armorPower,
-            statType: 'Defense'
-        };
-    }
-    
-    if (opponentLevel >= 15) {
-        botEquipment.helmet = {
-            name: 'War Helm',
-            rarity: opponentLevel >= 20 ? 'epic' : 'rare',
-            power: Math.floor(armorPower * 0.7),
-            statType: 'Defense'
-        };
+
+    // Add defensive equipment for higher level bots
+    if (opponentLevel >= 5) {
+        var baseArmorPerSlot = playerTotalArmor > 0 ? Math.floor(playerTotalArmor / 7) : Math.floor(3 + opponentLevel * 0.4);
+        baseArmorPerSlot = Math.max(baseArmorPerSlot, Math.floor(3 + opponentLevel * 0.4));
         
-        botEquipment.offhand = {
-            name: 'Tower Shield',
-            rarity: opponentLevel >= 20 ? 'epic' : 'rare',
-            power: Math.floor(armorPower * 0.8),
-            statType: 'Defense'
-        };
-    }
-    
-    if (opponentLevel >= 20) {
-        botEquipment.boots = {
-            name: 'Plated Boots',
-            rarity: 'epic',
-            power: Math.floor(armorPower * 0.5),
-            statType: 'Defense'
-        };
+        if (opponentLevel >= 10) {
+            botEquipment.chest = {
+                name: 'Battle Armor',
+                rarity: opponentLevel >= 15 ? 'rare' : 'uncommon',
+                power: Math.floor(baseArmorPerSlot * 1.2),
+                statType: 'Defense'
+            };
+        }
         
-        botEquipment.gloves = {
-            name: 'Gauntlets',
-            rarity: 'epic',
-            power: Math.floor(armorPower * 0.5),
-            statType: 'Defense'
-        };
+        if (opponentLevel >= 15) {
+            botEquipment.helmet = {
+                name: 'War Helm',
+                rarity: opponentLevel >= 20 ? 'epic' : 'rare',
+                power: Math.floor(baseArmorPerSlot * 0.8),
+                statType: 'Defense'
+            };
+            
+            botEquipment.offhand = {
+                name: 'Tower Shield',
+                rarity: opponentLevel >= 20 ? 'epic' : 'rare',
+                power: Math.floor(baseArmorPerSlot * 1.0),
+                statType: 'Defense'
+            };
+        }
+        
+        if (opponentLevel >= 20) {
+            botEquipment.boots = {
+                name: 'Plated Boots',
+                rarity: 'epic',
+                power: Math.floor(baseArmorPerSlot * 0.6),
+                statType: 'Defense'
+            };
+            
+            botEquipment.gloves = {
+                name: 'Gauntlets',
+                rarity: 'epic',
+                power: Math.floor(baseArmorPerSlot * 0.6),
+                statType: 'Defense'
+            };
+        }
+        
+        if (opponentLevel >= 25) {
+            botEquipment.shoulders = {
+                name: 'Pauldrons',
+                rarity: 'epic',
+                power: Math.floor(baseArmorPerSlot * 0.7),
+                statType: 'Defense'
+            };
+            
+            botEquipment.greaves = {
+                name: 'Leg Guards',
+                rarity: 'epic',
+                power: Math.floor(baseArmorPerSlot * 0.7),
+                statType: 'Defense'
+            };
+        }
     }
-}
     
     // Stats distribution
     var stats = {
@@ -5604,6 +5792,11 @@ function startFight(player, opponent, isDiamondFight) {
     currentBattleEvent = null; // Reset event for new fight
     
     function fightTurn() {
+        // Check if fight is paused (for clash)
+    if (fightPaused) {
+        setTimeout(fightTurn, 100); // Check again in 100ms
+        return;
+    }
         if (turnCount > maxTurns || player.currentHp <= 0 || opponent.currentHp <= 0) {
             endCombat(player, opponent);
             return;
@@ -5759,10 +5952,61 @@ function performAttack(attacker, defender, attackerType) {
     }
 
     // If using special attack, do that instead of normal attack
-    if (shouldUseSpecial) {
+if (shouldUseSpecial) {
+    // Check if this is opponent using special and player can counter
+    if (attackerType === 'opponent' && defender.level >= 10 && defender.specialAttack && 
+        defender.specialAvailable && !defender.specialUsed) {
+        
+        // Store opponent reference for clash
+        defender.currentOpponent = attacker;
+        
+        // Calculate damages for display
+        var playerDamage = calculateSpecialDamage(defender, attacker);
+        var opponentDamage = calculateSpecialDamage(attacker, defender);
+        
+        // Show clash prompt to player
+        showSpecialClashPrompt(playerDamage, opponentDamage, defender.specialAttack.name, attacker.specialAttack.name);
+        return; // Wait for player decision
+    } 
+    // Check if this is player using special and bot can counter (and bot's special is stronger)
+    else if (attackerType === 'player' && defender.level >= 10 && defender.specialAttack && 
+             defender.specialAvailable && !defender.specialUsed) {
+        
+        // Calculate damages to see if bot should counter
+        var playerDamage = calculateSpecialDamage(attacker, defender);
+        var opponentDamage = calculateSpecialDamage(defender, attacker);
+        
+        // Bot counters if their special is stronger
+        if (opponentDamage > playerDamage) {
+            console.log('Bot countering player special attack!');
+            
+            // Mark bot special as used
+            defender.specialUsed = true;
+            
+            // Store player as opponent for clash
+            attacker.currentOpponent = defender;
+            
+            // Add log message
+            addToFightLog('<span style="color: #ff6b6b; font-weight: bold;">⚠️ ' + defender.name + ' counters with their own special attack!</span>');
+            
+            // Start clash immediately
+            fightPaused = true;
+            setTimeout(function() {
+                startSpecialClash();
+            }, 1000);
+            return;
+        } else {
+            // Bot's special is weaker, let player's special go through
+            performSpecialAttack(attacker, defender, attackerType);
+            return;
+        }
+    } 
+    else {
+        // Normal special attack (no clash possible)
         performSpecialAttack(attacker, defender, attackerType);
-        return; // Exit early, don't do normal attack
+        return;
     }
+}
     
     var baseDamage = 10 + (attacker.stats.strength - 1) * 2;
     
@@ -5994,6 +6238,363 @@ function playerUseSpecial() {
         document.getElementById('player1HP').style.width = playerHpPercent + '%';
         document.getElementById('player1HPText').textContent = Math.floor(defender.currentHp) + '/' + defender.maxHp;
     }
+}   
+
+function showSpecialClashPrompt(playerDamage, opponentDamage, playerSpecialName, opponentSpecialName) {
+    clashTimeLeft = 10;
+    fightPaused = true; // PAUSE THE FIGHT
+    
+    var modalHTML = 
+        '<div id="clashPromptModal" class="clash-modal">' +
+            '<div class="clash-container">' +
+                '<div class="clash-title">⚡ SPECIAL ATTACK CLASH! ⚡</div>' +
+                '<div class="clash-timer">Counter in: <span id="clashTimerCount">' + clashTimeLeft + '</span>s</div>' +
+                
+                '<div class="clash-info">' +
+                    '<p style="color: #fff; text-align: center; margin-bottom: 15px; font-size: 1.1em;">' +
+                        'Your opponent is using their special attack!' +
+                    '</p>' +
+                    '<p style="color: #ffd93d; text-align: center; font-size: 0.95em;">' +
+                        'Counter with your own special attack to clash!' +
+                    '</p>' +
+                '</div>' +
+                
+                '<div class="clash-fighters">' +
+                    '<div class="clash-fighter">' +
+                        '<div class="clash-fighter-name">You</div>' +
+                        '<div class="clash-attack-name">' + playerSpecialName + '</div>' +
+                    '</div>' +
+                    '<div class="clash-vs">VS</div>' +
+                    '<div class="clash-fighter">' +
+                        '<div class="clash-fighter-name" style="color: #ff6b6b;">Opponent</div>' +
+                        '<div class="clash-attack-name">' + opponentSpecialName + '</div>' +
+                    '</div>' +
+                '</div>' +
+                
+                '<div style="display: flex; gap: 15px; margin-top: 25px;">' +
+                    '<button class="btn btn-primary" onclick="acceptSpecialClash()" style="flex: 1; padding: 15px; font-size: 1.2em; font-weight: bold;">⚡ COUNTER!</button>' +
+                    '<button class="btn btn-secondary" onclick="declineSpecialClash()" style="flex: 1; padding: 15px;">Defend</button>' +
+                '</div>' +
+            '</div>' +
+        '</div>';
+    
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    // Start countdown timer
+    clashTimer = setInterval(function() {
+        clashTimeLeft--;
+        var timerElement = document.getElementById('clashTimerCount');
+        if (timerElement) {
+            timerElement.textContent = clashTimeLeft;
+        }
+        
+        if (clashTimeLeft <= 0) {
+            clearInterval(clashTimer);
+            declineSpecialClash();
+        }
+    }, 1000);
+}
+
+function acceptSpecialClash() {
+    clearInterval(clashTimer);
+    var modal = document.getElementById('clashPromptModal');
+    if (modal) {
+        modal.remove();
+    }
+    
+    // Mark player special as used
+    gameState.currentFighter.specialUsed = true;
+    var btn = document.getElementById('player1SpecialBtn');
+    if (btn) {
+        btn.disabled = true;
+        btn.textContent = '⚡ Special Used';
+        btn.style.opacity = '0.5';
+    }
+    
+    // Start the clash animation
+    startSpecialClash();
+}
+
+function declineSpecialClash() {
+    clearInterval(clashTimer);
+    var modal = document.getElementById('clashPromptModal');
+    if (modal) {
+        modal.remove();
+    }
+    
+    // Opponent's special attack goes through normally
+    continueOpponentSpecial();
+    
+    // RESUME THE FIGHT
+    fightPaused = false;
+}
+function startSpecialClash() {
+    var player = gameState.currentFighter;
+    var opponent = player.currentOpponent;
+    
+    // Calculate both special attack damages
+    var playerDamage = calculateSpecialDamage(player, opponent);
+    var opponentDamage = calculateSpecialDamage(opponent, player);
+    
+    var modalHTML = 
+        '<div id="clashAnimationModal" class="clash-modal">' +
+            '<div class="clash-container clashing">' +
+                '<div class="clash-title">⚔️ CLASH IN PROGRESS! ⚔️</div>' +
+                
+                '<div class="clash-fighters" style="margin-bottom: 30px;">' +
+                    '<div class="clash-fighter">' +
+                        '<div class="clash-fighter-name">' + player.name + '</div>' +
+                        '<div class="clash-attack-name">' + player.specialAttack.name + '</div>' +
+                    '</div>' +
+                    '<div class="clash-vs">⚔️</div>' +
+                    '<div class="clash-fighter">' +
+                        '<div class="clash-fighter-name" style="color: #ff6b6b;">' + opponent.name + '</div>' +
+                        '<div class="clash-attack-name">' + opponent.specialAttack.name + '</div>' +
+                    '</div>' +
+                '</div>' +
+                
+                '<div class="clash-bar-container">' +
+                    '<div class="clash-bar clash-bar-player" id="clashBarPlayer" style="width: 50%;"></div>' +
+                    '<div class="clash-bar clash-bar-opponent" id="clashBarOpponent" style="width: 50%;"></div>' +
+                    '<div class="clash-center-line"></div>' +
+                '</div>' +
+                
+                '<div style="text-align: center; color: #ffd93d; font-size: 1.1em; font-weight: bold; margin-top: 20px;">The stronger attack will prevail!</div>' +
+            '</div>' +
+        '</div>';
+    
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    // Animate the clash bars
+    animateClash(playerDamage, opponentDamage);
+}
+
+function animateClash(playerDamage, opponentDamage) {
+    var playerBar = document.getElementById('clashBarPlayer');
+    var opponentBar = document.getElementById('clashBarOpponent');
+    
+    if (!playerBar || !opponentBar) return;
+    
+    var totalDamage = playerDamage + opponentDamage;
+    var playerPercent = (playerDamage / totalDamage) * 100;
+    var opponentPercent = (opponentDamage / totalDamage) * 100;
+    
+    // Determine who wins
+    var playerWins = playerDamage > opponentDamage;
+    
+    // Generate random animation pattern (5 different patterns)
+    var pattern = Math.floor(Math.random() * 5);
+    var animationPhases = [];
+    
+    if (pattern === 0) {
+        // Pattern 1: Player dominates early, opponent fights back, winner emerges
+        animationPhases = [
+            { player: 50, opponent: 50, delay: 100 },
+            { player: 60, opponent: 40, delay: 500 },
+            { player: 75, opponent: 25, delay: 1000 },
+            { player: 85, opponent: 15, delay: 1500 },
+            { player: 90, opponent: 10, delay: 2000 },
+            { player: 80, opponent: 20, delay: 2500 },
+            { player: 65, opponent: 35, delay: 3000 },
+            { player: 45, opponent: 55, delay: 3500 },
+            { player: 30, opponent: 70, delay: 4000 },
+            { player: 20, opponent: 80, delay: 4500 },
+            { player: playerWins ? 35 : 10, opponent: playerWins ? 65 : 90, delay: 5000 },
+            { player: playerWins ? 55 : 5, opponent: playerWins ? 45 : 95, delay: 5500 },
+            { player: playerWins ? 75 : 2, opponent: playerWins ? 25 : 98, delay: 6000 },
+            { player: playerWins ? 90 : 1, opponent: playerWins ? 10 : 99, delay: 6500 },
+            { player: playerWins ? 100 : 0, opponent: playerWins ? 0 : 100, delay: 7000 }
+        ];
+    } else if (pattern === 1) {
+        // Pattern 2: Opponent dominates early, player fights back, winner emerges
+        animationPhases = [
+            { player: 50, opponent: 50, delay: 100 },
+            { player: 40, opponent: 60, delay: 500 },
+            { player: 25, opponent: 75, delay: 1000 },
+            { player: 15, opponent: 85, delay: 1500 },
+            { player: 10, opponent: 90, delay: 2000 },
+            { player: 20, opponent: 80, delay: 2500 },
+            { player: 35, opponent: 65, delay: 3000 },
+            { player: 55, opponent: 45, delay: 3500 },
+            { player: 70, opponent: 30, delay: 4000 },
+            { player: 80, opponent: 20, delay: 4500 },
+            { player: playerWins ? 70 : 25, opponent: playerWins ? 30 : 75, delay: 5000 },
+            { player: playerWins ? 80 : 15, opponent: playerWins ? 20 : 85, delay: 5500 },
+            { player: playerWins ? 90 : 8, opponent: playerWins ? 10 : 92, delay: 6000 },
+            { player: playerWins ? 95 : 3, opponent: playerWins ? 5 : 97, delay: 6500 },
+            { player: playerWins ? 100 : 0, opponent: playerWins ? 0 : 100, delay: 7000 }
+        ];
+    } else if (pattern === 2) {
+        // Pattern 3: Even back and forth, sudden winner emergence
+        animationPhases = [
+            { player: 50, opponent: 50, delay: 100 },
+            { player: 60, opponent: 40, delay: 500 },
+            { player: 55, opponent: 45, delay: 900 },
+            { player: 45, opponent: 55, delay: 1300 },
+            { player: 40, opponent: 60, delay: 1700 },
+            { player: 50, opponent: 50, delay: 2100 },
+            { player: 60, opponent: 40, delay: 2500 },
+            { player: 50, opponent: 50, delay: 2900 },
+            { player: 40, opponent: 60, delay: 3300 },
+            { player: 50, opponent: 50, delay: 3700 },
+            { player: 55, opponent: 45, delay: 4100 },
+            { player: 45, opponent: 55, delay: 4500 },
+            { player: playerWins ? 60 : 35, opponent: playerWins ? 40 : 65, delay: 4900 },
+            { player: playerWins ? 80 : 20, opponent: playerWins ? 20 : 80, delay: 5300 },
+            { player: playerWins ? 95 : 5, opponent: playerWins ? 5 : 95, delay: 5700 },
+            { player: playerWins ? 100 : 0, opponent: playerWins ? 0 : 100, delay: 6100 }
+        ];
+    } else if (pattern === 3) {
+        // Pattern 4: Slow grind, one side slowly dominates
+        animationPhases = [
+            { player: 50, opponent: 50, delay: 100 },
+            { player: 55, opponent: 45, delay: 600 },
+            { player: 60, opponent: 40, delay: 1200 },
+            { player: 58, opponent: 42, delay: 1800 },
+            { player: 53, opponent: 47, delay: 2400 },
+            { player: 48, opponent: 52, delay: 3000 },
+            { player: 43, opponent: 57, delay: 3600 },
+            { player: 40, opponent: 60, delay: 4200 },
+            { player: playerWins ? 45 : 35, opponent: playerWins ? 55 : 65, delay: 4800 },
+            { player: playerWins ? 55 : 28, opponent: playerWins ? 45 : 72, delay: 5400 },
+            { player: playerWins ? 70 : 18, opponent: playerWins ? 30 : 82, delay: 6000 },
+            { player: playerWins ? 85 : 8, opponent: playerWins ? 15 : 92, delay: 6600 },
+            { player: playerWins ? 100 : 0, opponent: playerWins ? 0 : 100, delay: 7200 }
+        ];
+    } else {
+        // Pattern 5: Explosive start, calm middle, dramatic finish
+        animationPhases = [
+            { player: 50, opponent: 50, delay: 100 },
+            { player: 75, opponent: 25, delay: 400 },
+            { player: 30, opponent: 70, delay: 800 },
+            { player: 65, opponent: 35, delay: 1200 },
+            { player: 40, opponent: 60, delay: 1600 },
+            { player: 48, opponent: 52, delay: 2000 },
+            { player: 52, opponent: 48, delay: 2400 },
+            { player: 50, opponent: 50, delay: 2800 },
+            { player: 48, opponent: 52, delay: 3200 },
+            { player: 52, opponent: 48, delay: 3600 },
+            { player: playerWins ? 60 : 40, opponent: playerWins ? 40 : 60, delay: 4000 },
+            { player: playerWins ? 75 : 25, opponent: playerWins ? 25 : 75, delay: 4400 },
+            { player: playerWins ? 88 : 12, opponent: playerWins ? 12 : 88, delay: 4800 },
+            { player: playerWins ? 96 : 4, opponent: playerWins ? 4 : 96, delay: 5200 },
+            { player: playerWins ? 100 : 0, opponent: playerWins ? 0 : 100, delay: 5600 }
+        ];
+    }
+    
+    // Animate through each phase
+    animationPhases.forEach(function(phase) {
+        setTimeout(function() {
+            if (playerBar && opponentBar) {
+                playerBar.style.width = phase.player + '%';
+                opponentBar.style.width = phase.opponent + '%';
+                
+                // Add extra shake effect during big pushes
+                var container = document.querySelector('.clash-container');
+                if (container && (phase.player >= 80 || phase.opponent >= 80)) {
+                    container.classList.add('clashing');
+                } else if (container) {
+                    container.classList.remove('clashing');
+                }
+            }
+        }, phase.delay);
+    });
+    
+    // After animation completes, resolve the clash
+    var finalDelay = animationPhases[animationPhases.length - 1].delay + 500;
+    setTimeout(function() {
+        resolveSpecialClash(playerDamage, opponentDamage);
+    }, finalDelay);
+}
+
+function resolveSpecialClash(playerDamage, opponentDamage) {
+    var modal = document.getElementById('clashAnimationModal');
+    if (modal) {
+        modal.remove();
+    }
+    
+    var player = gameState.currentFighter;
+    var opponent = player.currentOpponent;
+    
+    if (playerDamage > opponentDamage) {
+        // Player wins clash - deal FULL player special damage to opponent
+        opponent.currentHp = Math.max(0, opponent.currentHp - playerDamage);
+        
+        addToFightLog('<span style="color: #6bcf7f; font-size: 1.2em; font-weight: bold;">⚡ CLASH VICTORY! ⚡</span>');
+        addToFightLog('<span class="player-name">' + player.name + '</span>\'s <span class="special">' + player.specialAttack.name + '</span> overpowers <span class="opponent-name">' + opponent.name + '</span>\'s <span class="special">' + opponent.specialAttack.name + '</span>!');
+        addToFightLog('<span class="opponent-name">' + opponent.name + '</span> takes <span class="damage">' + playerDamage + '</span> damage from the clash!');
+        
+        // Update opponent HP
+        var opponentHpPercent = (opponent.currentHp / opponent.maxHp) * 100;
+        document.getElementById('player2HP').style.width = opponentHpPercent + '%';
+        document.getElementById('player2HPText').textContent = Math.floor(opponent.currentHp) + '/' + opponent.maxHp;
+        
+    } else if (opponentDamage > playerDamage) {
+        // Opponent wins clash - deal FULL opponent special damage to player
+        player.currentHp = Math.max(0, player.currentHp - opponentDamage);
+        
+        addToFightLog('<span style="color: #ff6b6b; font-size: 1.2em; font-weight: bold;">⚔️ CLASH DEFEAT! ⚔️</span>');
+        addToFightLog('<span class="opponent-name">' + opponent.name + '</span>\'s <span class="special">' + opponent.specialAttack.name + '</span> overpowers <span class="player-name">' + player.name + '</span>\'s <span class="special">' + player.specialAttack.name + '</span>!');
+        addToFightLog('<span class="player-name">' + player.name + '</span> takes <span class="damage">' + opponentDamage + '</span> damage from the clash!');
+        
+        // Update player HP
+        var playerHpPercent = (player.currentHp / player.maxHp) * 100;
+        document.getElementById('player1HP').style.width = playerHpPercent + '%';
+        document.getElementById('player1HPText').textContent = Math.floor(player.currentHp) + '/' + player.maxHp;
+        
+    } else {
+        // Perfect tie - no damage
+        addToFightLog('<span style="color: #ffd93d; font-size: 1.2em; font-weight: bold;">⚖️ PERFECT CLASH! ⚖️</span>');
+        addToFightLog('Both special attacks are perfectly matched! The attacks cancel each other out - no damage dealt!');
+    }
+    
+    // Clear opponent reference
+    player.currentOpponent = null;
+    
+    // RESUME THE FIGHT
+    fightPaused = false;
+}
+function calculateSpecialDamage(attacker, defender) {
+    var specialDamage = attacker.level * 4 + 20;
+    
+    if (attacker.equipment && attacker.equipment.weapon) {
+        specialDamage += attacker.equipment.weapon.power || 0;
+    }
+    
+    // Apply defense
+    var totalDefense = 0;
+    if (defender.equipment) {
+        var equipmentSlotNames = ['offhand', 'helmet', 'shoulders', 'gloves', 'chest', 'greaves', 'boots'];
+        for (var i = 0; i < equipmentSlotNames.length; i++) {
+            var slot = equipmentSlotNames[i];
+            var item = defender.equipment[slot];
+            if (item && item.statType === 'Defense') {
+                totalDefense += item.power || 0;
+            }
+        }
+    }
+    
+    var defenseReduction = Math.min(60, totalDefense * 0.25);
+    specialDamage = Math.floor(specialDamage * (1 - defenseReduction / 100));
+    
+    return Math.max(3, specialDamage);
+}
+
+function continueOpponentSpecial() {
+    // This is called when player declines to clash or time runs out
+    // The opponent's special attack continues normally
+    var player = gameState.currentFighter;
+    var opponent = player.currentOpponent;
+    
+    if (opponent && opponent.currentHp > 0) {
+        performSpecialAttack(opponent, player, 'opponent');
+    }
+    
+    // Clear opponent reference
+    player.currentOpponent = null;
+    
+    // RESUME THE FIGHT
+    fightPaused = false;
 }
             
             function endCombat(player, opponent) {
@@ -6529,19 +7130,22 @@ if (fighter.level === 10) {
         function endFight() {
     document.getElementById('endFightBtn').style.display = 'none';
     
-    // Restore the header and logo when leaving fight screen
+    // Restore the header when leaving fight screen
     var headerContainer = document.querySelector('h1.title');
     if (headerContainer) {
         headerContainer.style.display = 'block';
     }
-    var companyLogo = document.querySelector('.company-logo');
-    if (companyLogo) {
-        companyLogo.style.display = 'block';
+    
+    // Set cooldown timer NOW (when returning to fighter screen) if it was a regular fight
+    var fighter = gameState.currentFighter;
+    if (fighter && !fighter.isDiamondFight) {
+        gameState.fightCooldownEnd = Date.now() + (60 * 1000);
+        saveToSupabase();
     }
     
     // Check if player lost to a boss - show rematch modal
     if (gameState.currentFighter && gameState.currentBoss && gameState.currentFighter.didLoseBossFight) {
-        gameState.currentFighter.didLoseBossFight = false; // Clear the flag
+        gameState.currentFighter.didLoseBossFight = false;
         showRematchModal(gameState.currentBoss);
         return;
     }
@@ -7042,6 +7646,65 @@ function claimReferralReward(newUserId) {
         console.error('Error claiming referral rewards:', error);
     });
 }
+
+        function showNewsModal() {
+    var existingModal = document.getElementById('newsModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    var modalHTML = 
+        '<div id="newsModal" style="display: block; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 2000; overflow-y: auto;">' +
+            '<div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #1a1a2e; padding: 40px; border-radius: 15px; border: 3px solid #ffd93d; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto; box-shadow: 0 0 30px rgba(255, 217, 61, 0.3);">' +
+                '<h2 style="color: #ffd93d; text-align: center; margin-bottom: 30px; font-size: 2em;">📰 Game News & Updates</h2>' +
+                
+                // Latest update
+                '<div style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 10px; margin-bottom: 20px; border-left: 4px solid #4ecdc4;">' +
+                    '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">' +
+                        '<h3 style="color: #4ecdc4; margin: 0; font-size: 1.3em;">Version 1.0 Launch!</h3>' +
+                        '<span style="color: #888; font-size: 0.85em;">Jan 2025</span>' +
+                    '</div>' +
+                    '<div style="color: #ccc; font-size: 0.95em; line-height: 1.6;">' +
+                        '<p style="margin-bottom: 10px;">🎉 <strong>Welcome to RandoFight!</strong></p>' +
+                        '<ul style="margin-left: 20px; margin-bottom: 10px;">' +
+                            '<li>⚔️ Real-time PvP battles</li>' +
+                            '<li>🎯 Battle events system</li>' +
+                            '<li>🏆 Weekly tournaments with prizes</li>' +
+                            '<li>📅 Daily task rewards</li>' +
+                            '<li>💎 Equipment loot system</li>' +
+                            '<li>⚡ Special attacks at level 10</li>' +
+                            '<li>👥 Referral rewards</li>' +
+                        '</ul>' +
+                        '<p style="margin-top: 10px; color: #6bcf7f;"><strong>Thank you for playing!</strong></p>' +
+                    '</div>' +
+                '</div>' +
+                
+                // Placeholder for future updates
+                '<div style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 10px; margin-bottom: 20px; border-left: 4px solid #888;">' +
+                    '<h3 style="color: #888; margin: 0 0 10px 0; font-size: 1.1em;">Coming Soon...</h3>' +
+                    '<div style="color: #888; font-size: 0.9em;">' +
+                        '<p>Stay tuned for future updates and new features!</p>' +
+                    '</div>' +
+                '</div>' +
+                
+                '<div style="text-align: center; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1);">' +
+                    '<p style="color: #666; font-size: 0.8em;">Follow us on social media for the latest news!</p>' +
+                '</div>' +
+                
+                '<button class="btn btn-secondary" onclick="closeNewsModal()" style="width: 100%; margin-top: 20px; padding: 12px;">Close</button>' +
+            '</div>' +
+        '</div>';
+    
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+}
+
+function closeNewsModal() {
+    var modal = document.getElementById('newsModal');
+    if (modal) {
+        modal.remove();
+    }
+}
+        
 function showCreditsModal() {
     var existingModal = document.getElementById('creditsModal');
     if (existingModal) {
