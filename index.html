@@ -2199,6 +2199,7 @@ function setupLoginKeyHandlers() {
             
             // Also save to localStorage as backup
             saveGameData();
+            return true; // ADD THIS
         } else {
             console.error('Supabase save error:', response.status, response.statusText);
             return response.text().then(function(text) {
@@ -3790,11 +3791,19 @@ if (isFirstFighter && gameState.currentUser && !gameState.currentUser.isGuest) {
     var userId = getUserId();
     processReferral(userId);
     
-    // Wait for save to complete, then claim rewards
+    // Give the new user their 50 diamonds immediately
     setTimeout(function() {
-        console.log('Attempting to claim referral rewards...');
-        claimReferralReward(userId);
-    }, 2000); // Increased delay to ensure save completes
+        var referrerId = localStorage.getItem('randofight_referrer');
+        if (referrerId) {
+            console.log('New user receiving referral bonus');
+            gameState.diamonds += 50;
+            updateDiamondDisplay();
+            saveToSupabase();
+            localStorage.removeItem('randofight_referrer');
+            
+            alert('🎉 Welcome bonus! You received 50 diamonds for using a referral link! 💎\n\nYour friend can claim their reward from the Referral menu.');
+        }
+    }, 1000);
 }
             
             showFighterScreen();
@@ -7411,10 +7420,23 @@ function showReferralModal() {
     
     // Get referral stats
     getReferralStats(userId).then(function(stats) {
+        var claimButtonHTML = '';
+        
+        if (stats.unclaimedRewards > 0) {
+            claimButtonHTML = 
+                '<div style="background: rgba(255, 215, 0, 0.2); border: 2px solid #ffd93d; border-radius: 8px; padding: 15px; margin-bottom: 20px;">' +
+                    '<div style="color: #ffd93d; font-weight: bold; font-size: 1.2em; margin-bottom: 10px;">💎 Unclaimed Rewards!</div>' +
+                    '<div style="color: #fff; font-size: 1.1em; margin-bottom: 15px;">' + stats.unclaimedRewards + ' diamonds waiting</div>' +
+                    '<button class="btn btn-primary" onclick="claimAllReferralRewards()" style="width: 100%; padding: 12px; font-size: 1.1em; font-weight: bold;">CLAIM ' + stats.unclaimedRewards + ' 💎</button>' +
+                '</div>';
+        }
+        
         var modal = 
             '<div id="referralModal" style="display: block; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; overflow-y: auto;">' +
                 '<div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #1a1a2e; padding: 30px; border-radius: 10px; border: 2px solid #4ecdc4; max-width: 500px; width: 90%; text-align: center;">' +
                     '<h2 style="color: #4ecdc4; margin-bottom: 20px;">🎁 Refer Friends & Earn Rewards!</h2>' +
+                    
+                    claimButtonHTML +
                     
                     '<div style="background: rgba(255, 215, 0, 0.2); border: 2px solid #ffd93d; border-radius: 8px; padding: 20px; margin-bottom: 20px;">' +
                         '<h3 style="color: #ffd93d; margin-bottom: 15px;">How It Works</h3>' +
@@ -7422,6 +7444,7 @@ function showReferralModal() {
                             '<p style="margin-bottom: 10px;">✅ Share your unique referral link</p>' +
                             '<p style="margin-bottom: 10px;">✅ Friend creates account & first fighter</p>' +
                             '<p style="margin-bottom: 10px;">✅ You both get <span style="color: #ffd93d; font-weight: bold;">50 💎</span></p>' +
+                            '<p style="color: #888; font-size: 0.85em; margin-top: 10px;">⚠️ Remember to claim your rewards!</p>' +
                         '</div>' +
                     '</div>' +
                     
@@ -7432,8 +7455,8 @@ function showReferralModal() {
                             '<div style="color: #888; font-size: 0.9em;">Friends Referred</div>' +
                         '</div>' +
                         '<div style="color: #fff; margin-top: 10px;">' +
-                            '<span style="color: #6bcf7f; font-size: 1.5em; font-weight: bold;">' + (stats.totalReferred * 50) + ' 💎</span>' +
-                            '<div style="color: #888; font-size: 0.9em;">Diamonds Earned</div>' +
+                            '<span style="color: #6bcf7f; font-size: 1.5em; font-weight: bold;">' + stats.totalClaimed + ' 💎</span>' +
+                            '<div style="color: #888; font-size: 0.9em;">Total Diamonds Claimed</div>' +
                         '</div>' +
                     '</div>' +
                     
@@ -7506,14 +7529,29 @@ function getReferralStats(userId) {
         return response.json();
     })
     .then(function(referrals) {
+        var unclaimedCount = 0;
+        var claimedCount = 0;
+        
+        for (var i = 0; i < referrals.length; i++) {
+            if (referrals[i].reward_claimed) {
+                claimedCount++;
+            } else {
+                unclaimedCount++;
+            }
+        }
+        
         return {
-            totalReferred: referrals.length
+            totalReferred: referrals.length,
+            unclaimedRewards: unclaimedCount * 50, // 50 diamonds per referral
+            totalClaimed: claimedCount * 50
         };
     })
     .catch(function(error) {
         console.error('Error getting referral stats:', error);
         return {
-            totalReferred: 0
+            totalReferred: 0,
+            unclaimedRewards: 0,
+            totalClaimed: 0
         };
     });
 }
@@ -7585,18 +7623,20 @@ function processReferral(newUserId) {
     });
 }
 
-function claimReferralReward(newUserId) {
-    var referrerId = localStorage.getItem('randofight_referrer');
+function claimAllReferralRewards() {
+    var userId = getUserId();
     
-    if (!referrerId) {
-        console.log('No referrer found, skipping reward claim');
-        return;
+    console.log('Claiming all referral rewards for user:', userId);
+    
+    // Disable the claim button immediately to prevent double-claiming
+    var claimButton = event.target;
+    if (claimButton) {
+        claimButton.disabled = true;
+        claimButton.textContent = 'Claiming...';
     }
     
-    console.log('Claiming referral rewards for referrer:', referrerId, 'and new user:', newUserId);
-    
-    // First, check if this referral has already been claimed
-    fetch(SUPABASE_URL + '/rest/v1/referrals?referred_id=eq.' + encodeURIComponent(newUserId), {
+    // Get ALL referrals for this user
+    fetch(SUPABASE_URL + '/rest/v1/referrals?referrer_id=eq.' + encodeURIComponent(userId), {
         method: 'GET',
         headers: {
             'apikey': SUPABASE_ANON_KEY,
@@ -7604,87 +7644,109 @@ function claimReferralReward(newUserId) {
         }
     })
     .then(function(response) {
+        if (!response.ok) {
+            throw new Error('Failed to fetch referrals: ' + response.status);
+        }
         return response.json();
     })
-    .then(function(referrals) {
-        if (referrals.length === 0) {
-            console.log('No referral record found');
-            localStorage.removeItem('randofight_referrer');
-            return;
-        }
+    .then(function(allReferrals) {
+        console.log('All referrals for user:', allReferrals);
         
-        var referral = referrals[0];
-        
-        if (referral.reward_claimed) {
-            console.log('Referral reward already claimed');
-            localStorage.removeItem('randofight_referrer');
-            return;
-        }
-        
-        // Award diamonds to referrer
-        return fetch(SUPABASE_URL + '/rest/v1/game_data?user_id=eq.' + encodeURIComponent(referrerId), {
-            method: 'GET',
-            headers: {
-                'apikey': SUPABASE_ANON_KEY,
-                'Authorization': 'Bearer ' + SUPABASE_ANON_KEY
+        // Filter unclaimed referrals manually
+        var unclaimedReferrals = [];
+        for (var i = 0; i < allReferrals.length; i++) {
+            var ref = allReferrals[i];
+            
+            // Check both false and null (in case field is null)
+            if (ref.reward_claimed === false || ref.reward_claimed === null || ref.reward_claimed === undefined) {
+                unclaimedReferrals.push(ref);
             }
-        })
-        .then(function(response) {
-            return response.json();
-        })
-        .then(function(data) {
-            if (data && data.length > 0) {
-                var referrerData = data[0];
-                var newDiamonds = (referrerData.diamonds || 0) + 50;
-                
-                console.log('Awarding 50 diamonds to referrer. Old:', referrerData.diamonds, 'New:', newDiamonds);
-                
-                return fetch(SUPABASE_URL + '/rest/v1/game_data?user_id=eq.' + encodeURIComponent(referrerId), {
+        }
+        
+        console.log('Unclaimed referrals found:', unclaimedReferrals.length);
+        
+        if (unclaimedReferrals.length === 0) {
+            alert('No unclaimed rewards available!');
+            closeReferralModal();
+            if (claimButton) {
+                claimButton.disabled = false;
+                claimButton.textContent = 'CLAIM';
+            }
+            return Promise.reject('No unclaimed rewards');
+        }
+        
+        var totalRewards = unclaimedReferrals.length * 50;
+        
+        console.log('Total reward to claim:', totalRewards, 'diamonds');
+        
+        // Mark all referrals as claimed FIRST (without claimed_at field)
+        var updatePromises = [];
+        for (var i = 0; i < unclaimedReferrals.length; i++) {
+            var referral = unclaimedReferrals[i];
+            console.log('Updating referral ID:', referral.id);
+            
+            updatePromises.push(
+                fetch(SUPABASE_URL + '/rest/v1/referrals?id=eq.' + referral.id, {
                     method: 'PATCH',
                     headers: {
                         'Content-Type': 'application/json',
                         'apikey': SUPABASE_ANON_KEY,
-                        'Authorization': 'Bearer ' + SUPABASE_ANON_KEY
+                        'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+                        'Prefer': 'return=representation'
                     },
-                    body: JSON.stringify({ 
-                        diamonds: newDiamonds,
-                        updated_at: new Date().toISOString()
+                    body: JSON.stringify({
+                        reward_claimed: true
                     })
-                });
-            }
-        })
-        .then(function() {
-            // Award diamonds to new user (current user)
-            console.log('Awarding 50 diamonds to new user');
-            gameState.diamonds += 50;
-            updateDiamondDisplay();
-            saveToSupabase(); // This will save the new diamond count
-            
-            // Mark referral as claimed
-            return fetch(SUPABASE_URL + '/rest/v1/referrals?referred_id=eq.' + encodeURIComponent(newUserId), {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'apikey': SUPABASE_ANON_KEY,
-                    'Authorization': 'Bearer ' + SUPABASE_ANON_KEY
-                },
-                body: JSON.stringify({ 
-                    reward_claimed: true,
-                    claimed_at: new Date().toISOString()
                 })
-            });
-        })
-        .then(function() {
-            console.log('Referral rewards claimed successfully!');
-            localStorage.removeItem('randofight_referrer');
+                .then(function(response) {
+                    console.log('Update response status:', response.status);
+                    if (!response.ok) {
+                        return response.text().then(function(text) {
+                            console.error('Update failed:', text);
+                            throw new Error('Failed to update referral: ' + response.status);
+                        });
+                    }
+                    return response.json();
+                })
+                .then(function(result) {
+                    console.log('Update successful:', result);
+                    return result;
+                })
+            );
+        }
+        
+        return Promise.all(updatePromises).then(function(results) {
+            console.log('All referrals marked as claimed. Results:', results);
             
-            // Show notification
-            alert('🎉 Referral bonus! You and your friend both received 50 diamonds! 💎');
+            // Now award diamonds
+            gameState.diamonds += totalRewards;
+            updateDiamondDisplay();
+            saveToSupabase();
+            
+            return totalRewards;
         });
+    })
+    .then(function(totalRewards) {
+        console.log('Successfully claimed', totalRewards, 'diamonds');
+        
+        // Close modal
+        closeReferralModal();
+        
+        // Show success message
+        alert('🎉 Successfully claimed ' + totalRewards + ' diamonds! 💎');
     })
     .catch(function(error) {
         console.error('Error claiming referral rewards:', error);
-        alert('There was an error claiming referral rewards. Please contact support.');
+        
+        // Re-enable button on error
+        if (claimButton) {
+            claimButton.disabled = false;
+            claimButton.textContent = 'CLAIM';
+        }
+        
+        if (error !== 'No unclaimed rewards') {
+            alert('Error claiming rewards. Please try again or contact support.');
+        }
     });
 }
         function showNewsModal() {
