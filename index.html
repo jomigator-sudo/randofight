@@ -639,7 +639,7 @@
     <div style="position: relative; width: 100%;">
         <input type="password" id="loginPassword" placeholder="Enter your password" style="padding-right: 45px; width: 100%;">
         <button type="button" onclick="togglePasswordVisibility('loginPassword', 'loginPasswordToggle')" id="loginPasswordToggle" class="password-toggle-btn">
-            🔒
+            Show
         </button>
     </div>
 </div>
@@ -668,7 +668,7 @@
     <div style="position: relative; width: 100%;">
         <input type="password" id="signupPassword" placeholder="Choose a password (min 6 characters)" style="padding-right: 45px; width: 100%;">
         <button type="button" onclick="togglePasswordVisibility('signupPassword', 'signupPasswordToggle')" id="signupPasswordToggle" class="password-toggle-btn">
-            🔒
+            Show
         </button>
     </div>
 </div>
@@ -707,7 +707,7 @@
     <div style="position: relative; width: 100%;">
         <input type="password" id="newPassword" placeholder="Enter new password (min 6 characters)" style="padding-right: 45px; width: 100%;">
         <button type="button" onclick="togglePasswordVisibility('newPassword', 'newPasswordToggle')" id="newPasswordToggle" class="password-toggle-btn">
-            🔒
+            Show
         </button>
     </div>
 </div>
@@ -716,7 +716,7 @@
     <div style="position: relative; width: 100%;">
         <input type="password" id="confirmPassword" placeholder="Confirm new password" style="padding-right: 45px; width: 100%;">
         <button type="button" onclick="togglePasswordVisibility('confirmPassword', 'confirmPasswordToggle')" id="confirmPasswordToggle" class="password-toggle-btn">
-            🔒
+            Show
         </button>
     </div>
 </div>
@@ -980,14 +980,14 @@ function closeDiscordModal() {
     if (!input || !button) return;
     
     if (input.type === 'password') {
-        // Password is hidden, clicking will show it
+        // Password is currently hidden, show it
         input.type = 'text';
-        button.textContent = '👁️'; // Open eye when visible
+        button.textContent = 'Hide'; // Now showing, so button says "Hide"
         button.classList.add('showing');
     } else {
-        // Password is visible, clicking will hide it
+        // Password is currently visible, hide it
         input.type = 'password';
-        button.textContent = '🔒'; // Lock icon when hidden
+        button.textContent = 'Show'; // Now hidden, so button says "Show"
         button.classList.remove('showing');
     }
 }
@@ -1527,25 +1527,48 @@ function showCreationScreen() {
 }
 
         function logoutUser() {
-            // Check if user is a guest
-            if (gameState.currentUser && gameState.currentUser.isGuest) {
-                if (confirm('You are playing as a guest. Your progress is only saved locally. Create an account to save your progress in the cloud?')) {
-                    showSignupFormWithData();
-                    return;
-                }
-            }
-            
-            gameState.currentUser = null;
-            gameState.isLoggedIn = false;
-            gameState.fighters = [];
-            gameState.currentFighter = null;
-            gameState.diamonds = 0;
-            
-            localStorage.removeItem('randofight_session');
-            
-            showLoginScreen();
-            console.log('User logged out');
+    // Check if user is a guest
+    if (gameState.currentUser && gameState.currentUser.isGuest) {
+        if (confirm('You are playing as a guest. Your progress is only saved locally. Create an account to save your progress in the cloud?')) {
+            showSignupFormWithData();
+            return;
         }
+    }
+    
+    // Clear all user data
+    gameState.currentUser = null;
+    gameState.isLoggedIn = false;
+    gameState.fighters = [];
+    gameState.currentFighter = null;
+    gameState.diamonds = 0;
+    gameState.fightCooldownEnd = 0;
+    gameState.unlockedSlots = [true, false, false, false, false];
+    gameState.currentSlotIndex = 0;
+    gameState.currentBoss = null;
+    gameState.dailyTasks = {
+        lastReset: new Date().toDateString(),
+        winsToday: 0,
+        claimed: {
+            win3: false,
+            win5: false,
+            win10: false,
+            win20: false,
+            win30: false
+        }
+    };
+    
+    // Clear ALL local storage data related to the game
+    localStorage.removeItem('randofight_session');
+    localStorage.removeItem('randofight_gamedata');
+    localStorage.removeItem('randofight_user_id');
+    localStorage.removeItem('randofight_referrer');
+    localStorage.removeItem('reset_token_demo');
+    localStorage.removeItem('reset_user_id');
+    
+    console.log('User logged out and all local data cleared');
+    
+    showLoginScreen();
+}
 
         function signupUser() {
             var email = document.getElementById('signupEmail').value.trim();
