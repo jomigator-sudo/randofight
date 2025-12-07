@@ -893,6 +893,8 @@
         </div>
 
     <script>
+        // Game version - increment this when you do a full wipe
+        var GAME_VERSION = 1.01; // Increment for each update
         // Supabase configuration
         var SUPABASE_URL = 'https://pmsbxvqavkoboxyhqjcc.supabase.co';
         var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBtc2J4dnFhdmtvYm94eWhxamNjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc2NjA2OTMsImV4cCI6MjA3MzIzNjY5M30.9-0-glSFo66fOktfR6ineO8J4Ra8RLVXwytCb9jca9U';
@@ -1571,149 +1573,154 @@ function showCreationScreen() {
 }
 
         function signupUser() {
-            var email = document.getElementById('signupEmail').value.trim();
-            var password = document.getElementById('signupPassword').value;
-            var username = document.getElementById('signupUsername').value.trim();
-            
-            if (!email || !password || !username) {
-                alert('Please fill in all fields.');
-                return;
-            }
-            
-            if (password.length < 6) {
-                alert('Password must be at least 6 characters long.');
-                return;
-            }
-            
-            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-                alert('Please enter a valid email address.');
-                return;
-            }
-            
-            if (username.length < 3) {
-                alert('Username must be at least 3 characters long.');
-                return;
-            }
-            
-            console.log('Attempting signup for:', email);
-            
-            // Store guest data before signup if applicable
-            var guestData = null;
-            if (gameState.currentUser && gameState.currentUser.isGuest) {
-                guestData = {
-                    fighters: gameState.fighters,
-                    diamonds: gameState.diamonds,
-                    fightCooldownEnd: gameState.fightCooldownEnd,
-                    unlockedSlots: gameState.unlockedSlots
-                };
-                console.log('Storing guest data for transfer:', guestData);
-            }
-            
-            fetch(SUPABASE_URL + '/rest/v1/users?email=eq.' + encodeURIComponent(email), {
-                method: 'GET',
-                headers: {
-                    'apikey': SUPABASE_ANON_KEY,
-                    'Authorization': 'Bearer ' + SUPABASE_ANON_KEY
-                }
-            })
-            .then(function(response) {
-                return response.json();
-            })
-            .then(function(existingUsers) {
-                if (existingUsers.length > 0) {
-                    alert('An account with this email already exists. Please use a different email or login instead.');
-                    return Promise.reject('Email exists');
-                }
-                
-                return fetch(SUPABASE_URL + '/rest/v1/users?username=eq.' + encodeURIComponent(username), {
-                    method: 'GET',
-                    headers: {
-                        'apikey': SUPABASE_ANON_KEY,
-                        'Authorization': 'Bearer ' + SUPABASE_ANON_KEY
-                    }
-                });
-            })
-            .then(function(response) {
-                return response.json();
-            })
-            .then(function(existingUsernames) {
-                if (existingUsernames.length > 0) {
-                    alert('Username "' + username + '" is already taken. Please choose a different username.');
-                    return Promise.reject('Username exists');
-                }
-                
-                return hashPassword(password);
-            })
-            .then(function(hashedPassword) {
-                var newUser = {
-                    user_id: 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
-                    email: email,
-                    username: username,
-                    password_hash: hashedPassword,
-                    created_at: new Date().toISOString()
-                };
-                
-                return fetch(SUPABASE_URL + '/rest/v1/users', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'apikey': SUPABASE_ANON_KEY,
-                        'Authorization': 'Bearer ' + SUPABASE_ANON_KEY
-                    },
-                    body: JSON.stringify(newUser)
-                })
-                .then(function(response) {
-    if (response.ok) {
-        // If we have guest data, transfer it to the new account
-        if (guestData) {
-            gameState.currentUser = newUser;
-            gameState.isLoggedIn = true;
-            gameState.fighters = guestData.fighters;
-            gameState.diamonds = guestData.diamonds;
-            gameState.fightCooldownEnd = guestData.fightCooldownEnd;
-            gameState.unlockedSlots = guestData.unlockedSlots;
-            
-            // Save guest data to the cloud
-            saveToSupabase();
-            
-            localStorage.setItem('randofight_session', JSON.stringify({
-                user_id: newUser.user_id,
-                email: newUser.email,
-                username: newUser.username,
-                loginTime: Date.now()
-            }));
-            
-            alert('Account created successfully and your guest progress has been transferred to the cloud!');
-            document.getElementById('usernameDisplay').textContent = newUser.username;
-            
-            // Clear form fields
-            document.getElementById('signupEmail').value = '';
-            document.getElementById('signupPassword').value = '';
-            document.getElementById('signupUsername').value = '';
-            
-            // Show title screen - this will trigger the button fix
-            showTitleScreen();
-        } else {
-            alert('Account created successfully! Please login with your new credentials.');
-            showLoginForm();
-            
-            // Clear form fields
-            document.getElementById('signupEmail').value = '';
-            document.getElementById('signupPassword').value = '';
-            document.getElementById('signupUsername').value = '';
-        }
-    } else {
-        throw new Error('Signup failed: ' + response.status);
+    var email = document.getElementById('signupEmail').value.trim();
+    var password = document.getElementById('signupPassword').value;
+    var username = document.getElementById('signupUsername').value.trim();
+    
+    if (!email || !password || !username) {
+        alert('Please fill in all fields.');
+        return;
     }
-});
-            })
-            .catch(function(error) {
-                if (error !== 'Email exists' && error !== 'Username exists') {
-                    console.error('Signup error:', error);
-                    alert('Account creation failed. Please try again.');
-                }
-            });
+
+    if (password.length < 6) {
+        alert('Password must be at least 6 characters long.');
+        return;
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        alert('Please enter a valid email address.');
+        return;
+    }
+
+    if (username.length < 3) {
+        alert('Username must be at least 3 characters long.');
+        return;
+    }
+
+    console.log('Attempting signup for:', email);
+
+    // Store guest data for transfer
+    var guestData = null;
+    if (gameState.currentUser && gameState.currentUser.isGuest) {
+        guestData = {
+            fighters: gameState.fighters,
+            diamonds: gameState.diamonds,
+            fightCooldownEnd: gameState.fightCooldownEnd,
+            unlockedSlots: gameState.unlockedSlots
+        };
+        console.log('Storing guest data for transfer:', guestData);
+    }
+
+    // Check if email already exists
+    fetch(SUPABASE_URL + '/rest/v1/users?email=eq.' + encodeURIComponent(email), {
+        method: 'GET',
+        headers: {
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': 'Bearer ' + SUPABASE_ANON_KEY
         }
+    })
+    .then(function(response) { return response.json(); })
+    .then(function(existingUsers) {
+        if (existingUsers.length > 0) {
+            alert('An account with this email already exists. Please use a different email or login instead.');
+            return Promise.reject('Email exists');
+        }
+
+        // Check if username already exists
+        return fetch(SUPABASE_URL + '/rest/v1/users?username=eq.' + encodeURIComponent(username), {
+            method: 'GET',
+            headers: {
+                'apikey': SUPABASE_ANON_KEY,
+                'Authorization': 'Bearer ' + SUPABASE_ANON_KEY
+            }
+        });
+    })
+    .then(function(response) { return response.json(); })
+    .then(function(existingUsernames) {
+        if (existingUsernames.length > 0) {
+            alert('Username "' + username + '" is already taken. Please choose a different username.');
+            return Promise.reject('Username exists');
+        }
+
+        return hashPassword(password);
+    })
+    .then(function(hashedPassword) {
+        var newUser = {
+            user_id: 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+            email: email,
+            username: username,
+            password_hash: hashedPassword,
+            created_at: new Date().toISOString()
+        };
+
+        // Create user
+        return fetch(SUPABASE_URL + '/rest/v1/users', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'apikey': SUPABASE_ANON_KEY,
+                'Authorization': 'Bearer ' + SUPABASE_ANON_KEY
+            },
+            body: JSON.stringify(newUser)
+        })
+        .then(function(response) {
+            if (!response.ok) {
+                throw new Error('Signup failed: ' + response.status);
+            }
+
+            // SUCCESSFUL SIGNUP
+            if (guestData) {
+                // Attach guest progress
+                gameState.currentUser = newUser;
+                gameState.currentUser.isGuest = false;
+                gameState.isLoggedIn = true;
+
+                gameState.fighters = guestData.fighters;
+                gameState.diamonds = guestData.diamonds;
+                gameState.fightCooldownEnd = guestData.fightCooldownEnd;
+                gameState.unlockedSlots = guestData.unlockedSlots;
+
+                localStorage.setItem('randofight_session', JSON.stringify({
+                    user_id: newUser.user_id,
+                    email: newUser.email,
+                    username: newUser.username,
+                    loginTime: Date.now(),
+                    isGuest: false
+                }));
+
+                // Clear form
+                document.getElementById('signupEmail').value = '';
+                document.getElementById('signupPassword').value = '';
+                document.getElementById('signupUsername').value = '';
+
+                alert('Account created successfully and your guest progress has been transferred to the cloud!');
+
+                // Save guest data then reload
+                saveToSupabase();
+
+                setTimeout(function() {
+                    sessionStorage.removeItem('returnToCharacterSelect'); // Clear flag
+                    location.reload();
+                }, 1500);
+
+            } else {
+                // Normal signup
+                alert('Account created successfully! Please login with your new credentials.');
+                showLoginForm();
+
+                document.getElementById('signupEmail').value = '';
+                document.getElementById('signupPassword').value = '';
+                document.getElementById('signupUsername').value = '';
+            }
+        });
+    })
+    .catch(function(error) {
+        if (error !== 'Email exists' && error !== 'Username exists') {
+            console.error('Signup error:', error);
+            alert('Account creation failed. Please try again.');
+        }
+    });
+}
 
         function playAsGuest() {
             console.log('Starting guest mode...');
@@ -1790,33 +1797,55 @@ function showCreationScreen() {
                 initPayPalButtons();
             }, 100);
         }
-
+        
+function returnToCharacterSelect() {
+    sessionStorage.removeItem('returnToCharacterSelect'); // Clear flag
+    showTitleScreen();
+}
+        
         function createAccountFromGuest() {
-            if (confirm('Creating an account will sync your current progress to the cloud. Continue?')) {
-                showSignupFormWithData();
-            }
-        }
+    sessionStorage.setItem('returnToCharacterSelect', 'true'); // Set flag
+    showSignupFormWithData();
+}
 
         function showSignupFormWithData() {
-            showLoginScreen();
-            showSignupForm();
-            
-            // Add a notice about data transfer
-            var signupForm = document.getElementById('signupForm');
-            if (signupForm) {
-                // Remove any existing notices first
-                var existingNotice = signupForm.querySelector('[style*="background: rgba(34, 197, 94"]');
-                if (existingNotice) {
-                    existingNotice.remove();
-                }
-                
-                var notice = document.createElement('div');
-                notice.innerHTML = '<div style="background: rgba(34, 197, 94, 0.2); border: 1px solid #22c55e; border-radius: 5px; padding: 10px; margin-bottom: 15px;">' +
-                    '<p style="color: #22c55e; font-size: 0.9em; margin: 0;">📤 <strong>Data Transfer:</strong> Your current progress will be saved to your new account!</p>' +
-                '</div>';
-                signupForm.insertBefore(notice, signupForm.firstChild);
-            }
+    showLoginScreen();
+    showSignupForm();
+    
+    // Add a notice about data transfer
+    var signupForm = document.getElementById('signupForm');
+    if (signupForm) {
+        // Remove any existing notices first
+        var existingNotice = signupForm.querySelector('[data-notice="guest-transfer"]');
+        if (existingNotice) {
+            existingNotice.remove();
         }
+        
+        var notice = document.createElement('div');
+        notice.setAttribute('data-notice', 'guest-transfer');
+        notice.innerHTML = '<div style="background: rgba(34, 197, 94, 0.2); border: 1px solid #22c55e; border-radius: 5px; padding: 10px; margin-bottom: 15px;">' +
+            '<p style="color: #22c55e; font-size: 0.9em; margin: 0;">📤 <strong>Data Transfer:</strong> Your current progress will be saved to your new account!</p>' +
+        '</div>';
+        signupForm.insertBefore(notice, signupForm.firstChild);
+        
+        // Check if we should show back button
+        if (sessionStorage.getItem('returnToCharacterSelect') === 'true') {
+            // Remove existing back button if any
+            var existingBackBtn = signupForm.querySelector('[data-button="back-to-select"]');
+            if (existingBackBtn) {
+                existingBackBtn.remove();
+            }
+            
+            // Add back button at the bottom
+            var backButtonDiv = document.createElement('div');
+            backButtonDiv.setAttribute('data-button', 'back-to-select');
+            backButtonDiv.style.textAlign = 'center';
+            backButtonDiv.style.marginTop = '15px';
+            backButtonDiv.innerHTML = '<button class="btn btn-secondary" onclick="returnToCharacterSelect()" style="width: 100%;">← Back to Character Select</button>';
+            signupForm.appendChild(backButtonDiv);
+        }
+    }
+}
 
         function sendPasswordReset() {
             var email = document.getElementById('resetEmail').value.trim();
@@ -2315,14 +2344,23 @@ function retryCloudSave(previousRetryCount) {
     
     updateLoadingProgress(20, 'Connecting to server...');
     
-    // First check localStorage for comparison
+    // Check localStorage version first
     var localData = localStorage.getItem('randofight_gamedata');
-    var localTimestamp = null;
+    var localVersion = 1; // Default to version 1 if not set
+    
     if (localData) {
         try {
             var parsed = JSON.parse(localData);
-            localTimestamp = parsed.lastSaved || 0;
-        } catch(e) {}
+            localVersion = parsed.gameVersion || 1;
+            
+            // If local data is old version, clear it
+            if (localVersion < GAME_VERSION) {
+                console.log('Clearing old local data (version ' + localVersion + ')');
+                localStorage.removeItem('randofight_gamedata');
+            }
+        } catch(e) {
+            console.error('Error parsing local data:', e);
+        }
     }
     
     updateLoadingProgress(40, 'Fetching your data...');
@@ -2342,66 +2380,63 @@ function retryCloudSave(previousRetryCount) {
         return response.json();
     })
     .then(function(data) {
-    console.log('Raw Supabase response:', data);
-    
-    updateLoadingProgress(80, 'Loading characters...');
-    
-    if (data && data.length > 0) {
-        var gameData = data[0];
-        var cloudTimestamp = new Date(gameData.updated_at).getTime();
+        console.log('Raw Supabase response:', data);
         
-        // Compare timestamps - use newer data
-        if (localTimestamp && localTimestamp > cloudTimestamp) {
-            console.log('Local data is newer, using local data and syncing to cloud');
-            loadGameData();
-            saveToSupabase();
-        } else {
+        updateLoadingProgress(80, 'Loading characters...');
+        
+        if (data && data.length > 0) {
+            var gameData = data[0];
+            
             console.log('Loading data from Supabase:', gameData);
             gameState.fighters = gameData.fighters || [];
             gameState.diamonds = gameData.diamonds || 0;
             gameState.fightCooldownEnd = gameData.fight_cooldown_end || 0;
             gameState.unlockedSlots = gameData.unlocked_slots || [true, false, false, false, false];
             
-            // Load daily tasks - IMPORTANT: Load before initializing
             if (gameData.daily_tasks) {
                 gameState.dailyTasks = gameData.daily_tasks;
                 console.log('Loaded daily tasks from cloud:', gameState.dailyTasks);
             }
             
-            // Also save to localStorage
-            saveGameData();
+            saveGameData(); // Save with new version number
             console.log('Game loaded from cloud successfully!');
+        } else {
+            console.log('No saved data found in Supabase');
+            loadGameData();
         }
-    } else {
-        console.log('No saved data found in Supabase - checking localStorage');
+        
+        initializeDailyTasks();
+        
+        updateLoadingProgress(100, 'Ready!');
+        
+        updateFighterSlots();
+        updateDiamondDisplay();
+        
+        setTimeout(hideLoadingScreen, 300);
+    })
+    .catch(function(error) {
+        console.error('Supabase load error:', error);
         loadGameData();
-    }
-    
-    // Initialize daily tasks (will create if missing or reset if new day)
-    initializeDailyTasks();
-    
-    updateLoadingProgress(100, 'Ready!');
-    
-    updateFighterSlots();
-    updateDiamondDisplay();
-    
-    // Hide loading screen after a brief delay
-    setTimeout(hideLoadingScreen, 300);
-})
-        }
+        updateFighterSlots();
+        updateDiamondDisplay();
+        updateLoadingProgress(100, 'Ready!');
+        setTimeout(hideLoadingScreen, 300);
+    });
+}
 
         function saveGameData() {
     try {
         var gameData = JSON.stringify({
+            gameVersion: GAME_VERSION, // Add version number
             fighters: gameState.fighters,
             diamonds: gameState.diamonds,
             fightCooldownEnd: gameState.fightCooldownEnd,
             unlockedSlots: gameState.unlockedSlots,
-            dailyTasks: gameState.dailyTasks, // Add this line
+            dailyTasks: gameState.dailyTasks,
             lastSaved: Date.now()
         });
         localStorage.setItem('randofight_gamedata', gameData);
-        console.log('Game saved to localStorage');
+        console.log('Game saved to localStorage (version ' + GAME_VERSION + ')');
     } catch (e) {
         console.log('Save failed:', e);
     }
@@ -2412,6 +2447,23 @@ function retryCloudSave(previousRetryCount) {
         var gameData = localStorage.getItem('randofight_gamedata');
         if (gameData) {
             var data = JSON.parse(gameData);
+            
+            // Check if data is from old version
+            if (!data.gameVersion || data.gameVersion < GAME_VERSION) {
+                console.log('Old game data detected (version ' + (data.gameVersion || 1) + '). Wiping local data...');
+                localStorage.removeItem('randofight_gamedata');
+                localStorage.removeItem('randofight_session');
+                localStorage.removeItem('randofight_user_id');
+                
+                // Show notification to user
+                alert('🔄 Game has been updated to Version ' + GAME_VERSION + '!\n\nYour local data has been reset. Please log in to sync with the server.');
+                
+                // Reload to login screen
+                location.reload();
+                return;
+            }
+            
+            // Load data normally if version matches
             gameState.fighters = data.fighters || [];
             gameState.diamonds = data.diamonds || 0;
             gameState.fightCooldownEnd = data.fightCooldownEnd || 0;
@@ -2427,12 +2479,14 @@ function retryCloudSave(previousRetryCount) {
                     win30: false
                 }
             };
-            console.log('Game loaded from localStorage');
+            console.log('Game loaded from localStorage (version ' + GAME_VERSION + ')');
         } else {
             console.log('No saved data found');
         }
     } catch (e) {
         console.log('Load failed:', e);
+        // Clear corrupted data
+        localStorage.removeItem('randofight_gamedata');
     }
 }
 
@@ -3294,6 +3348,29 @@ function checkAndClaimWeeklyPrizes() {
         existingModal.remove();
     }
     
+    // Check if user is a guest
+    if (gameState.currentUser && gameState.currentUser.isGuest) {
+        var modalHTML = 
+            '<div id="weeklyTournamentModal" style="display: block; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; overflow-y: auto;">' +
+                '<div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #1a1a2e; padding: 20px; border-radius: 10px; border: 2px solid #ffd93d; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto;">' +
+                    '<h2 style="color: #ffd93d; text-align: center; margin-bottom: 20px;">🏆 Weekly Tournament</h2>' +
+                    '<div style="text-align: center; padding: 40px 20px;">' +
+                        '<div style="background: rgba(245, 158, 11, 0.2); border: 2px solid #f59e0b; border-radius: 10px; padding: 30px; max-width: 500px; margin: 0 auto;">' +
+                            '<h3 style="color: #f59e0b; margin-bottom: 20px;">⚠️ Account Required</h3>' +
+                            '<p style="color: #ccc; margin-bottom: 20px; font-size: 1.1em;">You\'re playing as a guest!</p>' +
+                            '<p style="color: #888; margin-bottom: 25px;">Create an account to compete in weekly tournaments and win diamond prizes. Your current progress will be saved!</p>' +
+                            '<button class="btn btn-primary" onclick="closeWeeklyTournament(); createAccountFromGuest();" style="padding: 12px 30px; font-size: 1.1em;">Create Account</button>' +
+                        '</div>' +
+                    '</div>' +
+                    '<button class="btn btn-secondary" onclick="closeWeeklyTournament()" style="width: 100%; margin-top: 20px;">Close</button>' +
+                '</div>' +
+            '</div>';
+        
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+        return;
+    }
+    
+    // Regular tournament display for logged-in users
     var modalHTML = 
         '<div id="weeklyTournamentModal" style="display: block; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; overflow-y: auto;">' +
             '<div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #1a1a2e; padding: 20px; border-radius: 10px; border: 2px solid #ffd93d; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto;">' +
@@ -3802,8 +3879,8 @@ html += '<div class="leaderboard-entry"' + highlightStyle + '>' +
             
             var isFirstFighter = gameState.fighters.filter(function(f) { return f !== null && f !== undefined; }).length === 1;
             if (isFirstFighter && gameState.diamonds === 0) {
-                gameState.diamonds = 10;
-                alert('Welcome to RandoFight! You have received 10 free diamonds to get you started!');
+                gameState.diamonds = 20;
+                alert('Welcome to RandoFight! You have received 20 free diamonds to get you started!');
             }
             
             saveToSupabase();
@@ -5004,7 +5081,7 @@ function generateBossOpponent(playerLevel) {
                     '<h3 style="color: #f59e0b; margin-bottom: 20px;">📊 Global Leaderboard</h3>' +
                     '<p style="color: #ccc; margin-bottom: 20px; font-size: 1.1em;">You\'re playing as a guest!</p>' +
                     '<p style="color: #888; margin-bottom: 25px;">Create an account to enter the leaderboards and compete with players worldwide. Your current progress will be saved!</p>' +
-                    '<button class="btn btn-primary" onclick="createAccountFromGuest()" style="padding: 12px 30px; font-size: 1.1em;">Create Account</button>' +
+                    '<button class="btn btn-primary" onclick="closeGlobalLeaderboard(); createAccountFromGuest();" style="padding: 12px 30px; font-size: 1.1em;">Create Account</button>' +
                 '</div>' +
             '</div>';
         return;
@@ -7798,6 +7875,7 @@ function claimAllReferralRewards() {
                             '<li>📅 Daily task rewards</li>' +
                             '<li>💎 Equipment loot system</li>' +
                             '<li>⚡ Special attacks at level 10</li>' +
+                            '<li>😈 Random Boss Fights at level 30</li>' +
                             '<li>👥 Referral rewards</li>' +
                         '</ul>' +
                         '<p style="margin-top: 10px; color: #6bcf7f;"><strong>Thank you for playing!</strong></p>' +
@@ -7814,6 +7892,7 @@ function claimAllReferralRewards() {
                 
                 '<div style="text-align: center; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1);">' +
                     '<p style="color: #666; font-size: 0.8em;">Follow us on social media for the latest news!</p>' +
+                    '<p style="color: #666; font-size: 0.8em; margin-top: 5px;">Game Version: ' + GAME_VERSION + '</p>' +
                 '</div>' +
                 
                 '<button class="btn btn-secondary" onclick="closeNewsModal()" style="width: 100%; margin-top: 20px; padding: 12px;">Close</button>' +
